@@ -1,0 +1,15 @@
+# IDE
+.idea
+.venv
+__pycache__
+
+# Directories
+# ...
+
+# Files
+uninstall_libs.py
+sendall_with_sftp.py
+
+# Extensions
+*.env
+*.bat
