@@ -65,7 +65,7 @@ def home() -> jsonify:
     return jsonify({
         'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
         'author_github': 'https://github.com/Henrique-Coder',
-        'source_code_url': 'https://github.com/Henrique-Coder/everytools-api',
+        'source_code_url': 'https://github.com/Henrique-Coder/everytoolsapi',
         'base_url': 'http://node1.mindwired.com.br:8452',
         'endpoints': {
             'url-generator': {
