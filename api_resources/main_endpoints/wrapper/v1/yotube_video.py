@@ -3,6 +3,7 @@ from yt_dlp import YoutubeDL, utils as yt_dlp_utils
 from unicodedata import normalize
 from re import sub as re_sub, compile as re_compile
 from datetime import datetime
+from urllib.parse import unquote
 
 
 # Lists with regular expressions with forbidden URLs in the output json
@@ -65,8 +66,9 @@ def main(_id: str) -> Union[dict, None]:
 
         for lang, subs in subtitles.items():
             for sub_info in subs:
+                url = unquote(sub_info.get('url', str()))
                 subtitle_data = {
-                    'url': sub_info.get('url', str()),
+                    'url': url,
                     'lang': lang,
                     'ext': sub_info.get('ext', str()),
                 }
@@ -111,7 +113,7 @@ def main(_id: str) -> Union[dict, None]:
                     # Adding information about videos only if size is not 0
                     if size != 0:
                         media_data['video'].append({
-                            'url': _url,
+                            'url': unquote(_url),
                             'codec': _codec,
                             'framerate': _framerate,
                             'bitrate': _bitrate,
@@ -121,7 +123,7 @@ def main(_id: str) -> Union[dict, None]:
 
             if 'acodec' in format_info and format_info['acodec'] != 'none':
                 audio_data = {
-                    'url': format_info['url'],
+                    'url': unquote(format_info['url']),
                     'codec': format_info['acodec'],
                     'bitrate': int(format_info.get('abr', 0)),
                     'sample-rate': int(format_info.get('asr', 0)),
