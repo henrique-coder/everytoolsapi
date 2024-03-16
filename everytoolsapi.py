@@ -148,9 +148,11 @@ def endpoints() -> jsonify:
 
 # Flask API routes
 # Route: /api/ai/v?/ask-gemini
-@app.route('/api/ai/v1/ask-gemini', methods=['GET'])
+_ = endpoints_data['endpoints']['ai']['ask-gemini']['url']
+_route_ai__ask_to_gemini = _.split('?')[0] if '?' in _ else _
+@app.route(_route_ai__ask_to_gemini, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['ai']['ask-gemini']['rate_limit'])
-@cache.cached(timeout=5, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['ai']['ask-gemini']['cache_timeout'], make_cache_key=_make_cache_key)
 def _ai__ask_to_gemini() -> jsonify:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
@@ -171,9 +173,11 @@ def _ai__ask_to_gemini() -> jsonify:
 
 
 # Route: /api/randomizer/v?/int-number
-@app.route('/api/randomizer/v1/int-number', methods=['GET'])
+_ = endpoints_data['endpoints']['randomizer']['int-number']['url']
+_route_randomizer__int_number = _.split('?')[0] if '?' in _ else _
+@app.route(_route_randomizer__int_number, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['randomizer']['int-number']['rate_limit'])
-@cache.cached(timeout=0, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['randomizer']['int-number']['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__int_number() -> jsonify:
     p_min = request.args.get('min')
     p_max = request.args.get('max')
@@ -194,9 +198,11 @@ def _randomizer__int_number() -> jsonify:
 
 
 # Route: /api/randomizer/v?/float-number
-@app.route('/api/randomizer/v1/float-number', methods=['GET'])
+_ = endpoints_data['endpoints']['randomizer']['float-number']['url']
+_route_randomizer__float_number = _.split('?')[0] if '?' in _ else _
+@app.route(_route_randomizer__float_number, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['randomizer']['float-number']['rate_limit'])
-@cache.cached(timeout=0, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['randomizer']['float-number']['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__float_number() -> jsonify:
     def is_float(value: Any) -> bool:
         try:
@@ -224,9 +230,11 @@ def _randomizer__float_number() -> jsonify:
 
 
 # Route: /api/scraper/v?/file-mediafire.com
-@app.route('/api/scraper/v1/file-mediafire.com', methods=['GET'])
+_ = endpoints_data['endpoints']['scraper']['file-mediafire.com']['url']
+_route_scraper__file_mediafire0com = _.split('?')[0] if '?' in _ else _
+@app.route(_route_scraper__file_mediafire0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-mediafire.com']['rate_limit'])
-@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-mediafire.com']['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_mediafire_com() -> jsonify:
     p_id = request.args.get('id')
 
@@ -242,9 +250,11 @@ def _scraper__file_mediafire_com() -> jsonify:
 
 
 # Route: /api/scraper/v?/file-drive.google.com
-@app.route('/api/scraper/v1/file-drive.google.com', methods=['GET'])
+_ = endpoints_data['endpoints']['scraper']['file-drive.google.com']['url']
+_route_scraper__file_drive0google0com = _.split('?')[0] if '?' in _ else _
+@app.route(_route_scraper__file_drive0google0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-drive.google.com']['rate_limit'])
-@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-drive.google.com']['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_drive0google0com() -> jsonify:
     p_id = request.args.get('id')
 
@@ -260,9 +270,11 @@ def _scraper__file_drive0google0com() -> jsonify:
 
 
 # Route: /api/scraper/v?/file-gofile.io
-@app.route('/api/scraper/v1/file-gofile.io', methods=['GET'])
+_ = endpoints_data['endpoints']['scraper']['file-gofile.io']['url']
+_route_scraper__file_gofile0io = _.split('?')[0] if '?' in _ else _
+@app.route(_route_scraper__file_gofile0io, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-gofile.io']['rate_limit'])
-@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-gofile.io']['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_gofile0io() -> jsonify:
     return _route_in_maintenance()
 
@@ -280,9 +292,11 @@ def _scraper__file_gofile0io() -> jsonify:
 
 
 # Route: /api/scraper/v?/file-pillowcase.su
-@app.route('/api/scraper/v1/file-pillowcase.su', methods=['GET'])
+_ = endpoints_data['endpoints']['scraper']['file-pillowcase.su']['url']
+_route_scraper__file_pillowcase0su = _.split('?')[0] if '?' in _ else _
+@app.route(_route_scraper__file_pillowcase0su, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-pillowcase.su']['rate_limit'])
-@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-pillowcase.su']['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_pillowcase0su() -> jsonify:
     p_id = request.args.get('id')
 
@@ -298,9 +312,11 @@ def _scraper__file_pillowcase0su() -> jsonify:
 
 
 # Route: /api/scraper/v?/product-aliexpress.com
-@app.route('/api/scraper/v1/product-aliexpress.com', methods=['GET'])
+_ = endpoints_data['endpoints']['scraper']['product-aliexpress.com']['url']
+_route_scraper__product_aliexpress0com = _.split('?')[0] if '?' in _ else _
+@app.route(_route_scraper__product_aliexpress0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['product-aliexpress.com']['rate_limit'])
-@cache.cached(timeout=300, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['scraper']['product-aliexpress.com']['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__product_aliexpress0com() -> jsonify:
     p_id = request.args.get('id')
 
@@ -317,9 +333,11 @@ def _scraper__product_aliexpress0com() -> jsonify:
 
 
 # Route: /api/scraper/v?/video-youtube.com
-@app.route('/api/scraper/v1/video-youtube.com', methods=['GET'])
+_ = endpoints_data['endpoints']['scraper']['video-youtube.com']['url']
+_route_scraper__video_youtube0com = _.split('?')[0] if '?' in _ else _
+@app.route(_route_scraper__video_youtube0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['video-youtube.com']['rate_limit'])
-@cache.cached(timeout=14400, make_cache_key=_make_cache_key)
+@cache.cached(timeout=endpoints_data['endpoints']['scraper']['video-youtube.com']['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__video_youtube0com() -> jsonify:
     p_id = request.args.get('id')
 
