@@ -4,11 +4,10 @@ from lxml import html
 
 
 def main(_id: str) -> Union[str, None]:
-    url = f'https://drive.google.com/uc?export=download&id={_id}'
+    url = f'https://www.mediafire.com/file/{_id}'
 
     headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
     }
 
     try:
@@ -18,8 +17,9 @@ def main(_id: str) -> Union[str, None]:
 
     try:
         tree = html.fromstring(resp.content)
-        data = tree.xpath('//form[@id="download-form"]/@action')[0]
+        data = tree.xpath('//a[@id="downloadButton"]/@href')[0]
+        data = str(data[:data.rfind('/')])
     except Exception:
-        data = url
+        return None
 
     return data

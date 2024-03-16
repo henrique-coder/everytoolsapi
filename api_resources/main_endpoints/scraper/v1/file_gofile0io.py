@@ -4,10 +4,10 @@ from lxml import html
 
 
 def main(_id: str) -> Union[str, None]:
-    url = f'https://www.mediafire.com/file/{_id}'
+    url = f'https://gofile.io/d/{_id}'
 
     headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        # 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
     }
 
@@ -17,10 +17,10 @@ def main(_id: str) -> Union[str, None]:
         return None
 
     try:
-        tree = html.fromstring(resp.content)
-        data = tree.xpath('//a[@id="downloadButton"]/@href')[0]
-        data = str(data[:data.rfind('/')])
+        tree = html.fromstring(resp.text)
     except Exception:
         return None
 
-    return data
+
+if __name__ == '__main__':
+    print(main('mQy16C'))
