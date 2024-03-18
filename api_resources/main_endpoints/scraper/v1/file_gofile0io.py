@@ -22,7 +22,7 @@ def main(_id: str) -> Union[dict, None]:
 
     try:
         tree = html.fromstring(resp.content)
-        generated_data['url'] = None
+        generated_data['data'] = None
     except Exception:
         return None
 

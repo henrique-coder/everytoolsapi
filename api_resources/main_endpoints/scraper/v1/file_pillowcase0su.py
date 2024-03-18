@@ -19,7 +19,7 @@ def main(_id: str) -> Union[dict, None]:
         if resp.status_code not in (200, 302, 307):
             return None
 
-        generated_data['url'] = f'https://api.pillowcase.su/api/download/{_id}'
+        generated_data['data'] = f'https://api.pillowcase.su/api/download/{_id}'
     except httpx_exceptions.HTTPError:
         return None
 

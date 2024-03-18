@@ -2,9 +2,13 @@ from typing import Union
 from httpx import get, post
 from mimetypes import guess_type
 from base64 import b64encode
+from time import perf_counter
 
 
 def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: Union[int, str] = 300) -> Union[dict, None]:
+    start_time = perf_counter()
+    generated_data = dict()
+
     prompt = prompt.strip() if prompt else None
     image_url = image_url.strip() if image_url else None
     max_tokens = int(max_tokens) if max_tokens else 300
@@ -19,6 +23,8 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: 
     def check_url_content(url: str) -> Union[bytes, None]:
         try:
             response = get(url, follow_redirects=True, timeout=5)
+            response.raise_for_status()
+
             if response.status_code == 200:
                 return response.content
             else:
@@ -36,7 +42,7 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: 
     }
     headers = {
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
     }
     body = {
         'contents': [
@@ -85,7 +91,8 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: 
         if response.status_code != 200:
             return None
 
-        generated_text = response.json()['candidates'][0]['content']['parts'][0]['text']
-        return {'text': generated_text, 'model': model, 'max_tokens': max_tokens}
+        generated_data['data'] = {'text': response.json()['candidates'][0]['content']['parts'][0]['text'], 'model': model, 'max_tokens': max_tokens}
+        generated_data['processing_time'] = float(perf_counter() - start_time)
+        return generated_data
     except Exception:
         return None

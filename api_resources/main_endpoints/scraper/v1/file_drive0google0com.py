@@ -21,7 +21,7 @@ def main(_id: str) -> Union[dict, None]:
     except httpx_exceptions.HTTPError:
         return None
 
-    generated_data['url'] = url
+    generated_data['data'] = url
     generated_data['processing_time'] = float(perf_counter() - start_time)
 
     return generated_data

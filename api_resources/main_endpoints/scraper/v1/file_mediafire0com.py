@@ -24,7 +24,7 @@ def main(_id: str) -> Union[dict, None]:
     try:
         tree = html.fromstring(resp.content)
         data = tree.xpath('//a[@id="downloadButton"]/@href')[0]
-        generated_data['url'] = str(data[:data.rfind('/')])
+        generated_data['data'] = str(data[:data.rfind('/')])
     except Exception:
         return None
 

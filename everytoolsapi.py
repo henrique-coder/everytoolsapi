@@ -42,6 +42,26 @@ def get_rate_limit_message(requests_per_second: int, requests_per_minute: int, r
     return f'{requests_per_second}/second;{requests_per_minute}/minute;{requests_per_hour}/hour;{requests_per_day}/day'
 
 
+def get_success_response_message(processing_time: float, response_data: dict, endpoint_description: str) -> dict:
+    return {
+        'api': {
+            'success': True,
+            'processing_time': processing_time,
+            'description': endpoint_description
+        },
+        'response': response_data,
+    }
+
+
+def get_error_response_message(error_message: str) -> dict:
+    return {
+        'api': {
+            'success': False,
+            'message': error_message
+        }
+    }
+
+
 # Endpoints data
 endpoints_data = {
     'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
@@ -61,13 +81,13 @@ endpoints_data = {
                 'url': '/api/randomizer/v1/int-number?min=&max=',
                 'description': 'Generates a random integer number between two numbers.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
-                'cache_timeout': 0,
+                'cache_timeout': 1,
             },
             'float-number': {
                 'url': '/api/randomizer/v1/float-number?min=&max=',
                 'description': 'Generates a random float number between two numbers.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
-                'cache_timeout': 0,
+                'cache_timeout': 1,
             }
         },
         'scraper': {
@@ -149,27 +169,27 @@ def endpoints() -> jsonify:
 # Flask API routes
 # Route: /api/ai/v?/ask-gemini
 _ = endpoints_data['endpoints']['ai']['ask-gemini']['url']
-_route_ai__ask_to_gemini = _.split('?')[0] if '?' in _ else _
-@app.route(_route_ai__ask_to_gemini, methods=['GET'])
+_route_ai__ask_gemini = _.split('?')[0] if '?' in _ else _
+@app.route(_route_ai__ask_gemini, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['ai']['ask-gemini']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['ai']['ask-gemini']['cache_timeout'], make_cache_key=_make_cache_key)
-def _ai__ask_to_gemini() -> jsonify:
+def _ai__ask_gemini() -> jsonify:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
     p_max_tokens = request.args.get('max_tokens')
 
     if not p_prompt:
-        return jsonify({'success': False, 'message': "The prompt parameter is required."}), 400
+        return jsonify(get_error_response_message('The prompt parameter is required.'), 400)
 
     if p_max_tokens and not p_max_tokens.isnumeric():
-        return jsonify({'success': False, 'message': "The max_tokens parameter must be an integer."}), 400
+        return jsonify(get_error_response_message('The max_tokens parameter must be an integer.'), 400)
 
     output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url, p_max_tokens)
 
     if output_data:
-        return jsonify({'success': True, 'output': output_data, 'query': {'prompt': p_prompt, 'image_url': p_image_url}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['ai']['ask-gemini']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'An error occurred while asking the question. Please check your query and try again.', 'query': {'prompt': p_prompt, 'image_url': p_image_url}}), 404
+        return jsonify(get_error_response_message('An error occurred while asking the question. Please check your query and try again.'), 404)
 
 
 # Route: /api/randomizer/v?/int-number
@@ -183,18 +203,18 @@ def _randomizer__int_number() -> jsonify:
     p_max = request.args.get('max')
 
     if not p_min or not p_min.isnumeric() or not p_max or not p_max.isnumeric():
-        return jsonify({'success': False, 'message': "The min and max parameters are required and must be integers."}), 400
+        return jsonify(get_error_response_message('The min and max parameters are required and must be integers.'), 400)
 
     p_min, p_max = int(p_min), int(p_max)
     if p_min > p_max:
-        return jsonify({'success': False, 'message': "The min parameter must be less than the max parameter."}), 400
+        return jsonify(get_error_response_message('The min parameter must be less than the max parameter.'), 400)
 
     output_data = randomizer__int_number(p_min, p_max)
 
     if output_data:
-        return jsonify({'success': True, 'number': output_data, 'type': 'int', 'query': {'min': p_min, 'max': p_max}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['int-number']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'An error occurred while generating the random number. Please check your query and try again.', 'query': {'min': p_min, 'max': p_max}}), 404
+        return jsonify(get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404)
 
 
 # Route: /api/randomizer/v?/float-number
@@ -215,18 +235,18 @@ def _randomizer__float_number() -> jsonify:
     p_max = request.args.get('max')
 
     if not p_min or not is_float(p_min) or not p_max or not is_float(p_max):
-        return jsonify({'success': False, 'message': "The min and max parameters are required and must be floats."}), 400
+        return jsonify(get_error_response_message('The min and max parameters are required and must be floats.'), 400)
 
     p_min, p_max = float(p_min), float(p_max)
     if p_min > p_max:
-        return jsonify({'success': False, 'message': "The min parameter must be less than the max parameter."}), 400
+        return jsonify(get_error_response_message('The min parameter must be less than the max parameter.'), 400)
 
     output_data = randomizer__float_number(float(p_min), float(p_max))
 
     if output_data:
-        return jsonify({'success': True, 'number': output_data, 'type': 'float', 'query': {'min': p_min, 'max': p_max}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['float-number']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'An error occurred while generating the random number. Please check your query and try again.', 'query': {'min': p_min, 'max': p_max}}), 404
+        return jsonify(get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404)
 
 
 # Route: /api/scraper/v?/file-mediafire.com
@@ -239,14 +259,14 @@ def _scraper__file_mediafire_com() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isalnum():
-        return jsonify({'success': False, 'message': 'The id parameter is required and must be alphanumeric.'}), 400
+        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
 
     output_data = scraper__file_mediafire0com(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-mediafire.com']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
 
 
 # Route: /api/scraper/v?/file-drive.google.com
@@ -259,14 +279,14 @@ def _scraper__file_drive0google0com() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not re_compile(r'^[a-zA-Z0-9_-]+$').match(p_id):
-        return jsonify({'success': False, 'message': 'The id parameter is required and must be alphanumeric.'}), 400
+        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
 
     output_data = scraper__file_drive0google0com(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-drive.google.com']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
 
 
 # Route: /api/scraper/v?/file-gofile.io
@@ -281,14 +301,14 @@ def _scraper__file_gofile0io() -> jsonify:
     # p_id = request.args.get('id')
 
     # if not p_id or not p_id.isalnum():
-    #     return jsonify({'success': False, 'message': 'The id parameter is required and must be alphanumeric.'}), 400
+    #     return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
 
     # output_data = scraper__file_gofile0io(p_id)
 
     # if output_data:
-    #     return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
+    #     return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-gofile.io']['description']), 200)
     # else:
-    #     return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+    #     return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
 
 
 # Route: /api/scraper/v?/file-pillowcase.su
@@ -301,14 +321,14 @@ def _scraper__file_pillowcase0su() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isalnum():
-        return jsonify({'success': False, 'message': "The id parameter is required and must be alphanumeric."}), 400
+        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
 
     output_data = scraper__file_pillowcase0su(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'output': {'url': output_data}, 'query': {'id': p_id}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-pillowcase.su']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
 
 
 # Route: /api/scraper/v?/product-aliexpress.com
@@ -321,15 +341,15 @@ def _scraper__product_aliexpress0com() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isnumeric():
-        return jsonify({'success': False, 'message': "The id parameter is required and must be numeric."}), 400
+        return jsonify(get_error_response_message('The id parameter is required and must be numeric.'), 400)
 
     p_id = int(p_id)
     output_data = scraper__product_aliexpress0com(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'output': {'data': output_data}, 'query': {'id': p_id}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['product-aliexpress.com']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
 
 
 # Route: /api/scraper/v?/video-youtube.com
@@ -342,14 +362,14 @@ def _scraper__video_youtube0com() -> jsonify:
     p_id = request.args.get('id')
 
     if not p_id or not re_compile(r'^[a-zA-Z0-9_-]+$').match(p_id):
-        return jsonify({'success': False, 'message': "The id parameter is required and must be alphanumeric."}), 400
+        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
 
     output_data = scraper__video_youtube0com(p_id)
 
     if output_data:
-        return jsonify({'success': True, 'output': {'data': output_data}, 'query': {'id': p_id}}), 200
+        return jsonify(get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['video-youtube.com']['description']), 200)
     else:
-        return jsonify({'success': False, 'message': 'Query not found or invalid. Please check your query and try again.', 'query': {'id': p_id}}), 404
+        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
 
 
 if __name__ == '__main__':
