@@ -4,28 +4,35 @@ from json import loads as json_loads
 from httpx import get, _exceptions as httpx_exceptions
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from time import perf_counter
+
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
+    'Cookie': 'xman_f=82eZ73Yk3kUmArs2cqSaeVhIBpZUqa5s/nFuPNZUbJduW17e9ELWYOdwJD9yZAawfaLD8+Yi69pXnJy2qhqQWnyq5vD3lfKYXc8WGgVIsu4ExnaqS8zejw==;aep_usuc_f=site=usa&c_tp=USD&region=US&b_locale=en_US',
+}
 
 
 def main(_id: int) -> Union[dict, None]:
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Cookie': 'xman_f=82eZ73Yk3kUmArs2cqSaeVhIBpZUqa5s/nFuPNZUbJduW17e9ELWYOdwJD9yZAawfaLD8+Yi69pXnJy2qhqQWnyq5vD3lfKYXc8WGgVIsu4ExnaqS8zejw==;aep_usuc_f=site=usa&c_tp=USD&region=US&b_locale=en_US',
-    }
+    start_time = perf_counter()
+    generated_data = dict()
+
+    url = f'https://www.aliexpress.us/item/{_id}.html'
 
     try:
-        url = f'https://www.aliexpress.us/item/{_id}.html'
-        resp = get(url, follow_redirects=True, headers=headers, timeout=5).content
+        resp = get(url, follow_redirects=True, headers=headers, timeout=5)
+        resp.raise_for_status()
     except httpx_exceptions.HTTPError:
         return None
 
     try:
-        soup = BeautifulSoup(resp, 'html.parser')
+        soup = BeautifulSoup(resp.content, 'html.parser')
         data = soup.find('script', string=re_compile(r'window.runParams\s*=\s*{')).string.strip().replace('\n', str())
         raw_data = dict(json_loads(data[data.find('{', data.find('{') + 1): data.rfind('}')], strict=True))
     except Exception:
         return None
 
-    is_debug_mode = True
+    is_debug_mode = False
 
     # Section: Store Info
     try:
@@ -236,4 +243,7 @@ def main(_id: int) -> Union[dict, None]:
         }
     }
 
-    return formatted_data
+    generated_data['data'] = formatted_data
+    generated_data['processing_time'] = float(perf_counter() - start_time)
+
+    return generated_data
