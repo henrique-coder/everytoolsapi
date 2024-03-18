@@ -4,6 +4,7 @@ from unicodedata import normalize
 from re import sub as re_sub, compile as re_compile
 from datetime import datetime
 from urllib.parse import unquote
+from time import perf_counter
 
 
 # Lists with regular expressions with forbidden URLs in the output json
@@ -13,6 +14,9 @@ blacklisted_url_regexes = [
 
 
 def main(_id: str) -> Union[dict, None]:
+    start_time = perf_counter()
+    generated_data = dict()
+
     # Function to check if it is a valid URL according to the regex
     def is_blacklisted_url(url: str) -> bool:
         return not any(regex.match(url) for regex in blacklisted_url_regexes)
@@ -39,24 +43,24 @@ def main(_id: str) -> Union[dict, None]:
 
         return {
             'id': info.get('id', str()),
-            'long-url': f'https://www.youtube.com/watch?v={video_id}',
-            'short-url': f'https://youtu.be/{video_id}',
+            'long_url': f'https://www.youtube.com/watch?v={video_id}',
+            'short_url': f'https://youtu.be/{video_id}',
             'title': info.get('title', str()),
-            'sanitized-title': formatted_title,
+            'sanitized_title': formatted_title,
             'likes': info.get('like_count', 0),
             'description': info.get('description', str()),
-            'upload-date': epoch_upload_date,
+            'upload_date': epoch_upload_date,
             'duration': info.get('duration', 0),
             'views': info.get('view_count', 0),
             'categories': info.get('categories', list()),
             'tags': info.get('tags', list()),
-            'channel-id': channel_id,
-            'channel-url': channel_url,
-            'channel-name': info.get('uploader', str()),
-            'sanitized-channel-name': formatted_channel_name,
+            'channel_id': channel_id,
+            'channel_url': channel_url,
+            'channel_name': info.get('uploader', str()),
+            'sanitized_channel_name': formatted_channel_name,
             'comments': info.get('comment_count', 0),
-            'is-live': info.get('is_live', False),
-            'is-age-restricted': info.get('age_limit', 0) > 0,
+            'is_live': info.get('is_live', False),
+            'is_age_restricted': info.get('age_limit', 0) > 0,
         }
 
     # Function to extract information about subtitles
@@ -88,7 +92,7 @@ def main(_id: str) -> Union[dict, None]:
             }
         )
 
-        yt_dlp_utils.std_headers['User-Agent'] = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+        yt_dlp_utils.std_headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36'
 
         try:
             info = yt.sanitize_info(yt.extract_info(video_url, download=False), remove_private_keys=True)
@@ -126,7 +130,7 @@ def main(_id: str) -> Union[dict, None]:
                     'url': unquote(format_info['url']),
                     'codec': format_info['acodec'],
                     'bitrate': int(format_info.get('abr', 0)),
-                    'sample-rate': int(format_info.get('asr', 0)),
+                    'sample_rate': int(format_info.get('asr', 0)),
                 }
                 # Adding information about audio only if bitrate is not 0
                 if audio_data['bitrate'] != 0:
@@ -137,6 +141,9 @@ def main(_id: str) -> Union[dict, None]:
         subtitle_info = extract_subtitles(info)
         media_data['subtitles'] = subtitle_info
 
-        return data
+        generated_data['processing_time'] = float(perf_counter() - start_time)
+        generated_data['data'] = data
+
+        return generated_data
 
     return get_youtube_video_data(f'https://www.youtube.com/watch?v={_id}')
