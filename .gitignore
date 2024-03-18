@@ -9,6 +9,7 @@ __pycache__
 # Files
 uninstall_libs.py
 sendall_with_sftp.py
+debug_api.py
 
 # Extensions
 *.env
