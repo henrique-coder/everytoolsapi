@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, redirect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
@@ -60,6 +60,15 @@ def get_error_response_message(error_message: str) -> dict:
             'message': error_message
         }
     }
+
+
+# Flask required functions
+def _make_cache_key(*args, **kwargs) -> str:
+    return f'{request.url}{str(request.args)}'
+
+
+def _route_in_maintenance() -> tuple[dict, int]:
+    return {'success': False, 'message': 'This endpoint is under maintenance. Please try again later.'}, 503
 
 
 # Endpoints data
@@ -132,26 +141,17 @@ endpoints_data = {
 }
 
 
-# Flask required functions
-def _make_cache_key(*args, **kwargs) -> str:
-    return f'{request.url}{str(request.args)}'
-
-
-def _route_in_maintenance() -> jsonify:
-    return jsonify({'success': False, 'message': 'This endpoint is under maintenance. Please try again later.'}), 503
-
-
 # Flask error handlers
 @app.errorhandler(404)
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
-def weberror_404(_) -> jsonify:
-    return jsonify({'success': False, 'message': 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.'}), 404
+def weberror_404(_) -> tuple[dict, int]:
+    return {'success': False, 'message': 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.'}, 404
 
 
 @app.errorhandler(429)
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
-def weberror_429(_) -> jsonify:
-    return jsonify({'success': False, 'message': 'You have exceeded the rate limit! Please wait a few seconds and try again.'}), 429
+def weberror_429(_) -> tuple[dict, int]:
+    return ({'success': False, 'message': 'You have exceeded the rate limit! Please wait a few seconds and try again.'}), 429
 
 
 # Flask general routes
@@ -162,8 +162,8 @@ def homepage() -> redirect:
 
 @app.route('/endpoints', methods=['GET'])
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
-def endpoints() -> jsonify:
-    return jsonify(endpoints_data, 200)
+def endpoints() -> tuple[dict, int]:
+    return endpoints_data, 200
 
 
 # Flask API routes
@@ -173,23 +173,23 @@ _route_ai__ask_gemini = _.split('?')[0] if '?' in _ else _
 @app.route(_route_ai__ask_gemini, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['ai']['ask-gemini']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['ai']['ask-gemini']['cache_timeout'], make_cache_key=_make_cache_key)
-def _ai__ask_gemini() -> jsonify:
+def _ai__ask_gemini() -> tuple[dict, int]:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
     p_max_tokens = request.args.get('max_tokens')
 
     if not p_prompt:
-        return jsonify(get_error_response_message('The prompt parameter is required.'), 400)
+        return get_error_response_message('The prompt parameter is required.'), 400
 
     if p_max_tokens and not p_max_tokens.isnumeric():
-        return jsonify(get_error_response_message('The max_tokens parameter must be an integer.'), 400)
+        return get_error_response_message('The max_tokens parameter must be an integer.'), 400
 
     output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url, p_max_tokens)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['ai']['ask-gemini']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['ai']['ask-gemini']['description']), 200
     else:
-        return jsonify(get_error_response_message('An error occurred while asking the question. Please check your query and try again.'), 404)
+        return get_error_response_message('An error occurred while asking the question. Please check your query and try again.'), 404
 
 
 # Route: /api/randomizer/v?/int-number
@@ -198,23 +198,23 @@ _route_randomizer__int_number = _.split('?')[0] if '?' in _ else _
 @app.route(_route_randomizer__int_number, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['randomizer']['int-number']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['randomizer']['int-number']['cache_timeout'], make_cache_key=_make_cache_key)
-def _randomizer__int_number() -> jsonify:
+def _randomizer__int_number() -> tuple[dict, int]:
     p_min = request.args.get('min')
     p_max = request.args.get('max')
 
     if not p_min or not p_min.isnumeric() or not p_max or not p_max.isnumeric():
-        return jsonify(get_error_response_message('The min and max parameters are required and must be integers.'), 400)
+        return get_error_response_message('The min and max parameters are required and must be integers.'), 400
 
     p_min, p_max = int(p_min), int(p_max)
     if p_min > p_max:
-        return jsonify(get_error_response_message('The min parameter must be less than the max parameter.'), 400)
+        return get_error_response_message('The min parameter must be less than the max parameter.'), 400
 
     output_data = randomizer__int_number(p_min, p_max)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['int-number']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['int-number']['description']), 200
     else:
-        return jsonify(get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404)
+        return get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404
 
 
 # Route: /api/randomizer/v?/float-number
@@ -223,7 +223,7 @@ _route_randomizer__float_number = _.split('?')[0] if '?' in _ else _
 @app.route(_route_randomizer__float_number, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['randomizer']['float-number']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['randomizer']['float-number']['cache_timeout'], make_cache_key=_make_cache_key)
-def _randomizer__float_number() -> jsonify:
+def _randomizer__float_number() -> tuple[dict, int]:
     def is_float(value: Any) -> bool:
         try:
             float(value)
@@ -235,18 +235,18 @@ def _randomizer__float_number() -> jsonify:
     p_max = request.args.get('max')
 
     if not p_min or not is_float(p_min) or not p_max or not is_float(p_max):
-        return jsonify(get_error_response_message('The min and max parameters are required and must be floats.'), 400)
+        return get_error_response_message('The min and max parameters are required and must be floats.'), 400
 
     p_min, p_max = float(p_min), float(p_max)
     if p_min > p_max:
-        return jsonify(get_error_response_message('The min parameter must be less than the max parameter.'), 400)
+        return get_error_response_message('The min parameter must be less than the max parameter.'), 400
 
     output_data = randomizer__float_number(float(p_min), float(p_max))
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['float-number']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['float-number']['description']), 200
     else:
-        return jsonify(get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404)
+        return get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-mediafire.com
@@ -255,18 +255,18 @@ _route_scraper__file_mediafire0com = _.split('?')[0] if '?' in _ else _
 @app.route(_route_scraper__file_mediafire0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-mediafire.com']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-mediafire.com']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__file_mediafire_com() -> jsonify:
+def _scraper__file_mediafire_com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isalnum():
-        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
+        return get_error_response_message('The id parameter is required and must be alphanumeric.'), 400
 
     output_data = scraper__file_mediafire0com(p_id)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-mediafire.com']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-mediafire.com']['description']), 200
     else:
-        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
+        return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-drive.google.com
@@ -275,18 +275,18 @@ _route_scraper__file_drive0google0com = _.split('?')[0] if '?' in _ else _
 @app.route(_route_scraper__file_drive0google0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-drive.google.com']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-drive.google.com']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__file_drive0google0com() -> jsonify:
+def _scraper__file_drive0google0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not re_compile(r'^[a-zA-Z0-9_-]+$').match(p_id):
-        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
+        return get_error_response_message('The id parameter is required and must be alphanumeric.'), 400
 
     output_data = scraper__file_drive0google0com(p_id)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-drive.google.com']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-drive.google.com']['description']), 200
     else:
-        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
+        return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-gofile.io
@@ -295,20 +295,20 @@ _route_scraper__file_gofile0io = _.split('?')[0] if '?' in _ else _
 @app.route(_route_scraper__file_gofile0io, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-gofile.io']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-gofile.io']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__file_gofile0io() -> jsonify:
+def _scraper__file_gofile0io() -> tuple[dict, int]:
     return _route_in_maintenance()
 
-    # p_id = request.args.get('id')
+     # p_id = request.args.get('id')
 
-    # if not p_id or not p_id.isalnum():
-    #     return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
+     # if not p_id or not p_id.isalnum():
+     #     return get_error_response_message('The id parameter is required and must be alphanumeric.'), 400
 
-    # output_data = scraper__file_gofile0io(p_id)
+     # output_data = scraper__file_gofile0io(p_id)
 
-    # if output_data:
-    #     return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-gofile.io']['description']), 200)
-    # else:
-    #     return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
+     # if output_data:
+     #     return get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-gofile.io']['description']), 200
+     # else:
+     #     return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-pillowcase.su
@@ -317,18 +317,18 @@ _route_scraper__file_pillowcase0su = _.split('?')[0] if '?' in _ else _
 @app.route(_route_scraper__file_pillowcase0su, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['file-pillowcase.su']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-pillowcase.su']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__file_pillowcase0su() -> jsonify:
+def _scraper__file_pillowcase0su() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isalnum():
-        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
+        return get_error_response_message('The id parameter is required and must be alphanumeric.'), 400
 
     output_data = scraper__file_pillowcase0su(p_id)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-pillowcase.su']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-pillowcase.su']['description']), 200
     else:
-        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
+        return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/product-aliexpress.com
@@ -337,19 +337,19 @@ _route_scraper__product_aliexpress0com = _.split('?')[0] if '?' in _ else _
 @app.route(_route_scraper__product_aliexpress0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['product-aliexpress.com']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['scraper']['product-aliexpress.com']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__product_aliexpress0com() -> jsonify:
+def _scraper__product_aliexpress0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isnumeric():
-        return jsonify(get_error_response_message('The id parameter is required and must be numeric.'), 400)
+        return get_error_response_message('The id parameter is required and must be numeric.'), 400
 
     p_id = int(p_id)
     output_data = scraper__product_aliexpress0com(p_id)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['product-aliexpress.com']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['product-aliexpress.com']['description']), 200
     else:
-        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
+        return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/video-youtube.com
@@ -358,18 +358,18 @@ _route_scraper__video_youtube0com = _.split('?')[0] if '?' in _ else _
 @app.route(_route_scraper__video_youtube0com, methods=['GET'])
 @limiter.limit(endpoints_data['endpoints']['scraper']['video-youtube.com']['rate_limit'])
 @cache.cached(timeout=endpoints_data['endpoints']['scraper']['video-youtube.com']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__video_youtube0com() -> jsonify:
+def _scraper__video_youtube0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not re_compile(r'^[a-zA-Z0-9_-]+$').match(p_id):
-        return jsonify(get_error_response_message('The id parameter is required and must be alphanumeric.'), 400)
+        return get_error_response_message('The id parameter is required and must be alphanumeric.'), 400
 
     output_data = scraper__video_youtube0com(p_id)
 
     if output_data:
-        return jsonify(get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['video-youtube.com']['description']), 200)
+        return get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['video-youtube.com']['description']), 200
     else:
-        return jsonify(get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404)
+        return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 if __name__ == '__main__':
