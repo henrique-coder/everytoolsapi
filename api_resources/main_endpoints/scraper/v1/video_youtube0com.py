@@ -59,7 +59,7 @@ def main(_id: str) -> Union[dict, None]:
             'channel_name': info.get('uploader', str()),
             'sanitized_channel_name': formatted_channel_name,
             'comments': info.get('comment_count', 0),
-            'is_live': info.get('is_live', False),
+            'is_streaming': info.get('is_live', False),
             'is_age_restricted': info.get('age_limit', 0) > 0,
         }
 
