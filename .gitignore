@@ -4,7 +4,7 @@
 __pycache__
 
 # Directories
-# ...
+.tests
 
 # Files
 uninstall_libs.py
