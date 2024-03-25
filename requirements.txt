@@ -1,8 +1,8 @@
 flask
 flask-limiter
 flask-caching
-httpx
-lxml
-beautifulsoup4
-yt-dlp
 python-dotenv
+httpx
+beautifulsoup4
+lxml
+yt-dlp
