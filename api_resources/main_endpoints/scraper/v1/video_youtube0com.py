@@ -1,13 +1,13 @@
-from typing import Union
 from yt_dlp import YoutubeDL, utils as yt_dlp_utils
+from urllib.parse import unquote
 from unicodedata import normalize
 from re import sub as re_sub, compile as re_compile
 from datetime import datetime
-from urllib.parse import unquote
 from time import perf_counter
+from typing import Union
 
 
-# Lists with regular expressions with forbidden URLs in the output json
+# Lists with regular expressions with forbidden URLs
 blacklisted_url_regexes = [
     re_compile(r'https?://(?!manifest\.googlevideo\.com)\S+'),
 ]

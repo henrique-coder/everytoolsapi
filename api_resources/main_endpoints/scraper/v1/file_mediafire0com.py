@@ -1,7 +1,7 @@
-from typing import Union
 from httpx import get, _exceptions as httpx_exceptions
 from lxml import html
 from time import perf_counter
+from typing import Union
 
 
 headers = {

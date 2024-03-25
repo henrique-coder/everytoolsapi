@@ -1,7 +1,7 @@
-from typing import Union
 from httpx import head, _exceptions as httpx_exceptions
 from uuid import uuid4
 from time import perf_counter
+from typing import Union
 
 
 headers = {
