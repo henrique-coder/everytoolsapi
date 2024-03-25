@@ -18,6 +18,7 @@ from api_resources.main_endpoints.scraper.v1.file_gofile0io import main as scrap
 from api_resources.main_endpoints.scraper.v1.file_pillowcase0su import main as scraper__file_pillowcase0su
 from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main as scraper__product_aliexpress0com
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
+from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
 
 
 # Load environment variables
@@ -75,12 +76,12 @@ def _route_in_maintenance() -> tuple[dict, int]:
 endpoints_data = {
     'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
     'source_code_url': 'https://github.com/Henrique-Coder/everytoolsapi',
-    'base_api_url': 'http://node1.mindwired.com.br:8452',
+    'base_api_url': 'https://everytoolsapi.mindwired.com.br',
     'endpoints': {
         'ai': {
             'ask-gemini': {
                 'url': '/api/ai/v1/ask-gemini?prompt=&image_url=&max_tokens=',
-                'description': 'Ask a question to Gemini AI and get an answer. You can also provide an image to help the AI understand the context better.',
+                'description': 'Ask a question to Gemini AI and get an answer. You can also provide an image to help the AI understand the context better, and set the maximum number of tokens to be generated.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 5,
             }
@@ -88,13 +89,13 @@ endpoints_data = {
         'randomizer': {
             'int-number': {
                 'url': '/api/randomizer/v1/int-number?min=&max=',
-                'description': 'Generates a random integer number between two numbers.',
+                'description': 'Generates a random integer number between two numbers and returns it.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
                 'cache_timeout': 1,
             },
             'float-number': {
                 'url': '/api/randomizer/v1/float-number?min=&max=',
-                'description': 'Generates a random float number between two numbers.',
+                'description': 'Generates a random float number between two numbers and returns it.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
                 'cache_timeout': 1,
             }
@@ -126,15 +127,21 @@ endpoints_data = {
             },
             'product-aliexpress.com': {
                 'url': '/api/scraper/v1/product-aliexpress.com?id=',
-                'description': 'Extracts accurate information from an existing product on "aliexpress.com" and returns it in an easy-to-understand format.',
+                'description': 'Extracts accurate information from an existing product on "aliexpress.com" and returns it in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
             },
             'video-youtube.com': {
                 'url': '/api/scraper/v1/video-youtube.com?id=',
-                'description': 'Extracts accurate information from an existing video on "youtube.com" and returns it in an easy-to-understand format.',
+                'description': 'Extracts accurate information from an existing video on "youtube.com" and returns it in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 14400,
+            },
+            'product-promotions': {
+                'url': '/api/scraper/v1/product-promotions?name=',
+                'description': 'Search for active promotions of a product in the main promotion sites and returns them in an easy-to-understand JSON format.',
+                'rate_limit': get_rate_limit_message(1, 30, 200, 600),
+                'cache_timeout': 300,
             }
         }
     }
@@ -168,11 +175,11 @@ def endpoints() -> tuple[dict, int]:
 
 # Flask API routes
 # Route: /api/ai/v?/ask-gemini
-_ = endpoints_data['endpoints']['ai']['ask-gemini']['url']
-_route_ai__ask_gemini = _.split('?')[0] if '?' in _ else _
+_data = endpoints_data['endpoints']['ai']['ask-gemini']
+_route_ai__ask_gemini = _data['url'].split('?')[0] if '?' in _data['url'] else _data['url']
 @app.route(_route_ai__ask_gemini, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['ai']['ask-gemini']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['ai']['ask-gemini']['cache_timeout'], make_cache_key=_make_cache_key)
+@limiter.limit(_data['rate_limit'])
+@cache.cached(timeout=_data['cache_timeout'], make_cache_key=_make_cache_key)
 def _ai__ask_gemini() -> tuple[dict, int]:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
@@ -187,17 +194,17 @@ def _ai__ask_gemini() -> tuple[dict, int]:
     output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url, p_max_tokens)
 
     if output_data:
-        return get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['ai']['ask-gemini']['description']), 200
+        return get_success_response_message(output_data['processing_time'], output_data['data'], _data['description']), 200
     else:
         return get_error_response_message('An error occurred while asking the question. Please check your query and try again.'), 404
 
 
 # Route: /api/randomizer/v?/int-number
-_ = endpoints_data['endpoints']['randomizer']['int-number']['url']
-_route_randomizer__int_number = _.split('?')[0] if '?' in _ else _
+_data = endpoints_data['endpoints']['randomizer']['int-number']
+_route_randomizer__int_number = _data['url'].split('?')[0] if '?' in _data['url'] else _data['url']
 @app.route(_route_randomizer__int_number, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['randomizer']['int-number']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['randomizer']['int-number']['cache_timeout'], make_cache_key=_make_cache_key)
+@limiter.limit(_data['rate_limit'])
+@cache.cached(timeout=_data['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__int_number() -> tuple[dict, int]:
     p_min = request.args.get('min')
     p_max = request.args.get('max')
@@ -212,7 +219,7 @@ def _randomizer__int_number() -> tuple[dict, int]:
     output_data = randomizer__int_number(p_min, p_max)
 
     if output_data:
-        return get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, endpoints_data['endpoints']['randomizer']['int-number']['description']), 200
+        return get_success_response_message(output_data['processing_time'], {'number': output_data['data']}, _data['description']), 200
     else:
         return get_error_response_message('An error occurred while generating the random number. Please check your query and try again.'), 404
 
@@ -370,6 +377,26 @@ def _scraper__video_youtube0com() -> tuple[dict, int]:
         return get_success_response_message(output_data['processing_time'], output_data['data'], endpoints_data['endpoints']['scraper']['video-youtube.com']['description']), 200
     else:
         return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
+
+
+# Route: /api/scraper/v?/product-promotions
+_data = endpoints_data['endpoints']['scraper']['product-promotions']
+_route_scraper__product_promotions = _data['url'].split('?')[0] if '?' in _data['url'] else _data['url']
+@app.route(_route_scraper__product_promotions, methods=['GET'])
+@limiter.limit(_data['rate_limit'])
+@cache.cached(timeout=_data['cache_timeout'], make_cache_key=_make_cache_key)
+def _scraper__product_promotions() -> tuple[dict, int]:
+    p_name = request.args.get('name')
+
+    if not p_name:
+        return get_error_response_message('The name parameter is required.'), 400
+
+    output_data = scraper__product_promotions(p_name)
+
+    if output_data:
+        return get_success_response_message(output_data['processing_time'], output_data['data'], _data['description']), 200
+    else:
+        return get_error_response_message('No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
 
 
 if __name__ == '__main__':
