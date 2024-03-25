@@ -8,8 +8,8 @@
 </p>
 
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="images/logo-128x.png" alt="Logo" width="96" height="96">
+  <a href="https://github.com/Henrique-Coder/everytoolsapi">
+    <img src="images/logo_128x.png" alt="Logo" width="96" height="96">
   </a>
 
   <h3 align="center">EveryTools API</h3>
