@@ -14,7 +14,6 @@ from api_resources.main_endpoints.randomizer.v1.float_number import main as rand
 
 from api_resources.main_endpoints.scraper.v1.file_mediafire0com import main as scraper__file_mediafire0com
 from api_resources.main_endpoints.scraper.v1.file_drive0google0com import main as scraper__file_drive0google0com
-from api_resources.main_endpoints.scraper.v1.file_gofile0io import main as scraper__file_gofile0io
 from api_resources.main_endpoints.scraper.v1.file_pillowcase0su import main as scraper__file_pillowcase0su
 from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main as scraper__product_aliexpress0com
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
@@ -294,28 +293,6 @@ def _scraper__file_drive0google0com() -> tuple[dict, int]:
         return get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-drive.google.com']['description']), 200
     else:
         return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
-
-
-# Route: /api/scraper/v?/file-gofile.io
-_ = endpoints_data['endpoints']['scraper']['file-gofile.io']['url']
-_route_scraper__file_gofile0io = _.split('?')[0] if '?' in _ else _
-@app.route(_route_scraper__file_gofile0io, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['scraper']['file-gofile.io']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-gofile.io']['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__file_gofile0io() -> tuple[dict, int]:
-    return _route_in_maintenance()
-
-     # p_id = request.args.get('id')
-
-     # if not p_id or not p_id.isalnum():
-     #     return get_error_response_message('The id parameter is required and must be alphanumeric.'), 400
-
-     # output_data = scraper__file_gofile0io(p_id)
-
-     # if output_data:
-     #     return get_success_response_message(output_data['processing_time'], {'url': output_data['data']}, endpoints_data['endpoints']['scraper']['file-gofile.io']['description']), 200
-     # else:
-     #     return get_error_response_message('Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-pillowcase.su
