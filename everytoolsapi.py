@@ -87,13 +87,13 @@ endpoints_data = {
         'randomizer': {
             'int-number': {
                 'url': '/api/randomizer/v1/int-number?min=&max=',
-                'description': 'Generates a random integer number between two numbers and returns it.',
+                'description': 'Generate a random integer number between the specified minimum and maximum values.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
                 'cache_timeout': 1,
             },
             'float-number': {
                 'url': '/api/randomizer/v1/float-number?min=&max=',
-                'description': 'Generates a random float number between two numbers and returns it.',
+                'description': 'Generate a random float number between the specified minimum and maximum values.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
                 'cache_timeout': 1,
             }
