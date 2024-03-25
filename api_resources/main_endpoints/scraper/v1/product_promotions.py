@@ -1,9 +1,7 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from httpx import get, _exceptions as httpx_exceptions
 from bs4 import BeautifulSoup
 from urllib.parse import unquote
-from time import perf_counter, sleep
+from time import perf_counter
 from typing import Union
 
 
@@ -14,9 +12,6 @@ headers = {
 main_promotion_websites = {
     'boletando.com': 'https://boletando.com/?s={}&asp_active=1&p_asid=1',
 }
-
-selenium_options = Options()
-selenium_options.headless = True
 
 
 def main(_name: str) -> Union[dict, None]:
@@ -30,17 +25,6 @@ def main(_name: str) -> Union[dict, None]:
                 resp.raise_for_status()
                 return resp.text
             except httpx_exceptions.HTTPError:
-                return None
-
-        def get_html_source_by_selenium(_url: str, sleep_time: int) -> Union[str, None]:
-            try:
-                selenium_driver = webdriver.Chrome(options=selenium_options)
-                selenium_driver.get(_url)
-                sleep(sleep_time)
-                extracted_html = selenium_driver.page_source
-                selenium_driver.quit()
-                return extracted_html
-            except Exception:
                 return None
 
         if website == 'boletando.com':
