@@ -19,6 +19,8 @@ from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main 
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
 from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
 
+from api_resources.main_endpoints.fordev.v1.my_ipv4 import main as fordev__my_ipv4
+
 
 # Load environment variables
 env_vars = dotenv_values('.env')
@@ -135,6 +137,14 @@ endpoints_data = {
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
             }
+        },
+        'fordev': {
+            'my-ipv4': {
+                'url': '/api/fordev/v1/my-ipv4',
+                'description': 'Get your public IPv4 address.',
+                'rate_limit': get_rate_limit_message(2, 60, 3600, 30000),
+                'cache_timeout': 1,
+            }
         }
     }
 }
@@ -167,11 +177,10 @@ def endpoints() -> tuple[dict, int]:
 
 # Flask API routes
 # Route: /api/ai/v?/ask-gemini
-_data = endpoints_data['endpoints']['ai']['ask-gemini']
-_route_ai__ask_gemini = _data['url'].split('?')[0]
-@app.route(_route_ai__ask_gemini, methods=['GET'])
-@limiter.limit(_data['rate_limit'])
-@cache.cached(timeout=_data['cache_timeout'], make_cache_key=_make_cache_key)
+_data_route_ai__ask_gemini = endpoints_data['endpoints']['ai']['ask-gemini']
+@app.route(_data_route_ai__ask_gemini['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_route_ai__ask_gemini['rate_limit'])
+@cache.cached(timeout=_data_route_ai__ask_gemini['cache_timeout'], make_cache_key=_make_cache_key)
 def _ai__ask_gemini() -> tuple[dict, int]:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
@@ -186,17 +195,16 @@ def _ai__ask_gemini() -> tuple[dict, int]:
     output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url, p_max_tokens)
 
     if output_data:
-        return get_output_response_data(True, output_data['data'], _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, output_data['data'], _data_route_ai__ask_gemini['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'An error occurred while asking the question. Please check your query and try again.'), 404
 
 
 # Route: /api/randomizer/v?/int-number
-_data = endpoints_data['endpoints']['randomizer']['int-number']
-_route_randomizer__int_number = _data['url'].split('?')[0]
-@app.route(_route_randomizer__int_number, methods=['GET'])
-@limiter.limit(_data['rate_limit'])
-@cache.cached(timeout=_data['cache_timeout'], make_cache_key=_make_cache_key)
+_data_route_randomizer__int_number = endpoints_data['endpoints']['randomizer']['int-number']
+@app.route(_data_route_randomizer__int_number['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_route_randomizer__int_number['rate_limit'])
+@cache.cached(timeout=_data_route_randomizer__int_number['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__int_number() -> tuple[dict, int]:
     p_min = request.args.get('min')
     p_max = request.args.get('max')
@@ -211,17 +219,16 @@ def _randomizer__int_number() -> tuple[dict, int]:
     output_data = randomizer__int_number(p_min, p_max)
 
     if output_data:
-        return get_output_response_data(True, {'number': output_data['data']}, _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, {'number': output_data['data']}, _data_route_randomizer__int_number['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'An error occurred while generating the random number. Please check your query and try again.'), 404
 
 
 # Route: /api/randomizer/v?/float-number
-_data = endpoints_data['endpoints']['randomizer']['float-number']
-_route_randomizer__float_number = _data['url'].split('?')[0]
-@app.route(_route_randomizer__float_number, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['randomizer']['float-number']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['randomizer']['float-number']['cache_timeout'], make_cache_key=_make_cache_key)
+_data_route_randomizer__float_number = endpoints_data['endpoints']['randomizer']['float-number']
+@app.route(_data_route_randomizer__float_number['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_route_randomizer__float_number['rate_limit'])
+@cache.cached(timeout=_data_route_randomizer__float_number['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__float_number() -> tuple[dict, int]:
     def is_float(value: Any) -> bool:
         try:
@@ -243,17 +250,16 @@ def _randomizer__float_number() -> tuple[dict, int]:
     output_data = randomizer__float_number(float(p_min), float(p_max))
 
     if output_data:
-        return get_output_response_data(True, {'number': output_data['data']}, _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, {'number': output_data['data']}, _data_route_randomizer__float_number['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'An error occurred while generating the random number. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-mediafire.com
-_data = endpoints_data['endpoints']['scraper']['file-mediafire.com']
-_route_scraper__file_mediafire0com = _data['url'].split('?')[0]
-@app.route(_route_scraper__file_mediafire0com, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['scraper']['file-mediafire.com']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-mediafire.com']['cache_timeout'], make_cache_key=_make_cache_key)
+_data_route_scraper__file_mediafire0com = endpoints_data['endpoints']['scraper']['file-mediafire.com']
+@app.route(_data_route_scraper__file_mediafire0com['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_route_scraper__file_mediafire0com['rate_limit'])
+@cache.cached(timeout=_data_route_scraper__file_mediafire0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_mediafire_com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
@@ -263,17 +269,16 @@ def _scraper__file_mediafire_com() -> tuple[dict, int]:
     output_data = scraper__file_mediafire0com(p_id)
 
     if output_data:
-        return get_output_response_data(True, {'url': output_data['data']}, _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, {'url': output_data['data']}, _data_route_scraper__file_mediafire0com['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-drive.google.com
-_data = endpoints_data['endpoints']['scraper']['file-drive.google.com']
-_route_scraper__file_drive0google0com = _data['url'].split('?')[0]
-@app.route(_route_scraper__file_drive0google0com, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['scraper']['file-drive.google.com']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-drive.google.com']['cache_timeout'], make_cache_key=_make_cache_key)
+_data_route_scraper__file_drive0google0com = endpoints_data['endpoints']['scraper']['file-drive.google.com']
+@app.route(_data_route_scraper__file_drive0google0com['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_route_scraper__file_drive0google0com['rate_limit'])
+@cache.cached(timeout=_data_route_scraper__file_drive0google0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_drive0google0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
@@ -283,17 +288,16 @@ def _scraper__file_drive0google0com() -> tuple[dict, int]:
     output_data = scraper__file_drive0google0com(p_id)
 
     if output_data:
-        return get_output_response_data(True, {'url': output_data['data']}, _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, {'url': output_data['data']}, _data_route_scraper__file_drive0google0com['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/file-pillowcase.su
-_data = endpoints_data['endpoints']['scraper']['file-pillowcase.su']
-_route_scraper__file_pillowcase0su = _data['url'].split('?')[0]
-@app.route(_route_scraper__file_pillowcase0su, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['scraper']['file-pillowcase.su']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['scraper']['file-pillowcase.su']['cache_timeout'], make_cache_key=_make_cache_key)
+_data_route_scraper__file_pillowcase0su = endpoints_data['endpoints']['scraper']['file-pillowcase.su']
+@app.route(_data_route_scraper__file_pillowcase0su['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_route_scraper__file_pillowcase0su['rate_limit'])
+@cache.cached(timeout=_data_route_scraper__file_pillowcase0su['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_pillowcase0su() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
@@ -303,38 +307,35 @@ def _scraper__file_pillowcase0su() -> tuple[dict, int]:
     output_data = scraper__file_pillowcase0su(p_id)
 
     if output_data:
-        return get_output_response_data(True, {'url': output_data['data']}, _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, {'url': output_data['data']}, _data_route_scraper__file_pillowcase0su['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/product-aliexpress.com
-_data = endpoints_data['endpoints']['scraper']['product-aliexpress.com']
-_route_scraper__product_aliexpress0com = _data['url'].split('?')[0]
-@app.route(_route_scraper__product_aliexpress0com, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['scraper']['product-aliexpress.com']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['scraper']['product-aliexpress.com']['cache_timeout'], make_cache_key=_make_cache_key)
+_data_scraper__product_aliexpress0com = endpoints_data['endpoints']['scraper']['product-aliexpress.com']
+@app.route(_data_scraper__product_aliexpress0com['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_scraper__product_aliexpress0com['rate_limit'])
+@cache.cached(timeout=_data_scraper__product_aliexpress0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__product_aliexpress0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not p_id.isnumeric():
         return get_output_response_data(False, 'The id parameter is required and must be numeric.'), 400
 
-    p_id = int(p_id)
-    output_data = scraper__product_aliexpress0com(p_id)
+    output_data = scraper__product_aliexpress0com(str(p_id))
 
     if output_data:
-        return get_output_response_data(True, output_data['data'], _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, output_data['data'], _data_scraper__product_aliexpress0com['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/video-youtube.com
-_data = endpoints_data['endpoints']['scraper']['video-youtube.com']['url']
-_route_scraper__video_youtube0com = _data.split('?')[0]
-@app.route(_route_scraper__video_youtube0com, methods=['GET'])
-@limiter.limit(endpoints_data['endpoints']['scraper']['video-youtube.com']['rate_limit'])
-@cache.cached(timeout=endpoints_data['endpoints']['scraper']['video-youtube.com']['cache_timeout'], make_cache_key=_make_cache_key)
+_data_scraper__video_youtube0com = endpoints_data['endpoints']['scraper']['video-youtube.com']
+@app.route(_data_scraper__video_youtube0com['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_scraper__video_youtube0com['rate_limit'])
+@cache.cached(timeout=_data_scraper__video_youtube0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__video_youtube0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
@@ -344,17 +345,16 @@ def _scraper__video_youtube0com() -> tuple[dict, int]:
     output_data = scraper__video_youtube0com(p_id)
 
     if output_data:
-        return get_output_response_data(True, output_data['data'], _data['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, output_data['data'], _data_scraper__video_youtube0com['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
 
 # Route: /api/scraper/v?/product-promotions
-_data = endpoints_data['endpoints']['scraper']['product-promotions']
-_route_scraper__product_promotions = _data['url'].split('?')[0]
-@app.route(_route_scraper__product_promotions, methods=['GET'])
-@limiter.limit(_data['rate_limit'])
-@cache.cached(timeout=_data['cache_timeout'], make_cache_key=_make_cache_key)
+_data_scraper__product_promotions = endpoints_data['endpoints']['scraper']['product-promotions']
+@app.route(_data_scraper__product_promotions['url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_scraper__product_promotions['rate_limit'])
+@cache.cached(timeout=_data_scraper__product_promotions['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__product_promotions() -> tuple[dict, int]:
     p_name = request.args.get('name')
 
@@ -364,9 +364,23 @@ def _scraper__product_promotions() -> tuple[dict, int]:
     output_data = scraper__product_promotions(p_name)
 
     if output_data:
-        return get_output_response_data(True, output_data['processing_time'], output_data['data'], _data['description']), 200
+        return get_output_response_data(True, output_data['processing_time'], output_data['data'], _data_scraper__product_promotions['description']), 200
     else:
         return get_output_response_data(False, 'No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
+
+
+# Route: /api/fordev/v?/my-ipv4
+_data_fordev__my_ipv4 = endpoints_data['endpoints']['fordev']['my-ipv4']
+@app.route(_data_fordev__my_ipv4['url'], methods=['GET'])
+@limiter.limit(_data_fordev__my_ipv4['rate_limit'])
+@cache.cached(timeout=_data_fordev__my_ipv4['cache_timeout'], make_cache_key=_make_cache_key)
+def _fordev__my_ipv4() -> tuple[dict, int]:
+    output_data = fordev__my_ipv4(request.remote_addr)
+
+    if output_data:
+        return get_output_response_data(True, {'origin': output_data['data']}, _data_fordev__my_ipv4['description'], output_data['processing_time']), 200
+    else:
+        return get_output_response_data(False, 'An error occurred while trying to get your IPv4. Please try again later.'), 404
 
 
 if __name__ == '__main__':

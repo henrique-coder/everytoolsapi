@@ -21,7 +21,7 @@ def main(min_value: float, max_value: float) -> Union[dict, None]:
 
         generated_number = uniform(min_value, max_value)
         generated_data['data'] = round(floor(generated_number * 10 ** output_precision) / 10 ** output_precision, output_precision)
-    except Exception:
+    except BaseException:
         return None
 
     generated_data['processing_time'] = float(perf_counter() - start_time)

@@ -25,7 +25,7 @@ def main(_id: str) -> Union[dict, None]:
         tree = html.fromstring(resp.content)
         data = tree.xpath('//a[@id="downloadButton"]/@href')[0]
         generated_data['data'] = str(data[:data.rfind('/')])
-    except Exception:
+    except BaseException:
         return None
 
     generated_data['processing_time'] = float(perf_counter() - start_time)

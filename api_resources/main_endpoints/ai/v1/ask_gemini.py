@@ -17,7 +17,7 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: 
         try:
             mimetype = guess_type(url)[0]
             return mimetype
-        except Exception:
+        except BaseException:
             return None
 
     def check_url_content(url: str) -> Union[bytes, None]:
@@ -29,7 +29,7 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: 
                 return response.content
             else:
                 return None
-        except Exception:
+        except BaseException:
             return None
 
     available_models = {
@@ -94,5 +94,5 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: 
         generated_data['data'] = {'text': response.json()['candidates'][0]['content']['parts'][0]['text'], 'model': model, 'max_tokens': max_tokens}
         generated_data['processing_time'] = float(perf_counter() - start_time)
         return generated_data
-    except Exception:
+    except BaseException:
         return None

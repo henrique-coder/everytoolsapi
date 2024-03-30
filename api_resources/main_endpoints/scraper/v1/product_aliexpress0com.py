@@ -13,7 +13,7 @@ headers = {
 }
 
 
-def main(_id: int) -> Union[dict, None]:
+def main(_id: str) -> Union[dict, None]:
     start_time = perf_counter()
     generated_data = dict()
 
@@ -29,7 +29,7 @@ def main(_id: int) -> Union[dict, None]:
         soup = BeautifulSoup(resp.content, 'html.parser')
         data = soup.find('script', string=re_compile(r'window.runParams\s*=\s*{')).string.strip().replace('\n', str())
         raw_data = dict(json_loads(data[data.find('{', data.find('{') + 1): data.rfind('}')], strict=True))
-    except Exception:
+    except BaseException:
         return None
 
     is_debug_mode = False
@@ -41,7 +41,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__id = int(store_info__id)
         else:
             store_info__id = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__id: {e}')
         store_info__id = None
@@ -52,7 +52,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__name = str(store_info__name)
         else:
             store_info__name = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__name: {e}')
         store_info__name = None
@@ -63,7 +63,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__homepage_url = str('https:' + urljoin(str(), store_info__homepage_url))
         else:
             store_info__homepage_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__homepage_url: {e}')
         store_info__homepage_url = None
@@ -74,7 +74,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__products_url = str('https:' + urljoin(str(), store_info__products_url))
         else:
             store_info__products_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__products_url: {e}')
         store_info__products_url = None
@@ -85,7 +85,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__promotions_url = str('https:' + urljoin(str(), store_info__promotions_url))
         else:
             store_info__promotions_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__promotions_url: {e}')
         store_info__promotions_url = None
@@ -96,7 +96,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__best_sellers_url = str('https:' + urljoin(str(), store_info__best_sellers_url))
         else:
             store_info__best_sellers_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__best_sellers_url: {e}')
         store_info__best_sellers_url = None
@@ -107,7 +107,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__reviews_url = str('https:' + urljoin(str(), store_info__reviews_url))
         else:
             store_info__reviews_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__reviews_url: {e}')
         store_info__reviews_url = None
@@ -118,7 +118,7 @@ def main(_id: int) -> Union[dict, None]:
             store_info__logo_url = str(urljoin(str(), store_info__logo_url))
         else:
             store_info__logo_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] store_info__logo_url: {e}')
         store_info__logo_url = None
@@ -133,7 +133,7 @@ def main(_id: int) -> Union[dict, None]:
         else:
             product_info__id = None
             product_info__url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_info__id & product_info__url: {e}')
         product_info__id = None
@@ -145,7 +145,7 @@ def main(_id: int) -> Union[dict, None]:
             product_info__name = str(product_info__name)
         else:
             product_info__name = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_info__name: {e}')
         product_info__name = None
@@ -156,7 +156,7 @@ def main(_id: int) -> Union[dict, None]:
             product_info__description_url = str(str() + urljoin(str(), product_info__description_url))
         else:
             product_info__description_url = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_info__description_url: {e}')
         product_info__description_url = None
@@ -167,7 +167,7 @@ def main(_id: int) -> Union[dict, None]:
             product_info__available_stock = int(product_info__available_stock)
         else:
             product_info__available_stock = None
-    except Exception:
+    except BaseException:
         if is_debug_mode:
             print(f'[error] product_info__available_stock: {e}')
         product_info__available_stock = None
@@ -179,7 +179,7 @@ def main(_id: int) -> Union[dict, None]:
             product_price__currency_code = str(product_price__currency_code)
         else:
             product_price__currency_code = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_price__currency_code: {e}')
         product_price__currency_code = None
@@ -190,7 +190,7 @@ def main(_id: int) -> Union[dict, None]:
             product_price__original_value = round(float(product_price__original_value), 2)
         else:
             product_price__original_value = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_price__original_value: {e}')
         product_price__original_value = None
@@ -201,7 +201,7 @@ def main(_id: int) -> Union[dict, None]:
             product_price__discount_percentage = round(float(product_price__discount_percentage), 2)
         else:
             product_price__discount_percentage = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_price__discount_percentage: {e}')
         product_price__discount_percentage = None
@@ -212,7 +212,7 @@ def main(_id: int) -> Union[dict, None]:
             product_price__final_price = round(float(product_price__final_price), 2)
         else:
             product_price__final_price = None
-    except Exception as e:
+    except BaseException as e:
         if is_debug_mode:
             print(f'[error] product_price__final_price: {e}')
         product_price__final_price = None

@@ -1,14 +1,13 @@
 from typing import Union
-from random import randint
 from time import perf_counter
 
 
-def main(min_value: int, max_value: int) -> Union[dict, None]:
+def main(request_data: str) -> Union[dict, None]:
     start_time = perf_counter()
     generated_data = dict()
 
     try:
-        generated_data['data'] = randint(min_value, max_value)
+        generated_data['data'] = str(request_data)
     except BaseException:
         return None
 

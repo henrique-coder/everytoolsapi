@@ -92,12 +92,10 @@ def main(_id: str) -> Union[dict, None]:
             }
         )
 
-        yt_dlp_utils.std_headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36'
-
         try:
             info = yt.sanitize_info(yt.extract_info(video_url, download=False), remove_private_keys=True)
             data = {'info': extract_video_info(info), 'media': {'video': list(), 'audio': list(), 'subtitles': list()}}
-        except Exception:
+        except BaseException:
             return None
 
         # Adding details about videos, audios, and subtitles in the 'media' key
