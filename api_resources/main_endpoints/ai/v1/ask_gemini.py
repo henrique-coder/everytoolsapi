@@ -8,13 +8,13 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
 }
 
-def main(gemini_api_keys: list, prompt: str, image_url: str = None, max_tokens: Union[str, int] = 10000) -> Union[dict, None]:
+def main(gemini_api_keys: list, prompt: str, image_url: str = None) -> Union[dict, None]:
     start_time = perf_counter()
     generated_data = dict()
 
     prompt = str(prompt)
     image_url = str(image_url) if image_url else None
-    max_tokens = int(max_tokens) if max_tokens else 400
+    max_tokens = 10000
 
     def detect_mimetype(url: str) -> Union[str, None]:
         try:
