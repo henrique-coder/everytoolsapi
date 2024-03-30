@@ -80,75 +80,156 @@ endpoints_data = {
     'endpoints': {
         'ai': {
             'ask-gemini': {
-                'url': '/api/ai/v1/ask-gemini?prompt=&image_url=&max_tokens=',
-                'description': 'Ask a question to Gemini AI and get an answer. You can also provide an image to help the AI understand the context better, and set the maximum number of tokens to be generated.',
+                'description': 'Ask a question to Gemini AI and get an answer. You can also provide an image to help the AI understand the context better.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 5,
-            }
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/ai/v1/ask-gemini',
+                'full_endpoint_url': '/api/ai/v1/ask-gemini?prompt=&image_url=',
+                'parameters': {
+                    'required': [
+                        {'name': 'prompt', 'type': 'string', 'description': 'The question you want to ask to the AI.'},
+                    ],
+                    'optional': [
+                        {'name': 'image_url', 'type': 'string', 'description': 'An image URL to help the AI understand the context better.'},
+                    ]
+                },
+            },
         },
         'randomizer': {
             'int-number': {
-                'url': '/api/randomizer/v1/int-number?min=&max=',
                 'description': 'Generate a random integer number between the specified minimum and maximum values.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
                 'cache_timeout': 1,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/randomizer/v1/int-number',
+                'full_endpoint_url': '/api/randomizer/v1/int-number?min=&max=',
+                'parameters': {
+                    'required': [
+                        {'name': 'min', 'type': 'integer', 'description': 'The minimum value for the random number.'},
+                        {'name': 'max', 'type': 'integer', 'description': 'The maximum value for the random number.'},
+                    ],
+                    'optional': []
+                },
             },
             'float-number': {
-                'url': '/api/randomizer/v1/float-number?min=&max=',
                 'description': 'Generate a random float number between the specified minimum and maximum values.',
                 'rate_limit': get_rate_limit_message(5, 300, 18000, 30000),
                 'cache_timeout': 1,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/randomizer/v1/float-number',
+                'full_endpoint_url': '/api/randomizer/v1/float-number?min=&max=',
+                'parameters': {
+                    'required': [
+                        {'name': 'min', 'type': 'float', 'description': 'The minimum value for the random number.'},
+                        {'name': 'max', 'type': 'float', 'description': 'The maximum value for the random number.'},
+                    ],
+                    'optional': []
+                },
             }
         },
         'scraper': {
             'file-mediafire.com': {
-                'url': '/api/scraper/v1/file-mediafire.com?id=',
                 'description': 'Generates a direct and permanent link to a file hosted in "mediafire.com" and returns it.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/file-mediafire.com',
+                'full_endpoint_url': '/api/scraper/v1/file-mediafire.com?id=',
+                'parameters': {
+                    'required': [
+                        {'name': 'id', 'type': 'alphanumeric', 'description': 'The file ID you want to get the direct link.'},
+                    ],
+                    'optional': []
+                },
             },
             'file-drive.google.com': {
-                'url': '/api/scraper/v1/file-drive.google.com?id=',
                 'description': 'Generates a direct and temporary link to a file hosted in "drive.google.com" and returns it.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/file-drive.google.com',
+                'full_endpoint_url': '/api/scraper/v1/file-drive.google.com?id=',
+                'parameters': {
+                    'required': [
+                        {'name': 'id', 'type': 'alphanumeric', 'description': 'The file ID you want to get the direct link.'},
+                    ],
+                    'optional': []
+                },
             },
             'file-pillowcase.su': {
-                'url': '/api/scraper/v1/file-pillowcase.su?id=',
                 'description': 'Generates a direct and permanent link to a file hosted in "pillowcase.su" and returns it.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/file-pillowcase.su',
+                'full_endpoint_url': '/api/scraper/v1/file-pillowcase.su?id=',
+                'parameters': {
+                    'required': [
+                        {'name': 'id', 'type': 'alphanumeric', 'description': 'The file ID you want to get the direct link.'},
+                    ],
+                    'optional': []
+                },
             },
             'product-aliexpress.com': {
-                'url': '/api/scraper/v1/product-aliexpress.com?id=',
                 'description': 'Extracts accurate information from an existing product on "aliexpress.com" and returns it in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/product-aliexpress.com',
+                'full_endpoint_url': '/api/scraper/v1/product-aliexpress.com?id=',
+                'parameters': {
+                    'required': [
+                        {'name': 'id', 'type': 'numeric', 'description': 'The product ID you want to get the information.'},
+                    ],
+                    'optional': []
+                },
             },
             'video-youtube.com': {
-                'url': '/api/scraper/v1/video-youtube.com?id=',
                 'description': 'Extracts accurate information from an existing video on "youtube.com" and returns it in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
-                'cache_timeout': 14400,
+                'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/video-youtube.com',
+                'full_endpoint_url': '/api/scraper/v1/video-youtube.com?id=',
+                'parameters': {
+                    'required': [
+                        {'name': 'id', 'type': 'alphanumeric', 'description': 'The video ID you want to get the information.'},
+                    ],
+                    'optional': []
+                },
             },
             'product-promotions': {
-                'url': '/api/scraper/v1/product-promotions?name=',
-                'description': 'Search for active promotions of a product in the main promotion sites and returns them in an easy-to-understand JSON format.',
+                'description': 'Search for active promotions of a product in multiple stores and return them in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/product-promotions',
+                'full_endpoint_url': '/api/scraper/v1/product-promotions?name=',
+                'parameters': {
+                    'required': [
+                        {'name': 'name', 'type': 'string', 'description': 'The product name you want to get the promotions.'},
+                    ],
+                    'optional': []
+                },
             }
         },
         'fordev': {
             'my-ipv4': {
-                'url': '/api/fordev/v1/my-ipv4',
-                'description': 'Get your public IPv4 address.',
+                'description': 'Get your public IPv4 address',
                 'rate_limit': get_rate_limit_message(2, 60, 3600, 30000),
                 'cache_timeout': 1,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/fordev/v1/my-ipv4',
+                'full_endpoint_url': '/api/fordev/v1/my-ipv4',
+                'parameters': {
+                    'required': [],
+                    'optional': []
+                },
             }
         }
     }
 }
-
 
 # Flask error handlers
 @app.errorhandler(404)
@@ -176,33 +257,30 @@ def endpoints() -> tuple[dict, int]:
 
 
 # Flask API routes
+
 # Route: /api/ai/v?/ask-gemini
 _data_route_ai__ask_gemini = endpoints_data['endpoints']['ai']['ask-gemini']
-@app.route(_data_route_ai__ask_gemini['url'].split('?')[0], methods=['GET'])
+@app.route(_data_route_ai__ask_gemini['base_endpoint_url'], methods=_data_route_ai__ask_gemini['allowed_methods'])
 @limiter.limit(_data_route_ai__ask_gemini['rate_limit'])
 @cache.cached(timeout=_data_route_ai__ask_gemini['cache_timeout'], make_cache_key=_make_cache_key)
 def _ai__ask_gemini() -> tuple[dict, int]:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
-    p_max_tokens = request.args.get('max_tokens')
 
     if not p_prompt:
         return get_output_response_data(False, 'The prompt parameter is required.'), 400
 
-    if p_max_tokens and not p_max_tokens.isnumeric():
-        return get_output_response_data(False, 'The max_tokens parameter must be an integer.'), 400
-
-    output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url, p_max_tokens)
+    output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url)
 
     if output_data:
         return get_output_response_data(True, output_data['data'], _data_route_ai__ask_gemini['description'], output_data['processing_time']), 200
     else:
-        return get_output_response_data(False, 'An error occurred while asking the question. Please check your query and try again.'), 404
+        return get_output_response_data(False, f'An error occurred while trying to generate the response. Tip: make sure the image URL is valid and has one of the following MIME types: image/png, image/jpeg, image/webp, image/heic or image/heif.'), 404
 
 
 # Route: /api/randomizer/v?/int-number
 _data_route_randomizer__int_number = endpoints_data['endpoints']['randomizer']['int-number']
-@app.route(_data_route_randomizer__int_number['url'].split('?')[0], methods=['GET'])
+@app.route(_data_route_randomizer__int_number['base_endpoint_url'], methods=['GET'])
 @limiter.limit(_data_route_randomizer__int_number['rate_limit'])
 @cache.cached(timeout=_data_route_randomizer__int_number['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__int_number() -> tuple[dict, int]:
@@ -226,7 +304,7 @@ def _randomizer__int_number() -> tuple[dict, int]:
 
 # Route: /api/randomizer/v?/float-number
 _data_route_randomizer__float_number = endpoints_data['endpoints']['randomizer']['float-number']
-@app.route(_data_route_randomizer__float_number['url'].split('?')[0], methods=['GET'])
+@app.route(_data_route_randomizer__float_number['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_route_randomizer__float_number['rate_limit'])
 @cache.cached(timeout=_data_route_randomizer__float_number['cache_timeout'], make_cache_key=_make_cache_key)
 def _randomizer__float_number() -> tuple[dict, int]:
@@ -257,7 +335,7 @@ def _randomizer__float_number() -> tuple[dict, int]:
 
 # Route: /api/scraper/v?/file-mediafire.com
 _data_route_scraper__file_mediafire0com = endpoints_data['endpoints']['scraper']['file-mediafire.com']
-@app.route(_data_route_scraper__file_mediafire0com['url'].split('?')[0], methods=['GET'])
+@app.route(_data_route_scraper__file_mediafire0com['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_route_scraper__file_mediafire0com['rate_limit'])
 @cache.cached(timeout=_data_route_scraper__file_mediafire0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_mediafire_com() -> tuple[dict, int]:
@@ -276,7 +354,7 @@ def _scraper__file_mediafire_com() -> tuple[dict, int]:
 
 # Route: /api/scraper/v?/file-drive.google.com
 _data_route_scraper__file_drive0google0com = endpoints_data['endpoints']['scraper']['file-drive.google.com']
-@app.route(_data_route_scraper__file_drive0google0com['url'].split('?')[0], methods=['GET'])
+@app.route(_data_route_scraper__file_drive0google0com['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_route_scraper__file_drive0google0com['rate_limit'])
 @cache.cached(timeout=_data_route_scraper__file_drive0google0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_drive0google0com() -> tuple[dict, int]:
@@ -295,7 +373,7 @@ def _scraper__file_drive0google0com() -> tuple[dict, int]:
 
 # Route: /api/scraper/v?/file-pillowcase.su
 _data_route_scraper__file_pillowcase0su = endpoints_data['endpoints']['scraper']['file-pillowcase.su']
-@app.route(_data_route_scraper__file_pillowcase0su['url'].split('?')[0], methods=['GET'])
+@app.route(_data_route_scraper__file_pillowcase0su['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_route_scraper__file_pillowcase0su['rate_limit'])
 @cache.cached(timeout=_data_route_scraper__file_pillowcase0su['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__file_pillowcase0su() -> tuple[dict, int]:
@@ -314,7 +392,7 @@ def _scraper__file_pillowcase0su() -> tuple[dict, int]:
 
 # Route: /api/scraper/v?/product-aliexpress.com
 _data_scraper__product_aliexpress0com = endpoints_data['endpoints']['scraper']['product-aliexpress.com']
-@app.route(_data_scraper__product_aliexpress0com['url'].split('?')[0], methods=['GET'])
+@app.route(_data_scraper__product_aliexpress0com['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_scraper__product_aliexpress0com['rate_limit'])
 @cache.cached(timeout=_data_scraper__product_aliexpress0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__product_aliexpress0com() -> tuple[dict, int]:
@@ -333,7 +411,7 @@ def _scraper__product_aliexpress0com() -> tuple[dict, int]:
 
 # Route: /api/scraper/v?/video-youtube.com
 _data_scraper__video_youtube0com = endpoints_data['endpoints']['scraper']['video-youtube.com']
-@app.route(_data_scraper__video_youtube0com['url'].split('?')[0], methods=['GET'])
+@app.route(_data_scraper__video_youtube0com['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_scraper__video_youtube0com['rate_limit'])
 @cache.cached(timeout=_data_scraper__video_youtube0com['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__video_youtube0com() -> tuple[dict, int]:
@@ -352,7 +430,7 @@ def _scraper__video_youtube0com() -> tuple[dict, int]:
 
 # Route: /api/scraper/v?/product-promotions
 _data_scraper__product_promotions = endpoints_data['endpoints']['scraper']['product-promotions']
-@app.route(_data_scraper__product_promotions['url'].split('?')[0], methods=['GET'])
+@app.route(_data_scraper__product_promotions['base_endpoint_url'].split('?')[0], methods=['GET'])
 @limiter.limit(_data_scraper__product_promotions['rate_limit'])
 @cache.cached(timeout=_data_scraper__product_promotions['cache_timeout'], make_cache_key=_make_cache_key)
 def _scraper__product_promotions() -> tuple[dict, int]:
@@ -364,14 +442,14 @@ def _scraper__product_promotions() -> tuple[dict, int]:
     output_data = scraper__product_promotions(p_name)
 
     if output_data:
-        return get_output_response_data(True, output_data['processing_time'], output_data['data'], _data_scraper__product_promotions['description']), 200
+        return get_output_response_data(True, output_data['data'], _data_scraper__product_promotions['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
 
 
 # Route: /api/fordev/v?/my-ipv4
 _data_fordev__my_ipv4 = endpoints_data['endpoints']['fordev']['my-ipv4']
-@app.route(_data_fordev__my_ipv4['url'], methods=['GET'])
+@app.route(_data_fordev__my_ipv4['base_endpoint_url'], methods=['GET'])
 @limiter.limit(_data_fordev__my_ipv4['rate_limit'])
 @cache.cached(timeout=_data_fordev__my_ipv4['cache_timeout'], make_cache_key=_make_cache_key)
 def _fordev__my_ipv4() -> tuple[dict, int]:
