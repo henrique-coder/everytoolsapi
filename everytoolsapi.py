@@ -28,7 +28,7 @@ env_vars = dotenv_values()
 # Load Gemini API keys
 gemini_api_keys = list()
 redis_url = env_vars.get('REDIS_URL')
-flask_port = int(env_vars.get('FLASK_PORT'))
+flask_port = env_vars.get('FLASK_PORT')
 
 for key, value in env_vars.items():
     if key.startswith('GEMINI_API_KEY_'):
@@ -466,4 +466,4 @@ def _fordev__whats_my_ip() -> tuple[dict, int]:
 
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(debug=False, host='0.0.0.0', threaded=True, port=flask_port)
+    app.run(debug=False, host='0.0.0.0', threaded=True, port=int(flask_port))
