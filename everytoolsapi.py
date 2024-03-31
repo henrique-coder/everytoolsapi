@@ -463,4 +463,4 @@ def _fordev__whats_my_ip() -> tuple[dict, int]:
 
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(debug=False, host='0.0.0.0', threaded=True, port=8452)
+    app.run(debug=False, host='0.0.0.0', threaded=True)
