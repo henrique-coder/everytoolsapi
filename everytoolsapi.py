@@ -23,12 +23,12 @@ from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__w
 
 
 # Load environment variables
-env_vars = dotenv_values()
+env_vars = dotenv_values('.env')
 
 # Load Gemini API keys
 gemini_api_keys = list()
-redis_url = env_vars.get('REDIS_URL')
 flask_port = env_vars.get('FLASK_PORT')
+redis_url = env_vars.get('REDIS_URL')
 
 for key, value in env_vars.items():
     if key.startswith('GEMINI_API_KEY_'):
@@ -43,8 +43,6 @@ cache = Cache(app)
 
 # DEBUG
 print(redis_url)
-import httpx
-print(httpx.get('https://api.ipify.org').text)
 # DEBUG
 
 # General functions
