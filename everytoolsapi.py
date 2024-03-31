@@ -28,6 +28,7 @@ env_vars = dotenv_values()
 gemini_api_keys = list()
 
 for key, value in env_vars.items():
+    print(f'ENV: {key}={value}')
     if key.startswith('GEMINI_API_KEY_'):
         gemini_api_keys.append(value)
 
