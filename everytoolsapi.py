@@ -76,7 +76,7 @@ def _route_in_maintenance() -> tuple[dict, int]:
 endpoints_data = {
     'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
     'source_code_url': 'https://github.com/Henrique-Coder/everytoolsapi',
-    'base_api_url': 'https://everytoolsapi.mindwired.com.br',
+    'base_api_url': 'https://everytoolsapi.onrender.com',
     'endpoints': {
         'ai': {
             'ask-gemini': {
