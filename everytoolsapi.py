@@ -21,28 +21,27 @@ from api_resources.main_endpoints.scraper.v1.product_promotions import main as s
 
 from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__whats_my_ip
 
-
 # Load environment variables
-env_vars = dotenv_values('.env')
+env_vars = dotenv_values()
 
 # Load Gemini API keys
 gemini_api_keys = list()
-flask_port = env_vars.get('FLASK_PORT')
-redis_url = env_vars.get('REDIS_URL')
+redis_server_url = env_vars.get('REDIS_SERVER_URL')
 
 for key, value in env_vars.items():
+    print(f'{key}: {value}')
     if key.startswith('GEMINI_API_KEY_'):
         gemini_api_keys.append(value)
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'redis'
-app.config['CACHE_REDIS_URL'] = redis_url
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri=redis_url)
+app.config['CACHE_REDIS_URL'] = redis_server_url
+limiter = Limiter(app=app, key_func=get_remote_address, storage_uri=redis_server_url)
 cache = Cache(app)
 
 # DEBUG
-print(redis_url)
+print(f'Redis server URL: {redis_server_url}')
 # DEBUG
 
 # General functions
@@ -469,4 +468,4 @@ def _fordev__whats_my_ip() -> tuple[dict, int]:
 
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(debug=False, host='0.0.0.0', threaded=True, port=int(flask_port))
+    app.run(debug=False, host='0.0.0.0', threaded=True, port=5000)
