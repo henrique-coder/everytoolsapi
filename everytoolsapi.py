@@ -23,9 +23,9 @@ from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__w
 
 # Load environment variables
 env_vars = dotenv_values()
-print(f'envars: {env_vars}')
 
 # Load Gemini API keys
+redis_server_url = env_vars.get('REDIS_SERVER_URL')
 gemini_api_keys = list()
 
 for key, value in env_vars.items():
@@ -35,8 +35,9 @@ for key, value in env_vars.items():
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'simple'
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
+app.config['CACHE_TYPE'] = 'redis'
+app.config['CACHE_REDIS_URL'] = redis_server_url
+limiter = Limiter(app=app, key_func=get_remote_address, storage_uri=redis_server_url)
 cache = Cache(app)
 
 # General functions
