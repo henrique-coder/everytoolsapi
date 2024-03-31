@@ -1,6 +1,8 @@
+gunicorn
 flask
 flask-limiter
 flask-caching
+redis
 python-dotenv
 httpx
 beautifulsoup4

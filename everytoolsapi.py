@@ -27,6 +27,7 @@ env_vars = dotenv_values()
 
 # Load Gemini API keys
 gemini_api_keys = list()
+redis_url = env_vars.get('REDIS_URL')
 
 for key, value in env_vars.items():
     if key.startswith('GEMINI_API_KEY_'):
@@ -34,8 +35,9 @@ for key, value in env_vars.items():
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'simple'
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
+app.config['CACHE_TYPE'] = 'redis'
+app.config['CACHE_REDIS_URL'] = redis_url
+limiter = Limiter(app=app, key_func=get_remote_address)
 cache = Cache(app)
 
 
