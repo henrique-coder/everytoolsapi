@@ -41,6 +41,11 @@ app.config['CACHE_REDIS_URL'] = redis_url
 limiter = Limiter(app=app, key_func=get_remote_address, storage_uri=redis_url)
 cache = Cache(app)
 
+# DEBUG
+print(redis_url)
+import httpx
+print(httpx.get('https://api.ipify.org').text)
+# DEBUG
 
 # General functions
 def get_rate_limit_message(requests_per_second: int, requests_per_minute: int, requests_per_hour: int, requests_per_day: int) -> str:
