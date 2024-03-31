@@ -25,11 +25,11 @@ from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__w
 env_vars = dotenv_values()
 
 # Load Gemini API keys
-redis_server_url = env_vars.get('REDIS_SERVER_URL')
+flask_port = int(env_vars.get('FLASK_PORT'))
+redis_server_url = str(env_vars.get('REDIS_SERVER_URL'))
 gemini_api_keys = list()
 
 for key, value in env_vars.items():
-    print(f'env: {key}={value}')
     if key.startswith('GEMINI_API_KEY_'):
         gemini_api_keys.append(value)
 
@@ -464,4 +464,4 @@ def _fordev__whats_my_ip() -> tuple[dict, int]:
 
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(debug=False, host='0.0.0.0', threaded=True, port=5000)
+    app.run(debug=False, host='0.0.0.0', threaded=True, port=flask_port)
