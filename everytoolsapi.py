@@ -19,7 +19,7 @@ from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main 
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
 from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
 
-from api_resources.main_endpoints.fordev.v1.my_ipv4 import main as fordev__my_ipv4
+from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__whats_my_ip
 
 
 # Load environment variables
@@ -215,13 +215,13 @@ endpoints_data = {
             }
         },
         'fordev': {
-            'my-ipv4': {
-                'description': 'Get your public IPv4 address',
+            'whats-my-ip': {
+                'description': 'Get the IP address of the client who made the request.',
                 'rate_limit': get_rate_limit_message(2, 60, 3600, 30000),
                 'cache_timeout': 1,
                 'allowed_methods': ['GET'],
-                'base_endpoint_url': '/api/fordev/v1/my-ipv4',
-                'full_endpoint_url': '/api/fordev/v1/my-ipv4',
+                'base_endpoint_url': '/api/fordev/v1/whats-my-ip',
+                'full_endpoint_url': '/api/fordev/v1/whats-my-ip',
                 'parameters': {
                     'required': [],
                     'optional': []
@@ -447,18 +447,18 @@ def _scraper__product_promotions() -> tuple[dict, int]:
         return get_output_response_data(False, 'No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
 
 
-# Route: /api/fordev/v?/my-ipv4
-_data_fordev__my_ipv4 = endpoints_data['endpoints']['fordev']['my-ipv4']
-@app.route(_data_fordev__my_ipv4['base_endpoint_url'], methods=['GET'])
-@limiter.limit(_data_fordev__my_ipv4['rate_limit'])
-@cache.cached(timeout=_data_fordev__my_ipv4['cache_timeout'], make_cache_key=_make_cache_key)
-def _fordev__my_ipv4() -> tuple[dict, int]:
-    output_data = fordev__my_ipv4(request.remote_addr)
+# Route: /api/fordev/v?/whats-my-ip
+_data_fordev__whats_my_ip = endpoints_data['endpoints']['fordev']['whats-my-ip']
+@app.route(_data_fordev__whats_my_ip['base_endpoint_url'], methods=['GET'])
+@limiter.limit(_data_fordev__whats_my_ip['rate_limit'])
+@cache.cached(timeout=_data_fordev__whats_my_ip['cache_timeout'], make_cache_key=_make_cache_key)
+def _fordev__whats_my_ip() -> tuple[dict, int]:
+    output_data = fordev__whats_my_ip(request.headers)
 
     if output_data:
-        return get_output_response_data(True, {'origin': output_data['data']}, _data_fordev__my_ipv4['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, {'origin': output_data['data']}, _data_fordev__whats_my_ip['description'], output_data['processing_time']), 200
     else:
-        return get_output_response_data(False, 'An error occurred while trying to get your IPv4. Please try again later.'), 404
+        return get_output_response_data(False, 'An error occurred while trying to get the IP address. Please try again later.'), 404
 
 
 if __name__ == '__main__':
