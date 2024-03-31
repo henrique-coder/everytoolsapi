@@ -23,12 +23,13 @@ from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__w
 
 # Load environment variables
 env_vars = dotenv_values()
+print(f'envars: {env_vars}')
 
 # Load Gemini API keys
 gemini_api_keys = list()
 
 for key, value in env_vars.items():
-    print(f'ENV: {key}={value}')
+    print(f'env: {key}={value}')
     if key.startswith('GEMINI_API_KEY_'):
         gemini_api_keys.append(value)
 
