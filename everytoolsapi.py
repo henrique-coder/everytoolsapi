@@ -26,23 +26,16 @@ env_vars = dotenv_values()
 
 # Load Gemini API keys
 gemini_api_keys = list()
-redis_server_url = env_vars.get('REDIS_SERVER_URL')
 
 for key, value in env_vars.items():
-    print(f'{key}: {value}')
     if key.startswith('GEMINI_API_KEY_'):
         gemini_api_keys.append(value)
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'redis'
-app.config['CACHE_REDIS_URL'] = redis_server_url
-limiter = Limiter(app=app, key_func=get_remote_address)
+app.config['CACHE_TYPE'] = 'simple'
+limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
 cache = Cache(app)
-
-# DEBUG
-print(f'Redis server URL: {redis_server_url}')
-# DEBUG
 
 # General functions
 def get_rate_limit_message(requests_per_second: int, requests_per_minute: int, requests_per_hour: int, requests_per_day: int) -> str:
