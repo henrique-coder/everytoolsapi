@@ -37,7 +37,7 @@ for key, value in env_vars.items():
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'redis'
 app.config['CACHE_REDIS_URL'] = redis_server_url
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri=redis_server_url)
+limiter = Limiter(app=app, key_func=get_remote_address)
 cache = Cache(app)
 
 # DEBUG
