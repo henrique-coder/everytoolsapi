@@ -4,6 +4,7 @@ from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 from dotenv import dotenv_values
 from re import compile as re_compile
+from pathlib import Path
 from typing import Any, Union
 
 
@@ -22,16 +23,17 @@ from api_resources.main_endpoints.scraper.v1.product_promotions import main as s
 from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__whats_my_ip
 
 # Load environment variables
-env_vars = dotenv_values()
+env_gemini_api_keys = dotenv_values(Path('env/gemini_api_keys.env').resolve())
+env_settings = dotenv_values(Path('env/settings.env').resolve())
 
 # Load Gemini API keys
-flask_port = int(env_vars.get('FLASK_PORT'))
-redis_server_url = str(env_vars.get('REDIS_SERVER_URL'))
+flask_port = int(env_settings.get('FLASK_PORT'))
+redis_server_url = str(env_settings.get('REDIS_SERVER_URL'))
+
 gemini_api_keys = list()
 
-for key, value in env_vars.items():
-    if key.startswith('GEMINI_API_KEY_'):
-        gemini_api_keys.append(value)
+for key, value in env_gemini_api_keys.items():
+    gemini_api_keys.append(str(value))
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
@@ -66,7 +68,7 @@ def get_output_response_data(success: bool, data: Union[dict, str], endpoint_des
 
 # Flask required functions
 def _make_cache_key(*args, **kwargs) -> str:
-    return f'{request.url}{str(request.args)}'
+    return request.url
 
 
 def _route_in_maintenance() -> tuple[dict, int]:
