@@ -4,9 +4,7 @@ from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 from dotenv import dotenv_values
 from re import compile as re_compile
-from pathlib import Path
 from typing import Any, Union
-
 
 from api_resources.main_endpoints.ai.v1.ask_gemini import main as ai__ask_gemini
 
@@ -22,9 +20,10 @@ from api_resources.main_endpoints.scraper.v1.product_promotions import main as s
 
 from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__whats_my_ip
 
+
 # Load environment variables
-env_gemini_api_keys = dotenv_values(Path('env/gemini_api_keys.env').resolve())
-env_settings = dotenv_values(Path('env/settings.env').resolve())
+env_gemini_api_keys = dotenv_values('gemini_api_keys.env')
+env_settings = dotenv_values('settings.env')
 
 # Load Gemini API keys
 flask_port = int(env_settings.get('FLASK_PORT'))
@@ -270,7 +269,7 @@ def _ai__ask_gemini() -> tuple[dict, int]:
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
 
-    if not p_prompt:
+    if not p_prompt or not str(p_prompt).strip():
         return get_output_response_data(False, 'The prompt parameter is required.'), 400
 
     output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url)

@@ -12,8 +12,8 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None) -> Union[dic
     start_time = perf_counter()
     generated_data = dict()
 
-    prompt = str(prompt)
-    image_url = str(image_url) if image_url else None
+    prompt = str(prompt).strip()
+    if not image_url or not str(image_url).strip(): image_url = None
     max_tokens = 10000
 
     def detect_mimetype(url: str) -> Union[str, None]:
