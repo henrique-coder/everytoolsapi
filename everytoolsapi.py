@@ -277,16 +277,21 @@ def weberror_429(_) -> tuple[dict, int]:
 
 
 # Flask general routes
-
-@app.route('/status', methods=['GET'])
-@cache.cached(timeout=28800, make_cache_key=_make_cache_key)
-def status() -> tuple[dict, int]:
-    return {'success': True, 'message': 'The API is online and working.'}, 200
-
-
 @app.route('/', methods=['GET'])
 def homepage() -> redirect:
     return redirect('/docs', code=302)
+
+
+@app.route('/api', methods=['GET'])
+@cache.cached(timeout=28800, make_cache_key=_make_cache_key)
+def api() -> tuple[dict, int]:
+    return {'success': True, 'message': 'The API is online and working.'}, 200
+
+
+@app.route('/status', methods=['GET'])
+@cache.cached(timeout=86400, make_cache_key=_make_cache_key)
+def status() -> redirect:
+    return redirect('https://1r23r6r9.status.cron-job.org', code=302)
 
 
 @app.route('/docs', methods=['GET'])
