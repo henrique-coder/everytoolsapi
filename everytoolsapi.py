@@ -485,6 +485,8 @@ _data_others__whoami = endpoints_data['endpoints']['others']['whoami']
 @limiter.limit(_data_others__whoami['rate_limit'])
 @cache.cached(timeout=_data_others__whoami['cache_timeout'], make_cache_key=_make_cache_key)
 def _others__whoami() -> tuple[dict, int]:
+    return _route_in_maintenance()
+
     output_data = others__whoami(request.headers.__dict__)
 
     if output_data:
@@ -515,6 +517,8 @@ _data_others__ip_info = endpoints_data['endpoints']['others']['ip-info']
 @limiter.limit(_data_others__ip_info['rate_limit'])
 @cache.cached(timeout=_data_others__ip_info['cache_timeout'], make_cache_key=_make_cache_key)
 def _others__ip_info() -> tuple[dict, int]:
+    return _route_in_maintenance()
+    
     p_ip = request.args.get('ip')
 
     output_data = others__ip_info(request.headers.__dict__, p_ip)
