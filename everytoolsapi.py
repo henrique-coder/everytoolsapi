@@ -18,16 +18,18 @@ from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main 
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
 from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
 
-from api_resources.main_endpoints.fordev.v1.whats_my_ip import main as fordev__whats_my_ip
+from api_resources.main_endpoints.others.v1.whoami import main as others__whoami
+from api_resources.main_endpoints.others.v1.ua_info import main as others__ua_info
+from api_resources.main_endpoints.others.v1.ip_info import main as others__ip_info
 
 
-# Load environment variables
+# Load environment variables from .env files
 env_gemini_api_keys = dotenv_values('gemini_api_keys.env')
 env_settings = dotenv_values('settings.env')
 
-# Load Gemini API keys
+# Get environment variables values
 flask_port = int(env_settings.get('FLASK_PORT'))
-redis_server_url = str(env_settings.get('REDIS_SERVER_URL'))
+# redis_server_url = str(env_settings.get('REDIS_SERVER_URL'))  # Uncomment this line if you want to use Redis as a cache server
 
 gemini_api_keys = list()
 
@@ -36,9 +38,9 @@ for key, value in env_gemini_api_keys.items():
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'redis'
-app.config['CACHE_REDIS_URL'] = redis_server_url
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri=redis_server_url)
+app.config['CACHE_TYPE'] = 'simple'  # 'redis'  # Change to 'redis' if you want to use Redis as a cache server
+# app.config['CACHE_REDIS_URL'] = redis_server_url  # Uncomment this line if you want to use Redis as a cache server
+limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
 cache = Cache(app)
 
 # General functions
@@ -216,20 +218,48 @@ endpoints_data = {
                 },
             }
         },
-        'fordev': {
-            'whats-my-ip': {
-                'description': 'Get the IP address of the client who made the request.',
+        'others': {
+            'whoami': {
+                'description': 'Get information about your request, such as IPv4, IPv6 (if available) and User-Agent.',
                 'rate_limit': get_rate_limit_message(2, 60, 3600, 30000),
                 'cache_timeout': 1,
                 'allowed_methods': ['GET'],
-                'base_endpoint_url': '/api/fordev/v1/whats-my-ip',
-                'full_endpoint_url': '/api/fordev/v1/whats-my-ip',
+                'base_endpoint_url': '/api/others/v1/whoami',
+                'full_endpoint_url': '/api/others/v1/whoami',
                 'parameters': {
                     'required': [],
                     'optional': []
                 },
-            }
-        }
+            },
+            'ua-info': {
+                'description': 'Parse a input User-Agent string or the User-Agent string of the request and return it in an easy-to-understand JSON format.',
+                'rate_limit': get_rate_limit_message(1, 60, 3600, 30000),
+                'cache_timeout': 3600,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/others/v1/ua-info',
+                'full_endpoint_url': '/api/others/v1/ua-info?ua=',
+                'parameters': {
+                    'required': [],
+                    'optional': [
+                        {'name': 'ua', 'type': 'string', 'description': 'The User-Agent string you want to parse.'}
+                    ],
+                },
+            },
+            'ip-info': {
+                'description': 'Get information about an IPv4 or IPv6 address and return it in an easy-to-understand JSON format.',
+                'rate_limit': get_rate_limit_message(1, 30, 200, 600),
+                'cache_timeout': 3600,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/others/v1/ip-info',
+                'full_endpoint_url': '/api/others/v1/ip-info?ip=',
+                'parameters': {
+                    'required': [],
+                    'optional': [
+                        {'name': 'ip', 'type': 'string', 'description': 'The IPv4 or IPv6 address you want to get the information.'}
+                    ]
+                },
+            },
+        },
     }
 }
 
@@ -249,10 +279,10 @@ def weberror_429(_) -> tuple[dict, int]:
 # Flask general routes
 @app.route('/', methods=['GET'])
 def homepage() -> redirect:
-    return redirect('/endpoints', code=302)
+    return redirect('/docs', code=302)
 
 
-@app.route('/endpoints', methods=['GET'])
+@app.route('/docs', methods=['GET'])
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
 def endpoints() -> tuple[dict, int]:
     return endpoints_data, 200
@@ -449,20 +479,52 @@ def _scraper__product_promotions() -> tuple[dict, int]:
         return get_output_response_data(False, 'No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
 
 
-# Route: /api/fordev/v?/whats-my-ip
-_data_fordev__whats_my_ip = endpoints_data['endpoints']['fordev']['whats-my-ip']
-@app.route(_data_fordev__whats_my_ip['base_endpoint_url'], methods=['GET'])
-@limiter.limit(_data_fordev__whats_my_ip['rate_limit'])
-@cache.cached(timeout=_data_fordev__whats_my_ip['cache_timeout'], make_cache_key=_make_cache_key)
-def _fordev__whats_my_ip() -> tuple[dict, int]:
-    output_data = fordev__whats_my_ip(request.headers)
+# Route: /api/others/v?/whoami
+_data_others__whoami = endpoints_data['endpoints']['others']['whoami']
+@app.route(_data_others__whoami['base_endpoint_url'], methods=['GET'])
+@limiter.limit(_data_others__whoami['rate_limit'])
+@cache.cached(timeout=_data_others__whoami['cache_timeout'], make_cache_key=_make_cache_key)
+def _others__whoami() -> tuple[dict, int]:
+    output_data = others__whoami(request.headers.__dict__)
 
     if output_data:
-        return get_output_response_data(True, {'origin': output_data['data']}, _data_fordev__whats_my_ip['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, output_data['data'], _data_others__whoami['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'An error occurred while trying to get the IP address. Please try again later.'), 404
 
 
+# Route: /api/others/v?/ua-info
+_data_others__ua_info = endpoints_data['endpoints']['others']['ua-info']
+@app.route(_data_others__ua_info['base_endpoint_url'], methods=['GET'])
+@limiter.limit(_data_others__ua_info['rate_limit'])
+@cache.cached(timeout=_data_others__ua_info['cache_timeout'], make_cache_key=_make_cache_key)
+def _others__ua_info() -> tuple[dict, int]:
+    p_ua = request.args.get('ua')
+
+    output_data = others__ua_info(request.headers.__dict__, p_ua)
+
+    if output_data:
+        return get_output_response_data(True, output_data['data'], _data_others__ua_info['description'], output_data['processing_time']), 200
+    else:
+        return get_output_response_data(False, 'An error occurred while trying to parse the User-Agent. Please try again later.'), 404
+
+
+# Route: /api/others/v?/ip-info
+_data_others__ip_info = endpoints_data['endpoints']['others']['ip-info']
+@app.route(_data_others__ip_info['base_endpoint_url'], methods=['GET'])
+@limiter.limit(_data_others__ip_info['rate_limit'])
+@cache.cached(timeout=_data_others__ip_info['cache_timeout'], make_cache_key=_make_cache_key)
+def _others__ip_info() -> tuple[dict, int]:
+    p_ip = request.args.get('ip')
+
+    output_data = others__ip_info(request.headers.__dict__, p_ip)
+
+    if output_data:
+        return get_output_response_data(True, output_data['data'], _data_others__ip_info['description'], output_data['processing_time']), 200
+    else:
+        return get_output_response_data(False, 'An error occurred while trying to search for the IP address. Please try again later or check if the IP address is valid.'), 404
+
+
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(debug=False, host='0.0.0.0', threaded=True, port=flask_port)
+    app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
