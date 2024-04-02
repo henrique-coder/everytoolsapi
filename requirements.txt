@@ -8,3 +8,4 @@ httpx
 beautifulsoup4
 lxml
 yt-dlp
+user-agents
