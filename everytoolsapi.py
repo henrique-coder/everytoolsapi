@@ -1,10 +1,9 @@
-from flask import Flask, request, redirect, Response
+from flask import Flask, request, redirect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 from dotenv import dotenv_values
 from re import compile as re_compile
-from urllib.parse import urlparse, unquote
 from typing import Any, Union
 
 from api_resources.main_endpoints.ai.v1.ask_gemini import main as ai__ask_gemini
@@ -22,7 +21,6 @@ from api_resources.main_endpoints.scraper.v1.product_promotions import main as s
 from api_resources.main_endpoints.others.v1.whoami import main as others__whoami
 from api_resources.main_endpoints.others.v1.ua_info import main as others__ua_info
 from api_resources.main_endpoints.others.v1.ip_info import main as others__ip_info
-# from api_resources.main_endpoints.others.v1.better_dl import main as others__better_dl
 
 
 # Load environment variables from .env files
@@ -258,22 +256,6 @@ endpoints_data = {
                     'required': [],
                     'optional': [
                         {'name': 'ip', 'type': 'string', 'description': 'The IPv4 or IPv6 address you want to get the information.'}
-                    ]
-                },
-            },
-            'better-dl': {
-                'description': 'Download a video from a URL and return it in a easy-to-understand JSON format.',
-                'rate_limit': get_rate_limit_message(1, 60, 3600, 30000),
-                'cache_timeout': 3600,
-                'allowed_methods': ['GET'],
-                'base_endpoint_url': '/api/others/v1/better-dl',
-                'full_endpoint_url': '/api/others/v1/better-dl?url=&filename=',
-                'parameters': {
-                    'required': [
-                        {'name': 'url', 'type': 'string', 'description': 'Direct file URL'},
-                    ],
-                    'optional': [
-                        {'name': 'filename', 'type': 'string', 'description': 'File name with extension'},
                     ]
                 },
             },
@@ -557,33 +539,6 @@ def _others__ip_info() -> tuple[dict, int]:
         return get_output_response_data(True, output_data['data'], _data_others__ip_info['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'An error occurred while trying to search for the IP address. Please try again later or check if the IP address is valid.'), 404
-
-
-# Route: /api/others/v?/better-dl
-_data_others__better_dl = endpoints_data['endpoints']['others']['better-dl']
-@app.route(_data_others__better_dl['base_endpoint_url'], methods=['GET'])
-@limiter.limit(_data_others__better_dl['rate_limit'])
-@cache.cached(timeout=_data_others__better_dl['cache_timeout'], make_cache_key=_make_cache_key)
-def _others__better_dl() -> Any:
-    p_url = request.args.get('url')
-    p_filename = request.args.get('filename')
-
-    if not p_url or not str(p_url).strip():
-        return get_output_response_data(False, 'The url parameter is required.'), 400
-
-    if not p_filename or not str(p_filename).strip():
-        p_filename = unquote(urlparse(p_url).path.split('/')[-1])
-
-    headers = {
-        'Content-Disposition': f'attachment; filename="{p_filename}"',
-        'Content-Type': 'application/octet-stream',
-    }
-
-    response = Response(headers=headers)
-    response.headers['Location'] = p_url
-    response.status_code = 302
-
-    return response
 
 
 if __name__ == '__main__':
