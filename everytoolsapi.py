@@ -2,8 +2,9 @@ from flask import Flask, request, redirect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
-from dotenv import dotenv_values
 from re import compile as re_compile
+from dotenv import load_dotenv
+from os import getenv
 from typing import Any, Union
 
 from api_resources.main_endpoints.ai.v1.ask_gemini import main as ai__ask_gemini
@@ -24,21 +25,19 @@ from api_resources.main_endpoints.others.v1.ip_info import main as others__ip_in
 
 
 # Load environment variables from .env files
-env_gemini_api_keys = dotenv_values('gemini_api_keys.env')
-env_settings = dotenv_values('settings.env')
+load_dotenv()
 
 # Get environment variables values
-flask_port = int(env_settings.get('FLASK_PORT'))
+flask_port = int(getenv('FLASK_PORT'))
 # redis_server_url = str(env_settings.get('REDIS_SERVER_URL'))  # Uncomment this line if you want to use Redis as a cache server
 
 gemini_api_keys = list()
-
-for key, value in env_gemini_api_keys.items():
-    gemini_api_keys.append(str(value))
+gemini_api_keys.append(getenv('GEMINI_API_KEY_1'))
+gemini_api_keys.append(getenv('GEMINI_API_KEY_2'))
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'simple'  # 'redis'  # Change to 'redis' if you want to use Redis as a cache server
+app.config['CACHE_TYPE'] = 'simple'  # Change to "redis" if you want to use Redis as a cache server
 # app.config['CACHE_REDIS_URL'] = redis_server_url  # Uncomment this line if you want to use Redis as a cache server
 limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
 cache = Cache(app)
