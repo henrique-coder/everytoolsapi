@@ -4,11 +4,10 @@
 __pycache__
 
 # Directories
-.tests
+.debug
 
 # Files
-sendall_with_sftp.py
-debug_api.py
+# ...
 
 # Extensions
 *.env
