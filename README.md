@@ -17,10 +17,10 @@
   <p align="center">
     Welcome to the EveryTools API. Where you can find all the tools you need in one place.
     <br />
-    <a href="https://everytoolsapi.onrender.com/docs"><strong>Explore the documentation</strong></a>
+    <a href="https://everytoolsapi-henrique-coder.koyeb.app/docs"><strong>Explore the documentation</strong></a>
     <br />
     <br />
-    <a href="https://everytoolsapi.onrender.com">View Website</a>
+    <a href="https://everytoolsapi-henrique-coder.koyeb.app">View Website</a>
     ·
     <a href="https://github.com/Henrique-Coder/everytoolsapi/issues">Report Bug</a>
     ·
@@ -94,7 +94,7 @@ To successfully install the EveryTools API, follow these last steps:
 <!-- USAGE -->
 ## Usage
 
-For more information on how to use the API, please refer to the full [documentation](https://everytoolsapi.onrender.com/docs).
+For more information on how to use the API, please refer to the full [documentation](https://everytoolsapi-henrique-coder.koyeb.app/docs).
 
 <!-- CONTRIBUTING -->
 ## Contributing
