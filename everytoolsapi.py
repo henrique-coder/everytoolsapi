@@ -79,7 +79,7 @@ def _route_in_maintenance() -> tuple[dict, int]:
 endpoints_data = {
     'message': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
     'source_code_url': 'https://github.com/Henrique-Coder/everytoolsapi',
-    'base_api_url': 'https://everytoolsapi.onrender.com',
+    'base_api_url': 'https://everytoolsapi-henrique-coder.koyeb.app',
     'endpoints': {
         'ai': {
             'ask-gemini': {
@@ -276,21 +276,15 @@ def weberror_429(_) -> tuple[dict, int]:
 
 
 # Flask general routes
-@app.route('/', methods=['GET'])
-def homepage() -> redirect:
-    return redirect('/docs', code=302)
-
-
-@app.route('/api', methods=['GET'])
+@app.route('/api', methods=['GET', 'HEAD'])
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
 def api() -> tuple[dict, int]:
     return {'success': True, 'message': 'The API is online and working.'}, 200
 
 
-@app.route('/status', methods=['GET'])
-@cache.cached(timeout=86400, make_cache_key=_make_cache_key)
-def status() -> redirect:
-    return redirect('https://1r23r6r9.status.cron-job.org', code=302)
+@app.route('/', methods=['GET'])
+def initial_page() -> redirect:
+    return redirect('/docs', code=301)
 
 
 @app.route('/docs', methods=['GET'])
