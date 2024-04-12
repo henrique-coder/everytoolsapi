@@ -29,7 +29,7 @@ load_dotenv()
 
 # Get environment variables values
 flask_port = int(getenv('FLASK_PORT'))
-# redis_server_url = str(env_settings.get('REDIS_SERVER_URL'))  # Uncomment this line if you want to use Redis as a cache server
+# redis_server_url = str(getenv('REDIS_SERVER_URL'))  # Uncomment this line if you want to use Redis as a cache server
 
 gemini_api_keys = list()
 gemini_api_keys.append(getenv('GEMINI_API_KEY_1'))
@@ -39,8 +39,9 @@ gemini_api_keys.append(getenv('GEMINI_API_KEY_2'))
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'simple'  # Change to "redis" if you want to use Redis as a cache server
 # app.config['CACHE_REDIS_URL'] = redis_server_url  # Uncomment this line if you want to use Redis as a cache server
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')
+limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')  # Change storage_uri to "redis" if you want to use Redis as a cache server
 cache = Cache(app)
+
 
 # General functions
 def get_rate_limit_message(requests_per_second: int, requests_per_minute: int, requests_per_hour: int, requests_per_day: int) -> str:
@@ -490,8 +491,6 @@ _data_others__whoami = endpoints_data['endpoints']['others']['whoami']
 @limiter.limit(_data_others__whoami['rate_limit'])
 @cache.cached(timeout=_data_others__whoami['cache_timeout'], make_cache_key=_make_cache_key)
 def _others__whoami() -> tuple[dict, int]:
-    return _route_in_maintenance()
-
     output_data = others__whoami(request.headers.__dict__)
 
     if output_data:
@@ -522,8 +521,6 @@ _data_others__ip_info = endpoints_data['endpoints']['others']['ip-info']
 @limiter.limit(_data_others__ip_info['rate_limit'])
 @cache.cached(timeout=_data_others__ip_info['cache_timeout'], make_cache_key=_make_cache_key)
 def _others__ip_info() -> tuple[dict, int]:
-    return _route_in_maintenance()
-    
     p_ip = request.args.get('ip')
 
     output_data = others__ip_info(request.headers.__dict__, p_ip)
