@@ -11,7 +11,10 @@ def main(headers_data: Union[dict, None] = None, custom_ip: Union[str, None] = N
         if not headers_data or 'environ' not in headers_data:
             return None
 
-        ip = headers_data['environ'].get('REMOTE_ADDR')
+        try:
+            ip = headers_data.get('environ').get('REMOTE_ADDR')
+        except AttributeError:
+            return None
 
         if not ip:
             return None
