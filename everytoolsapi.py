@@ -19,7 +19,6 @@ from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main 
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
 from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
 
-from api_resources.main_endpoints.others.v1.whoami import main as others__whoami
 from api_resources.main_endpoints.others.v1.ua_info import main as others__ua_info
 from api_resources.main_endpoints.others.v1.ip_info import main as others__ip_info
 
@@ -219,18 +218,6 @@ endpoints_data = {
             },
         },
         'others': {
-            'whoami': {
-                'description': 'Get information about your request, such as IPv4, IPv6 (if available) and User-Agent.',
-                'rate_limit': get_rate_limit_message(2, 60, 3600, 30000),
-                'cache_timeout': 1,
-                'allowed_methods': ['GET'],
-                'base_endpoint_url': '/api/others/v1/whoami',
-                'full_endpoint_url': '/api/others/v1/whoami',
-                'parameters': {
-                    'required': [],
-                    'optional': []
-                },
-            },
             'ua-info': {
                 'description': 'Parse a input User-Agent string or the User-Agent string of the request and return it in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 60, 3600, 30000),
@@ -253,10 +240,10 @@ endpoints_data = {
                 'base_endpoint_url': '/api/others/v1/ip-info',
                 'full_endpoint_url': '/api/others/v1/ip-info?ip=',
                 'parameters': {
-                    'required': [],
-                    'optional': [
+                    'required': [
                         {'name': 'ip', 'type': 'string', 'description': 'The IPv4 or IPv6 address you want to get the information.'}
-                    ]
+                    ],
+                    'optional': []
                 },
             },
         },
@@ -485,22 +472,6 @@ def _scraper__product_promotions() -> tuple[dict, int]:
         return get_output_response_data(False, 'No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
 
 
-# Route: /api/others/v?/whoami
-_data_others__whoami = endpoints_data['endpoints']['others']['whoami']
-@app.route(_data_others__whoami['base_endpoint_url'], methods=['GET'])
-@limiter.limit(_data_others__whoami['rate_limit'])
-@cache.cached(timeout=_data_others__whoami['cache_timeout'], make_cache_key=_make_cache_key)
-def _others__whoami() -> tuple[dict, int]:
-    output_data = others__whoami(None)
-    print(request.remote_addr)
-    print(request.environ)
-
-    if output_data:
-        return get_output_response_data(True, output_data['data'], _data_others__whoami['description'], output_data['processing_time']), 200
-    else:
-        return get_output_response_data(False, 'An error occurred while trying to get the IP address. Please try again later.'), 404
-
-
 # Route: /api/others/v?/ua-info
 _data_others__ua_info = endpoints_data['endpoints']['others']['ua-info']
 @app.route(_data_others__ua_info['base_endpoint_url'], methods=['GET'])
@@ -509,7 +480,7 @@ _data_others__ua_info = endpoints_data['endpoints']['others']['ua-info']
 def _others__ua_info() -> tuple[dict, int]:
     p_ua = request.args.get('ua')
 
-    output_data = others__ua_info(request.headers.__dict__, p_ua)
+    output_data = others__ua_info(request.user_agent, p_ua)
 
     if output_data:
         return get_output_response_data(True, output_data['data'], _data_others__ua_info['description'], output_data['processing_time']), 200
@@ -525,8 +496,10 @@ _data_others__ip_info = endpoints_data['endpoints']['others']['ip-info']
 def _others__ip_info() -> tuple[dict, int]:
     p_ip = request.args.get('ip')
 
-    output_data = others__ip_info(dict(remote_ipv4=request.remote_addr), p_ip)
-    print(request.remote_addr)
+    if not p_ip or not str(p_ip).strip():
+        return get_output_response_data(False, 'The ip parameter is required.'), 400
+
+    output_data = others__ip_info(p_ip)
 
     if output_data:
         return get_output_response_data(True, output_data['data'], _data_others__ip_info['description'], output_data['processing_time']), 200
@@ -536,4 +509,4 @@ def _others__ip_info() -> tuple[dict, int]:
 
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=True)
+    app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)

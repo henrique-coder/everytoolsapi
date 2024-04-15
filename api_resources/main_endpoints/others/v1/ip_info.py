@@ -1,22 +1,17 @@
-from typing import Any, Union, Dict
+from typing import Union
 from httpx import get, _exceptions as httpx_exceptions
 from time import perf_counter
 
 
-def main(headers_data: Dict[Any, None] = None, custom_ip: Union[str, None] = None) -> Union[dict, None]:
+def main(custom_ip: Union[str, None] = None) -> Union[dict, None]:
     start_time = perf_counter()
     generated_data = {'data': dict()}
 
     if not custom_ip or not str(custom_ip).strip():
-        ip = headers_data.get('remote_ipv4')
-
-        if not ip:
-            return None
-    else:
-        ip = str(custom_ip).strip()
+        return None
 
     try:
-        response = get(f'http://ip-api.com/json/{ip}?lang=en&fields=66813951', timeout=5)
+        response = get(f'http://ip-api.com/json/{custom_ip}?lang=en&fields=66813951', timeout=5)
         response.raise_for_status()
 
         json_response = response.json()
