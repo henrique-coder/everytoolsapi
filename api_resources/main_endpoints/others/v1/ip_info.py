@@ -1,20 +1,14 @@
-from typing import Union
+from typing import Any, Union, Dict
 from httpx import get, _exceptions as httpx_exceptions
 from time import perf_counter
 
 
-def main(headers_data: Union[dict, None] = None, custom_ip: Union[str, None] = None) -> Union[dict, None]:
+def main(headers_data: Dict[Any, None] = None, custom_ip: Union[str, None] = None) -> Union[dict, None]:
     start_time = perf_counter()
     generated_data = {'data': dict()}
 
     if not custom_ip or not str(custom_ip).strip():
-        if not headers_data or 'environ' not in headers_data:
-            return None
-
-        try:
-            ip = headers_data.get('environ').get('REMOTE_ADDR')
-        except AttributeError:
-            return None
+        ip = headers_data.get('remote_ipv4')
 
         if not ip:
             return None

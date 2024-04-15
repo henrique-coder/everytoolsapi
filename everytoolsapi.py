@@ -491,9 +491,9 @@ _data_others__whoami = endpoints_data['endpoints']['others']['whoami']
 @limiter.limit(_data_others__whoami['rate_limit'])
 @cache.cached(timeout=_data_others__whoami['cache_timeout'], make_cache_key=_make_cache_key)
 def _others__whoami() -> tuple[dict, int]:
-    return _route_in_maintenance()
-
-    output_data = others__whoami(request.headers.__dict__)
+    output_data = others__whoami(None)
+    print(request.remote_addr)
+    print(request.environ)
 
     if output_data:
         return get_output_response_data(True, output_data['data'], _data_others__whoami['description'], output_data['processing_time']), 200
@@ -523,11 +523,10 @@ _data_others__ip_info = endpoints_data['endpoints']['others']['ip-info']
 @limiter.limit(_data_others__ip_info['rate_limit'])
 @cache.cached(timeout=_data_others__ip_info['cache_timeout'], make_cache_key=_make_cache_key)
 def _others__ip_info() -> tuple[dict, int]:
-    return _route_in_maintenance()
-
     p_ip = request.args.get('ip')
 
-    output_data = others__ip_info(request.headers.__dict__, p_ip)
+    output_data = others__ip_info(dict(remote_ipv4=request.remote_addr), p_ip)
+    print(request.remote_addr)
 
     if output_data:
         return get_output_response_data(True, output_data['data'], _data_others__ip_info['description'], output_data['processing_time']), 200
@@ -537,4 +536,4 @@ def _others__ip_info() -> tuple[dict, int]:
 
 if __name__ == '__main__':
     app.config['JSON_SORT_KEYS'] = True
-    app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
+    app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=True)
