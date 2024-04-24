@@ -1,4 +1,4 @@
-from yt_dlp import YoutubeDL, utils as yt_dlp_utils
+from yt_dlp import YoutubeDL
 from urllib.parse import unquote
 from unicodedata import normalize
 from re import sub as re_sub, compile as re_compile
@@ -47,18 +47,18 @@ def main(_id: str) -> Union[dict, None]:
             'short_url': f'https://youtu.be/{video_id}',
             'title': info.get('title', str()),
             'sanitized_title': formatted_title,
-            'likes': info.get('like_count', 0),
+            'like_count': info.get('like_count', 0),
             'description': info.get('description', str()),
-            'upload_date': epoch_upload_date,
+            'uploaded_at': epoch_upload_date,
             'duration': info.get('duration', 0),
-            'views': info.get('view_count', 0),
+            'view_count': info.get('view_count', 0),
             'categories': info.get('categories', list()),
             'tags': info.get('tags', list()),
             'channel_id': channel_id,
             'channel_url': channel_url,
             'channel_name': info.get('uploader', str()),
             'sanitized_channel_name': formatted_channel_name,
-            'comments': info.get('comment_count', 0),
+            'comment_count': info.get('comment_count', 0),
             'is_streaming': info.get('is_live', False),
             'is_age_restricted': info.get('age_limit', 0) > 0,
         }
