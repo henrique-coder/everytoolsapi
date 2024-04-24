@@ -8,4 +8,5 @@ httpx
 beautifulsoup4
 lxml
 yt-dlp
+youtube-dl
 user-agents
