@@ -2,7 +2,7 @@ from flask import Flask, request, redirect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
-from re import compile as re_compile
+from re import compile as re_compile, match as re_match
 from dotenv import load_dotenv
 from os import getenv
 from typing import Any, Union
@@ -18,6 +18,7 @@ from api_resources.main_endpoints.scraper.v1.file_pillowcase0su import main as s
 from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main as scraper__product_aliexpress0com
 from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
 from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
+from api_resources.main_endpoints.scraper.v1.music_soundcloud0com import main as scraper__music_soundcloud0com
 
 from api_resources.main_endpoints.others.v1.ua_info import main as others__ua_info
 from api_resources.main_endpoints.others.v1.ip_info import main as others__ip_info
@@ -216,6 +217,20 @@ endpoints_data = {
                     'optional': []
                 },
             },
+            'music-soundcloud.com': {
+                'description': 'Extracts accurate information from an existing music on "soundcloud.com" and returns it in an easy-to-understand JSON format.',
+                'rate_limit': get_rate_limit_message(1, 30, 200, 600),
+                'cache_timeout': 300,
+                'allowed_methods': ['GET'],
+                'base_endpoint_url': '/api/scraper/v1/music-soundcloud.com',
+                'full_endpoint_url': '/api/scraper/v1/music-soundcloud.com?url=',
+                'parameters': {
+                    'required': [
+                        {'name': 'url', 'type': 'string', 'description': 'The music URL you want to get the information.'},
+                    ],
+                    'optional': []
+                },
+            }
         },
         'others': {
             'ua-info': {
@@ -470,6 +485,29 @@ def _scraper__product_promotions() -> tuple[dict, int]:
         return get_output_response_data(True, output_data['data'], _data_scraper__product_promotions['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'No active promotions were found for the chosen product. Please choose another product or change its name.'), 404
+
+
+# Route: /api/scraper/v?/music-soundcloud.com
+_data_scraper__music_soundcloud0com = endpoints_data['endpoints']['scraper']['music-soundcloud.com']
+@app.route(_data_scraper__music_soundcloud0com['base_endpoint_url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_scraper__music_soundcloud0com['rate_limit'])
+@cache.cached(timeout=_data_scraper__music_soundcloud0com['cache_timeout'], make_cache_key=_make_cache_key)
+def _scraper__music_soundcloud0com() -> tuple[dict, int]:
+    def is_valid_soundcloud_track_url(url: str) -> bool:
+        pattern = r'https://soundcloud.com/[\w-]+/[\w-]+$'
+        return bool(re_match(pattern, url))
+
+    p_url = request.args.get('url')
+
+    if not p_url or not is_valid_soundcloud_track_url(p_url):
+        return get_output_response_data(False, 'The url parameter is required.'), 400
+
+    output_data = scraper__music_soundcloud0com(p_url)
+
+    if output_data:
+        return get_output_response_data(True, output_data['data'], _data_scraper__music_soundcloud0com['description'], output_data['processing_time']), 200
+    else:
+        return get_output_response_data(False, 'An error occurred while trying to get the music information. Please check the URL and try again.'), 404
 
 
 # Route: /api/others/v?/ua-info
