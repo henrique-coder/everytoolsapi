@@ -16,7 +16,7 @@ from api_resources.main_endpoints.scraper.v1.file_mediafire0com import main as s
 from api_resources.main_endpoints.scraper.v1.file_drive0google0com import main as scraper__file_drive0google0com
 from api_resources.main_endpoints.scraper.v1.file_pillowcase0su import main as scraper__file_pillowcase0su
 from api_resources.main_endpoints.scraper.v1.product_aliexpress0com import main as scraper__product_aliexpress0com
-from api_resources.main_endpoints.scraper.v1.video_youtube0com import main as scraper__video_youtube0com
+from api_resources.main_endpoints.scraper.v1.media_youtube0com import main as scraper__media_youtube0com
 from api_resources.main_endpoints.scraper.v1.product_promotions import main as scraper__product_promotions
 from api_resources.main_endpoints.scraper.v1.music_soundcloud0com import main as scraper__music_soundcloud0com
 
@@ -189,13 +189,13 @@ endpoints_data = {
                     'optional': []
                 },
             },
-            'video-youtube.com': {
+            'media-youtube.com': {
                 'description': 'Extracts accurate information from an existing video on "youtube.com" and returns it in an easy-to-understand JSON format.',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 300,
                 'allowed_methods': ['GET'],
-                'base_endpoint_url': '/api/scraper/v1/video-youtube.com',
-                'full_endpoint_url': '/api/scraper/v1/video-youtube.com?id=',
+                'base_endpoint_url': '/api/scraper/v1/media-youtube.com',
+                'full_endpoint_url': '/api/scraper/v1/media-youtube.com?id=',
                 'parameters': {
                     'required': [
                         {'name': 'id', 'type': 'alphanumeric', 'description': 'The video ID you want to get the information.'},
@@ -449,21 +449,21 @@ def _scraper__product_aliexpress0com() -> tuple[dict, int]:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
 
-# Route: /api/scraper/v?/video-youtube.com
-_data_scraper__video_youtube0com = endpoints_data['endpoints']['scraper']['video-youtube.com']
-@app.route(_data_scraper__video_youtube0com['base_endpoint_url'].split('?')[0], methods=['GET'])
-@limiter.limit(_data_scraper__video_youtube0com['rate_limit'])
-@cache.cached(timeout=_data_scraper__video_youtube0com['cache_timeout'], make_cache_key=_make_cache_key)
-def _scraper__video_youtube0com() -> tuple[dict, int]:
+# Route: /api/scraper/v?/media-youtube.com
+_data_scraper__media_youtube0com = endpoints_data['endpoints']['scraper']['media-youtube.com']
+@app.route(_data_scraper__media_youtube0com['base_endpoint_url'].split('?')[0], methods=['GET'])
+@limiter.limit(_data_scraper__media_youtube0com['rate_limit'])
+@cache.cached(timeout=_data_scraper__media_youtube0com['cache_timeout'], make_cache_key=_make_cache_key)
+def _scraper__media_youtube0com() -> tuple[dict, int]:
     p_id = request.args.get('id')
 
     if not p_id or not re_compile(r'^[a-zA-Z0-9_-]+$').match(p_id):
         return get_output_response_data(False, 'The id parameter is required and must be alphanumeric.'), 400
 
-    output_data = scraper__video_youtube0com(p_id)
+    output_data = scraper__media_youtube0com(p_id)
 
     if output_data:
-        return get_output_response_data(True, output_data['data'], _data_scraper__video_youtube0com['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, output_data['data'], _data_scraper__media_youtube0com['description'], output_data['processing_time']), 200
     else:
         return get_output_response_data(False, 'Query not found or invalid. Please check your query and try again.'), 404
 
