@@ -2,9 +2,9 @@ from flask import Flask, request, redirect, render_template
 from flask_limiter import util as flask_limiter_utils, Limiter
 from flask_caching import Cache
 from re import compile as re_compile, match as re_match
+from pathlib import Path
 from dotenv import load_dotenv
 from os import getenv
-from pathlib import Path
 from typing import Any, Union
 
 from api_resources.main_endpoints.ai.v1.ask_gemini import main as ai__ask_gemini
@@ -28,12 +28,12 @@ from api_resources.main_endpoints.others.v1.ip_info import main as others__ip_in
 load_dotenv()
 
 # Get environment variables values
-flask_port = int(getenv('FLASK_PORT'))
+flask_port = int(getenv('FLASK_PORT') if getenv('FLASK_PORT') else 5000)
 # redis_server_url = str(getenv('REDIS_SERVER_URL'))  # Uncomment this line if you want to use Redis as a cache server
 
 gemini_api_keys = list()
-gemini_api_keys.append(getenv('GEMINI_API_KEY_1'))
-gemini_api_keys.append(getenv('GEMINI_API_KEY_2'))
+gemini_api_keys.append(getenv('GEMINI_API_KEY_1') if getenv('GEMINI_API_KEY_1') else None)
+gemini_api_keys.append(getenv('GEMINI_API_KEY_2') if getenv('GEMINI_API_KEY_2') else None)
 
 # Initialize Flask app and your plugins
 app = Flask(__name__)
@@ -278,6 +278,7 @@ def show_error_page(error_code: int, error_name: str = None):
         else:
             error_name = 'Unknown Error'
 
+    print(f'[debug] Template path: {Path("static/templates/global_error_page.html").absolute().as_posix()}')
     return render_template('global_error_page.html', error_code=error_code, error_name=error_name), error_code
 
 
@@ -567,7 +568,6 @@ def _others__ip_info() -> tuple[dict, int]:
 
 
 if __name__ == '__main__':
-    app.static_folder = Path('static').resolve()
-    app.template_folder = Path('static/templates').resolve()
+    app.template_folder = Path('static/templates').absolute().as_posix()
     app.config['JSON_SORT_KEYS'] = True
     app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
