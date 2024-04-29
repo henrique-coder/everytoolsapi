@@ -567,7 +567,7 @@ def _others__ip_info() -> tuple[dict, int]:
 
 
 if __name__ == '__main__':
-    app.static_folder = Path('./static').resolve()
-    app.template_folder = Path('./static/templates').resolve()
+    app.static_folder = Path('static').resolve()
+    app.template_folder = Path('static/templates').resolve()
     app.config['JSON_SORT_KEYS'] = True
     app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
