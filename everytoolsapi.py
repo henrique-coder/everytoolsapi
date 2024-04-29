@@ -278,7 +278,7 @@ def show_error_page(error_code: int, error_name: str = None):
         else:
             error_name = 'Unknown Error'
 
-    print(f'[debug] Template path: "{Path(app.template_folder).joinpath("global_error_page.html").as_posix()}"')
+    print(f'[debug] Template path: "{Path(app.template_folder).joinpath("global_error_page.html").resolve().as_posix()}"')
     return render_template('global_error_page.html', error_code=error_code, error_name=error_name), error_code
 
 
@@ -568,7 +568,7 @@ def _others__ip_info() -> tuple[dict, int]:
 
 
 if __name__ == '__main__':
-    app.config['TEMPLATE_FOLDER'] = Path('static/templates').resolve()
-    app.template_folder = Path('static/templates').resolve()
+    app.static_folder = Path('static')
+    app.template_folder = Path('templates')
     app.config['JSON_SORT_KEYS'] = True
     app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
