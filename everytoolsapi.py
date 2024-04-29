@@ -1,10 +1,10 @@
-from flask import Flask, request, redirect
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from flask import Flask, request, redirect, render_template
+from flask_limiter import util as flask_limiter_utils, Limiter
 from flask_caching import Cache
 from re import compile as re_compile, match as re_match
 from dotenv import load_dotenv
 from os import getenv
+from pathlib import Path
 from typing import Any, Union
 
 from api_resources.main_endpoints.ai.v1.ask_gemini import main as ai__ask_gemini
@@ -39,7 +39,7 @@ gemini_api_keys.append(getenv('GEMINI_API_KEY_2'))
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'simple'  # Change to "redis" if you want to use Redis as a cache server
 # app.config['CACHE_REDIS_URL'] = redis_server_url  # Uncomment this line if you want to use Redis as a cache server
-limiter = Limiter(app=app, key_func=get_remote_address, storage_uri='memory://')  # Change storage_uri to "redis" if you want to use Redis as a cache server
+limiter = Limiter(app=app, key_func=flask_limiter_utils.get_remote_address, storage_uri='memory://')  # Change storage_uri to "redis" if you want to use Redis as a cache server
 cache = Cache(app)
 
 
@@ -265,17 +265,38 @@ endpoints_data = {
     }
 }
 
+
 # Flask error handlers
+def show_error_page(error_code: int, error_name: str = None):
+    if not error_name:
+        if error_code == 404:
+            error_name = 'Not Found'
+        elif error_code == 429:
+            error_name = 'Rate Limit Exceeded'
+        elif error_code == 500:
+            error_name = 'Internal Server Error'
+        else:
+            error_name = 'Unknown Error'
+
+    return render_template('global_error_page.html', error_code=error_code, error_name=error_name), error_code
+
+
 @app.errorhandler(404)
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
-def weberror_404(_) -> tuple[dict, int]:
-    return {'success': False, 'message': 'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.'}, 404
+def weberror_404(_) -> render_template:
+    return show_error_page(404)
 
 
 @app.errorhandler(429)
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
-def weberror_429(_) -> tuple[dict, int]:
-    return ({'success': False, 'message': 'You have exceeded the rate limit! Please wait a few seconds and try again.'}), 429
+def weberror_429(_) -> render_template:
+    return show_error_page(429)
+
+
+@app.errorhandler(500)
+@cache.cached(timeout=28800, make_cache_key=_make_cache_key)
+def weberror_500(_) -> render_template:
+    return show_error_page(500)
 
 
 # Flask general routes
@@ -546,5 +567,7 @@ def _others__ip_info() -> tuple[dict, int]:
 
 
 if __name__ == '__main__':
+    app.static_folder = Path('./static').resolve()
+    app.template_folder = Path('./static/templates').resolve()
     app.config['JSON_SORT_KEYS'] = True
     app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)

@@ -9,7 +9,7 @@
 
 <div align="center">
   <a href="https://github.com/Henrique-Coder/everytoolsapi">
-    <img src="images/logo/96x96.png" alt="Logo" width="96" height="96">
+    <img src=".github/images/logo/96x96.png" alt="Logo" width="96" height="96">
   </a>
 
   <h3 align="center">EveryTools API</h3>
@@ -79,7 +79,7 @@ To get a local copy up and running, follow these simple steps.
 
 You will need the following software installed on your machine to run the website locally:
 
-- [Python 3.11.8](https://www.python.org/downloads/release/python-3118)
+- [Python 3.11.9](https://www.python.org/downloads/release/python-3119)
 
 <!-- INSTALLATION -->
 ### Installation
