@@ -1,16 +1,16 @@
-from youtube_dl import YoutubeDL
-from httpx import head
 from datetime import datetime
-from unicodedata import normalize
 from re import sub as re_sub
-from urllib.parse import unquote
 from time import perf_counter
 from typing import Union
+from urllib.parse import unquote
+from httpx import head
+from unicodedata import normalize
+from youtube_dl import YoutubeDL
 
 
 def main(url: str) -> Union[dict, None]:
-    def sanitize_string(title: str) -> str:
-        normalized_string = normalize('NFKD', title).encode('ASCII', 'ignore').decode('utf-8')
+    def sanitize_string(string: str) -> str:
+        normalized_string = normalize('NFKD', string).encode('ASCII', 'ignore').decode('utf-8')
         sanitized_string = re_sub(r'\s+', ' ', re_sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string).strip())
 
         return sanitized_string

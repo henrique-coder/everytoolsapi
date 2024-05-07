@@ -1,10 +1,10 @@
-from yt_dlp import YoutubeDL
-from urllib.parse import unquote
-from unicodedata import normalize
-from re import sub as re_sub, compile as re_compile
 from datetime import datetime
+from re import sub as re_sub, compile as re_compile
 from time import perf_counter
 from typing import Union
+from urllib.parse import unquote
+from unicodedata import normalize
+from yt_dlp import YoutubeDL
 
 
 # Lists with regular expressions with forbidden URLs
@@ -130,6 +130,7 @@ def main(_id: str) -> Union[dict, None]:
                     'bitrate': int(format_info.get('abr', 0)),
                     'sample_rate': int(format_info.get('asr', 0)),
                 }
+
                 # Adding information about audio only if bitrate is not 0
                 if audio_data['bitrate'] != 0:
                     audio_data['size'] = int(format_info.get('filesize', 0))

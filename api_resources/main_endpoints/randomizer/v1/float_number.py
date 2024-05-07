@@ -1,7 +1,7 @@
-from random import uniform, choice
-from typing import Union
 from math import floor
+from random import uniform, choice
 from time import perf_counter
+from typing import Union
 
 
 def main(min_value: float, max_value: float) -> Union[dict, None]:

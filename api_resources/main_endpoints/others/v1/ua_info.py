@@ -1,7 +1,7 @@
-from typing import Union
-from werkzeug.user_agent import UserAgent
-from user_agents import parse as user_agent_parser
 from time import perf_counter
+from typing import Union
+from user_agents import parse as UserAgentParser
+from werkzeug.user_agent import UserAgent
 
 
 def main(request_user_agent: UserAgent = None, custom_ua: Union[str, None] = None) -> Union[dict, None]:
@@ -16,7 +16,7 @@ def main(request_user_agent: UserAgent = None, custom_ua: Union[str, None] = Non
     else:
         ua_string = str(custom_ua).strip()
 
-    user_agent = user_agent_parser(ua_string)
+    user_agent = UserAgentParser(ua_string)
 
     generated_data['data']['ua_string'] = user_agent.ua_string
     generated_data['data']['os'] = {'family': user_agent.os.family, 'version': user_agent.os.version, 'version_string': user_agent.os.version_string}
