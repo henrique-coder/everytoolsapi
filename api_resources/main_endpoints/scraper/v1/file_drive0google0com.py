@@ -1,12 +1,11 @@
-from httpx import head, _exceptions as httpx_exceptions
-from uuid import uuid4
 from time import perf_counter
 from typing import Union
+from uuid import uuid4
+from fake_useragent import UserAgent as FakeUserAgent
+from httpx import head, _exceptions as httpx_exceptions
 
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-}
+user_agent = FakeUserAgent()
 
 
 def main(_id: str) -> Union[dict, None]:
@@ -16,7 +15,7 @@ def main(_id: str) -> Union[dict, None]:
     url = f'https://drive.usercontent.google.com/download?id={_id}&confirm=t&uuid={uuid4()}'
 
     try:
-        resp = head(url, headers=headers, timeout=5)
+        resp = head(url, headers={'User-Agent': user_agent.random}, timeout=10)
         resp.raise_for_status()
     except httpx_exceptions.HTTPError:
         return None

@@ -1,13 +1,13 @@
-from httpx import get, _exceptions as httpx_exceptions
-from bs4 import BeautifulSoup
-from urllib.parse import unquote
 from time import perf_counter
 from typing import Union
+from urllib.parse import unquote
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent as FakeUserAgent
+from httpx import get, _exceptions as httpx_exceptions
 
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-}
+user_agent = FakeUserAgent()
+
 
 main_promotion_websites = {
     'boletando.com': 'https://boletando.com/?s={}&asp_active=1&p_asid=1',
@@ -21,7 +21,7 @@ def main(_name: str) -> Union[dict, None]:
     for website, url in main_promotion_websites.items():
         def get_html_source_by_get_request(_url: str) -> Union[str, None]:
             try:
-                resp = get(_url, headers=headers, timeout=5)
+                resp = get(_url, headers={'User-Agent': user_agent.random}, timeout=10)
                 resp.raise_for_status()
                 return resp.text
             except httpx_exceptions.HTTPError:

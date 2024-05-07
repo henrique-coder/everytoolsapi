@@ -1,14 +1,17 @@
-from httpx import get, _exceptions as httpx_exceptions
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 from json import loads as json_loads
 from re import compile as re_compile
 from time import perf_counter
 from typing import Union
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent as FakeUserAgent
+from httpx import get, _exceptions as httpx_exceptions
+
+
+user_agent = FakeUserAgent()
 
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
     'Cookie': 'xman_f=82eZ73Yk3kUmArs2cqSaeVhIBpZUqa5s/nFuPNZUbJduW17e9ELWYOdwJD9yZAawfaLD8+Yi69pXnJy2qhqQWnyq5vD3lfKYXc8WGgVIsu4ExnaqS8zejw==;aep_usuc_f=site=usa&c_tp=USD&region=US&b_locale=en_US',
 }
 
@@ -20,7 +23,8 @@ def main(_id: str) -> Union[dict, None]:
     url = f'https://www.aliexpress.us/item/{_id}.html'
 
     try:
-        resp = get(url, follow_redirects=True, headers=headers, timeout=5)
+        headers.update({'User-Agent': user_agent.random})
+        resp = get(url, follow_redirects=True, headers=headers, timeout=10)
         resp.raise_for_status()
     except httpx_exceptions.HTTPError:
         return None

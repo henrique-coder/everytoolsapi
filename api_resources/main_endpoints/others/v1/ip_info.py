@@ -1,6 +1,10 @@
-from typing import Union
-from httpx import get, _exceptions as httpx_exceptions
 from time import perf_counter
+from typing import Union
+from fake_useragent import UserAgent as FakeUserAgent
+from httpx import get, _exceptions as httpx_exceptions
+
+
+user_agent = FakeUserAgent()
 
 
 def main(custom_ip: Union[str, None] = None) -> Union[dict, None]:
@@ -11,7 +15,7 @@ def main(custom_ip: Union[str, None] = None) -> Union[dict, None]:
         return None
 
     try:
-        response = get(f'http://ip-api.com/json/{custom_ip}?lang=en&fields=66813951', timeout=5)
+        response = get(f'http://ip-api.com/json/{custom_ip}?lang=en&fields=66813951', headers={'User-Agent': user_agent.random}, timeout=10)
         response.raise_for_status()
 
         json_response = response.json()

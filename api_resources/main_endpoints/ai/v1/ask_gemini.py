@@ -1,12 +1,12 @@
-from typing import Union
-from httpx import head, get, post
 from base64 import b64encode
 from time import perf_counter
+from typing import Union
+from fake_useragent import UserAgent as FakeUserAgent
+from httpx import head, get, post
 
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36',
-}
+user_agent = FakeUserAgent()
+
 
 def main(gemini_api_keys: list, prompt: str, image_url: str = None) -> Union[dict, None]:
     start_time = perf_counter()
@@ -18,7 +18,7 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None) -> Union[dic
 
     def detect_mimetype(url: str) -> Union[str, None]:
         try:
-            response = head(url, headers=headers, follow_redirects=True, timeout=5)
+            response = head(url, headers={'User-Agent': user_agent.random}, follow_redirects=True, timeout=10)
             response.raise_for_status()
 
             if response.status_code == 200:
@@ -35,7 +35,7 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None) -> Union[dic
 
     def get_url_bytes(url: str) -> Union[bytes, None]:
         try:
-            response = get(url, headers=headers, follow_redirects=True, timeout=5)
+            response = get(url, headers={'User-Agent': user_agent.random}, follow_redirects=True, timeout=10)
             response.raise_for_status()
 
             if response.status_code == 200:
@@ -53,7 +53,7 @@ def main(gemini_api_keys: list, prompt: str, image_url: str = None) -> Union[dic
     available_models = {'text_only': 'gemini-pro', 'text_and_image': 'gemini-pro-vision'}
 
     params = {'key': None}
-    headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    headers = {'User-Agent': user_agent.random, 'Content-Type': 'application/json', 'Accept': 'application/json'}
     body = {
         'contents': [
             {
