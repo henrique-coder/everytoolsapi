@@ -10,3 +10,4 @@ lxml
 yt-dlp
 youtube-dl
 user-agents
+fake-useragent
