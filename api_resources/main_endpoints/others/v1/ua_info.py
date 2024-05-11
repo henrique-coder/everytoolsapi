@@ -1,7 +1,7 @@
 from time import perf_counter
-from typing import Union
 from user_agents import parse as UserAgentParser
 from werkzeug.user_agent import UserAgent
+from typing import *
 
 
 def main(request_user_agent: UserAgent = None, custom_ua: Union[str, None] = None) -> Union[dict, None]:

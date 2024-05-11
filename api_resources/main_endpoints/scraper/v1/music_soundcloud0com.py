@@ -1,11 +1,11 @@
 from datetime import datetime
 from re import sub as re_sub
 from time import perf_counter
-from typing import Union
 from urllib.parse import unquote
 from httpx import head
 from unicodedata import normalize
 from youtube_dl import YoutubeDL
+from typing import *
 
 
 def main(url: str) -> Union[dict, None]:

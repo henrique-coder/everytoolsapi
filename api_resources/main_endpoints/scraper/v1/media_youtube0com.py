@@ -1,10 +1,10 @@
 from datetime import datetime
 from re import sub as re_sub, compile as re_compile
 from time import perf_counter
-from typing import Union
 from urllib.parse import unquote
 from unicodedata import normalize
 from yt_dlp import YoutubeDL
+from typing import *
 
 
 # Lists with regular expressions with forbidden URLs

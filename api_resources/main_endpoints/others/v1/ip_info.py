@@ -1,7 +1,7 @@
 from time import perf_counter
-from typing import Union
 from fake_useragent import UserAgent as FakeUserAgent
 from httpx import get, _exceptions as httpx_exceptions
+from typing import *
 
 
 user_agent = FakeUserAgent()

@@ -1,6 +1,6 @@
 from random import randint
 from time import perf_counter
-from typing import Union
+from typing import *
 
 
 def main(min_value: int, max_value: int) -> Union[dict, None]:
