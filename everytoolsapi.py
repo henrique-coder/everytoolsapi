@@ -88,7 +88,7 @@ endpoints_data = {
                 'description': 'Ask any AI available on our list a question and get an answer. You can also provide an image to help the AI better understand the context (if the AI supports it). Available AI models: "gemini-pro" (in: text/image), "gpt-3.5-turbo" (in: text), "gpt-3.5-turbo-16k" (in: text), "gpt-3.5-turbo-16k-0613" (in: text), "gpt-3.5-turbo-0613" (in: text), "gpt-3.5-turbo-1106" (in: text), "gpt-3.5-turbo-instruct" (in: text), "gpt-3.5-turbo-0125" (in: text), "gpt-4" (in: text), "gpt-4-turbo" (in: text), "gpt-4-turbo-preview" (in: text), "gpt-4-32k" (in: text), "gpt-4-32k-0613" (in: text), "gpt-4-0613" (in: text), "gpt-4-1106-preview" (in: text), "gpt-4-0125-preview" (in: text), "gpt-4-turbo-2024-04-09" (in: text), "claude-3-haiku" (in: text), "claude-3-sonnet" (in: text), "claude-3-opus" (in: text), "pplx-7b-chat" (in: text), "pplx-70b-chat" (in: text)',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 5,
-                'allowed_methods': ['POST'],
+                'allowed_methods': ['GET'],
                 'base_endpoint_url': '/api/ai/v1/ask',
                 'full_endpoint_url': '/api/ai/v1/ask?prompt=&image_url=',
                 'parameters': {
@@ -334,6 +334,8 @@ _data_route_ai__ask = endpoints_data['endpoints']['ai']['ask']
 @limiter.limit(_data_route_ai__ask['rate_limit'])
 @cache.cached(timeout=_data_route_ai__ask['cache_timeout'], make_cache_key=_make_cache_key)
 def _ai__ask() -> tuple[dict, int]:
+    return _route_in_maintenance()
+
     p_model = request.args.get('model')
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
