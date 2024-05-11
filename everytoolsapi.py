@@ -7,7 +7,7 @@ from flask import Flask, request, redirect, render_template
 from flask_caching import Cache
 from flask_limiter import util as flask_limiter_utils, Limiter
 
-from api_resources.main_endpoints.ai.v1.ask_gemini import main as ai__ask_gemini
+from api_resources.main_endpoints.ai.v1.ask import main as ai__ask
 
 from api_resources.main_endpoints.randomizer.v1.int_number import main as randomizer__int_number
 from api_resources.main_endpoints.randomizer.v1.float_number import main as randomizer__float_number
@@ -62,7 +62,8 @@ def get_output_response_data(success: bool, data: Union[dict, str], endpoint_des
         return {
             'api': {
                 'success': False,
-                'message': data
+                'message': data,
+                'description': endpoint_description
             }
         }
 
@@ -83,13 +84,13 @@ endpoints_data = {
     'base_api_url': 'https://everytoolsapi-henrique-coder.koyeb.app',
     'endpoints': {
         'ai': {
-            'ask-gemini': {
-                'description': 'Ask a question to Gemini AI and get an answer. You can also provide an image to help the AI understand the context better.',
+            'ask': {
+                'description': 'Ask any AI available on our list a question and get an answer. You can also provide an image to help the AI better understand the context (if the AI supports it). Available AI models: "gemini-pro" (in: text/image), "gpt-3.5-turbo" (in: text), "gpt-3.5-turbo-16k" (in: text), "gpt-3.5-turbo-16k-0613" (in: text), "gpt-3.5-turbo-0613" (in: text), "gpt-3.5-turbo-1106" (in: text), "gpt-3.5-turbo-instruct" (in: text), "gpt-3.5-turbo-0125" (in: text), "gpt-4" (in: text), "gpt-4-turbo" (in: text), "gpt-4-turbo-preview" (in: text), "gpt-4-32k" (in: text), "gpt-4-32k-0613" (in: text), "gpt-4-0613" (in: text), "gpt-4-1106-preview" (in: text), "gpt-4-0125-preview" (in: text), "gpt-4-turbo-2024-04-09" (in: text), "claude-3-haiku" (in: text), "claude-3-sonnet" (in: text), "claude-3-opus" (in: text), "pplx-7b-chat" (in: text), "pplx-70b-chat" (in: text)',
                 'rate_limit': get_rate_limit_message(1, 30, 200, 600),
                 'cache_timeout': 5,
-                'allowed_methods': ['GET'],
-                'base_endpoint_url': '/api/ai/v1/ask-gemini',
-                'full_endpoint_url': '/api/ai/v1/ask-gemini?prompt=&image_url=',
+                'allowed_methods': ['POST'],
+                'base_endpoint_url': '/api/ai/v1/ask',
+                'full_endpoint_url': '/api/ai/v1/ask?prompt=&image_url=',
                 'parameters': {
                     'required': [
                         {'name': 'prompt', 'type': 'string', 'description': 'The question you want to ask to the AI.'},
@@ -275,6 +276,8 @@ def show_error_page(error_code: int, error_name: str = None):
             error_name = 'Rate Limit Exceeded'
         elif error_code == 500:
             error_name = 'Internal Server Error'
+        elif error_code == 405:
+            error_name = 'Method Not Allowed'
         else:
             error_name = 'Unknown Error'
 
@@ -291,6 +294,12 @@ def weberror_404(_) -> render_template:
 @cache.cached(timeout=28800, make_cache_key=_make_cache_key)
 def weberror_429(_) -> render_template:
     return show_error_page(429)
+
+
+@app.errorhandler(405)
+@cache.cached(timeout=28800, make_cache_key=_make_cache_key)
+def weberror_405(_) -> render_template:
+    return show_error_page(405)
 
 
 @app.errorhandler(500)
@@ -319,24 +328,32 @@ def docs() -> tuple[dict, int]:
 
 # Flask API routes
 
-# Route: /api/ai/v?/ask-gemini
-_data_route_ai__ask_gemini = endpoints_data['endpoints']['ai']['ask-gemini']
-@app.route(_data_route_ai__ask_gemini['base_endpoint_url'], methods=_data_route_ai__ask_gemini['allowed_methods'])
-@limiter.limit(_data_route_ai__ask_gemini['rate_limit'])
-@cache.cached(timeout=_data_route_ai__ask_gemini['cache_timeout'], make_cache_key=_make_cache_key)
-def _ai__ask_gemini() -> tuple[dict, int]:
+# Route: /api/ai/v?/ask
+_data_route_ai__ask = endpoints_data['endpoints']['ai']['ask']
+@app.route(_data_route_ai__ask['base_endpoint_url'], methods=_data_route_ai__ask['allowed_methods'])
+@limiter.limit(_data_route_ai__ask['rate_limit'])
+@cache.cached(timeout=_data_route_ai__ask['cache_timeout'], make_cache_key=_make_cache_key)
+def _ai__ask() -> tuple[dict, int]:
+    p_model = request.args.get('model')
     p_prompt = request.args.get('prompt')
     p_image_url = request.args.get('image_url')
 
-    if not p_prompt or not str(p_prompt).strip():
-        return get_output_response_data(False, 'The prompt parameter is required.'), 400
+    json_data = request.get_json(force=True, silent=True)
+    if not json_data or not isinstance(json_data, list):
+        json_data = list()
 
-    output_data = ai__ask_gemini(gemini_api_keys, p_prompt, p_image_url)
+    if not p_model or not str(p_model).strip():
+        return get_output_response_data(False, 'The model parameter is required.', _data_route_ai__ask['description']), 400
+
+    if not p_prompt or not str(p_prompt).strip():
+        return get_output_response_data(False, 'The prompt parameter is required.', _data_route_ai__ask['description']), 400
+
+    output_data = ai__ask(json_data, p_model, p_prompt, p_image_url, gemini_api_keys)
 
     if output_data:
-        return get_output_response_data(True, output_data['data'], _data_route_ai__ask_gemini['description'], output_data['processing_time']), 200
+        return get_output_response_data(True, output_data['data'], _data_route_ai__ask['description'], output_data['processing_time']), 200
     else:
-        return get_output_response_data(False, f'An error occurred while trying to generate the response. Tip: make sure the image URL is valid and has one of the following MIME types: image/png, image/jpeg, image/webp, image/heic or image/heif.'), 404
+        return get_output_response_data(False, f'Some error has occurred, the chosen template does not exist or the payload is invalid. Please check your query and try again.', _data_route_ai__ask['description']), 404
 
 
 # Route: /api/randomizer/v?/int-number
