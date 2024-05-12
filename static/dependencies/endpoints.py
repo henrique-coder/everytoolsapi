@@ -5,6 +5,7 @@ from static.dependencies.version import APIVersion
 from static.dependencies.functions import APITools
 
 from static.endpoints.randomizer.v2.services import Randomizer
+from static.endpoints.requester.v2.services import Requester
 
 
 app = flask.current_app
@@ -47,4 +48,17 @@ class Endpoints:
             def float_number(min_value: Any, max_value: Any) -> dict:
                 timer = APITools.Timer()
                 response = Randomizer.float_number(min_value, max_value)
+                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+
+        class Requester:
+            @staticmethod
+            def user_agent(headers: Any, value: Any) -> dict:
+                timer = APITools.Timer()
+                response = Requester.user_agent(headers, value)
+                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+
+            @staticmethod
+            def ip_address(remote_ip_address: Any, value: Any) -> dict:
+                timer = APITools.Timer()
+                response = Requester.ip_address(remote_ip_address, value)
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
