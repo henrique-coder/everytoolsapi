@@ -84,6 +84,6 @@ def randomizer_float_number(version: str) -> Any:
 if __name__ == '__main__':
     app.config['CACHE_TYPE'] = 'simple'
     app.config['JSON_SORT_KEYS'] = True
-    app.static_folder = Path('static')
-    app.template_folder = Path('static/templates')
+    app.template_folder = Path(Path.cwd(), 'static', 'templates').resolve()
+    print(app.template_folder)  # Debugging purposes
     app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
