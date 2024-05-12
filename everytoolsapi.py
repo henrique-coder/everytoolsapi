@@ -34,7 +34,7 @@ def show_error_page(error_code: int, custom_error_name: str = None):
         error_name = HTTPStatus(error_code).phrase
         custom_error_name = error_name
 
-    return flask.render_template('web-errors/generic.html', error_code=error_code, error_name=custom_error_name), error_code
+    return flask.render_template('web_errors.html', error_code=error_code, error_name=custom_error_name), error_code
 
 @app.errorhandler(404)
 def error_404(e: Exception) -> Tuple[str, int]: return show_error_page(404)
@@ -84,6 +84,6 @@ def randomizer_float_number(version: str) -> Any:
 if __name__ == '__main__':
     app.config['CACHE_TYPE'] = 'simple'
     app.config['JSON_SORT_KEYS'] = True
-    app.static_folder = Path(Path.cwd(), 'static').resolve()
-    app.template_folder = Path(app.static_folder, 'templates').resolve()
+    app.static_folder = Path('static')
+    app.template_folder = Path('static/templates')
     app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
