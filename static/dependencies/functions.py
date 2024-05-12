@@ -149,3 +149,26 @@ class APITools:
 
         output_data = {'api': {'success': data['success'], 'elapsedTime': elapsed_time, 'errorMessage': data['errorMessage']}, 'response': data['response']}
         return output_data
+
+    @staticmethod
+    def set_none_if_empty(data: Any) -> Optional[Any]:
+        """
+        Set None if the data is empty.
+        :param data: The data to check.
+        """
+
+        try:
+            if isinstance(data, str) and not data.strip(): return None
+            else: return data
+        except AttributeError: return None
+
+    @staticmethod
+    def remove_keys_from_dict(data: dict, keys: List[str]) -> dict:
+        """
+        Remove keys from a dictionary.
+        :param data: The dictionary to remove keys from.
+        :param keys: The keys to remove from the dictionary.
+        """
+
+        for key in keys: data.pop(key, None)
+        return data
