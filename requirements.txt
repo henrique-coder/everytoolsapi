@@ -1,15 +1,15 @@
 flask
 gunicorn
 python-dotenv
+user-agents
+httpx
 
 # flask-limiter
 # flask-caching
 # redis
-# httpx
 # beautifulsoup4
 # lxml
 # yt-dlp
 # youtube-dl
-# user-agents
 # fake-useragent
 # langcodes
