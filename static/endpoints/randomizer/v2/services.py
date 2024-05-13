@@ -3,16 +3,17 @@ from math import floor
 from random import uniform, choice
 from typing import *
 
+from static.dependencies.functions import APITools
 from static.dependencies.exceptions import Exceptions
 
-
-output_dict = {'success': False, 'errorMessage': str(), 'response': dict()}
 
 class Randomizer:
     @staticmethod
     def int_number(min_value: Any, max_value: Any) -> dict:
+        output_dict = APITools.get_default_output_dict()
+
         # Input parameter validation
-        if not str(min_value).strip() or not str(max_value).strip():
+        if not min_value or not max_value:
             output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('min_value, max_value')
             return output_dict
 
@@ -36,8 +37,10 @@ class Randomizer:
 
     @staticmethod
     def float_number(min_value: Any, max_value: Any) -> dict:
+        output_dict = APITools.get_default_output_dict()
+
         # Input parameter validation
-        if not str(min_value).strip() or not str(max_value).strip():
+        if not min_value or not max_value:
             output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('min_value, max_value')
             return output_dict
 

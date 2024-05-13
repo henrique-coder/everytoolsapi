@@ -41,24 +41,24 @@ class Endpoints:
             @staticmethod
             def int_number(min_value: Any, max_value: Any) -> dict:
                 timer = APITools.Timer()
-                response = Randomizer.int_number(min_value, max_value)
+                response = Randomizer.int_number(APITools.set_none_if_empty(min_value), APITools.set_none_if_empty(max_value))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
             @staticmethod
             def float_number(min_value: Any, max_value: Any) -> dict:
                 timer = APITools.Timer()
-                response = Randomizer.float_number(min_value, max_value)
+                response = Randomizer.float_number(APITools.set_none_if_empty(min_value), APITools.set_none_if_empty(max_value))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
         class Requester:
             @staticmethod
-            def user_agent(headers: Any, value: Any) -> dict:
+            def user_agent(remote_user_agent_header: Any, value: Any) -> dict:
                 timer = APITools.Timer()
-                response = Requester.user_agent(headers, value)
+                response = Requester.user_agent(APITools.set_none_if_empty(remote_user_agent_header), APITools.set_none_if_empty(value))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
             @staticmethod
-            def ip_address(remote_ip_address: Any, value: Any) -> dict:
+            def ip_address(remote_ip_address_header: Any, value: Any) -> dict:
                 timer = APITools.Timer()
-                response = Requester.ip_address(remote_ip_address, value)
+                response = Requester.ip_address(APITools.set_none_if_empty(remote_ip_address_header), APITools.set_none_if_empty(value))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)

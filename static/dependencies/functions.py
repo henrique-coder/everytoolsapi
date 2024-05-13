@@ -153,14 +153,54 @@ class APITools:
     @staticmethod
     def set_none_if_empty(data: Any) -> Optional[Any]:
         """
-        Set None if the data is empty.
-        :param data: The data to check.
+        Set a value to None if it is empty.
+        :param data: Any value to check.
         """
 
         try:
-            if isinstance(data, str) and not data.strip(): return None
-            else: return data
-        except AttributeError: return None
+            if isinstance(data, str) and not data.strip():
+                return None
+            elif isinstance(data, list):
+                stripped_data = [item.strip() if isinstance(item, str) else item for item in data]
+                if all(item is None for item in stripped_data):
+                    return None
+                elif all(item == str() for item in stripped_data):
+                    return None
+                else:
+                    return stripped_data
+            elif isinstance(data, dict):
+                stripped_dict = {}
+                for key, value in data.items():
+                    if isinstance(key, str):
+                        stripped_key = key.strip()
+                        if stripped_key == str():
+                            continue
+                    else:
+                        stripped_key = key
+                    if isinstance(value, str):
+                        stripped_value = value.strip()
+                        if stripped_value == str():
+                            stripped_value = None
+                    else:
+                        stripped_value = value
+                    stripped_dict[stripped_key] = stripped_value
+                if not stripped_dict:
+                    return None
+                else:
+                    return stripped_dict
+            elif isinstance(data, (tuple, set)):
+                if not data:
+                    return None
+                else:
+                    return data
+            elif isinstance(data, bool) and not data:
+                return None
+            elif data is None:
+                return None
+            else:
+                return data
+        except AttributeError:
+            return None
 
     @staticmethod
     def remove_keys_from_dict(data: dict, keys: List[str]) -> dict:
@@ -172,3 +212,11 @@ class APITools:
 
         for key in keys: data.pop(key, None)
         return data
+
+    @staticmethod
+    def get_default_output_dict() -> dict:
+        """
+        Get the default output dictionary. (success: False, errorMessage: str(), response: dict())
+        """
+
+        return {'success': False, 'errorMessage': str(), 'response': dict()}

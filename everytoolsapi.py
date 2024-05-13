@@ -83,7 +83,7 @@ def randomizer_float_number(version: str) -> Any:
 @app.route('/api/<version>/requester/user-agent/', methods=['GET'])
 def requester_user_agent(version: str) -> Any:
     APITools.check_main_request(flask.request.remote_addr, None, version, latest_api_version)
-    return Endpoints.api_version(version).Requester.user_agent(flask.request.headers, flask.request.args.get('value'))
+    return Endpoints.api_version(version).Requester.user_agent(flask.request.user_agent.string, flask.request.args.get('value'))
 
 @app.route('/api/<version>/requester/ip-address/', methods=['GET'])
 def requester_ip_address(version: str) -> Any:

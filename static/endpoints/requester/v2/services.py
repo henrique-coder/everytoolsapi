@@ -6,30 +6,18 @@ from static.dependencies.functions import APITools
 from static.dependencies.exceptions import Exceptions
 
 
-output_dict = {'success': False, 'errorMessage': str(), 'response': dict()}
-
-
 class Requester:
     @staticmethod
-    def user_agent(headers: Any, value: Any) -> dict:
-        # Input parameter validation
-        headers, value = APITools.set_none_if_empty(headers), APITools.set_none_if_empty(value)
+    def user_agent(remote_user_agent_header: Any, value: Any) -> dict:
+        output_dict = APITools.get_default_output_dict()
 
-        if not value and not headers:
-            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('headers, value')
+        # Input parameter validation
+        if not value and not remote_user_agent_header:
+            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('value')
             return output_dict
 
         if value: ua_string = value
-        else:
-            try: headers = dict(headers)
-            except ValueError:
-                output_dict['errorMessage'] = Exceptions.INVALID_REQUEST_HEADERS.message
-                return output_dict
-
-            if 'User-Agent' in headers: ua_string = headers['User-Agent']
-            else:
-                output_dict['errorMessage'] = Exceptions.USER_AGENT_HEADER_NOT_FOUND.message
-                return output_dict
+        else: ua_string = remote_user_agent_header
 
         # Main process
         user_agent = UserAgentParser(ua_string)
@@ -47,16 +35,16 @@ class Requester:
         return output_dict
 
     @staticmethod
-    def ip_address(remote_ip_address: Any, ip: Any) -> dict:
-        # Input parameter validation
-        remote_ip_address, ip = APITools.set_none_if_empty(remote_ip_address), APITools.set_none_if_empty(ip)
+    def ip_address(remote_ip_address_header: Any, value: Any) -> dict:
+        output_dict = APITools.get_default_output_dict()
 
-        if not ip and not remote_ip_address:
+        # Input parameter validation
+        if not value and not remote_ip_address_header:
             output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('remote_ip_address, ip')
             return output_dict
 
-        if ip: ip_address = ip
-        else: ip_address = remote_ip_address
+        if value: ip_address = value
+        else: ip_address = remote_ip_address_header
 
         # Main process
         try:
