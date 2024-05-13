@@ -66,8 +66,8 @@ class Requester:
             output_dict['success'], output_dict['response'] = True, dict_data
             return output_dict
         else:
-            if dict_data['message'] == 'private range': output_dict['errorMessage'] = Exceptions.IPAPI_PRIVATE_RANGE.message.format(ip_address)
-            elif dict_data['message'] == 'reserved range': output_dict['errorMessage'] = Exceptions.IPAPI_RESERVED_RANGE.message.format(ip_address)
-            elif dict_data['message'] == 'invalid query': output_dict['errorMessage'] = Exceptions.INVALID_PUBLIC_IP_ADDRESS.message.format(ip_address)
+            if dict_data['message'] == 'private range': output_dict['errorMessage'] = Exceptions.IPAPI_PRIVATE_RANGE.message
+            elif dict_data['message'] == 'reserved range': output_dict['errorMessage'] = Exceptions.IPAPI_RESERVED_RANGE.message
+            elif dict_data['message'] == 'invalid query': output_dict['errorMessage'] = Exceptions.INVALID_PUBLIC_IP_ADDRESS.message
             else: output_dict['errorMessage'] = Exceptions.ONLINE_REQUEST_FAILED.message
             return output_dict

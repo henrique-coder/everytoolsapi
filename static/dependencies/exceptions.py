@@ -36,10 +36,10 @@ class Exceptions:
         message = 'This request failed, please try again or report this error at https://github.com/Henrique-Coder/everytoolsapi/issues.'
 
     class INVALID_PUBLIC_IP_ADDRESS:
-        message = 'The IP address is invalid ({0}). Please enter a valid public IP address.'
+        message = 'The IP address is invalid. Please enter a valid public IP address.'
 
     class IPAPI_PRIVATE_RANGE:
-        message = 'The IP address is in a private range ({0}). Please enter a public IP address.'
+        message = 'The IP address is in a private range. Please enter a public IP address.'
 
     class IPAPI_RESERVED_RANGE:
-        message = 'The IP address is in a reserved range ({0}). Please enter a public IP address.'
+        message = 'The IP address is in a reserved range. Please enter a public IP address.'
