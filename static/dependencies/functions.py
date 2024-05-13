@@ -123,21 +123,21 @@ class APITools:
         return None
 
     @staticmethod
-    def gen_api_status_response_dict(is_existing: bool, query_version: str = None, latest_version: str = None) -> dict:
+    def gen_api_status_response_dict(has_existed: bool, query_version: str = None, latest_version: str = None) -> dict:
         """
         Generate a dictionary with the API response.
-        :param is_existing: A boolean to determine if the API version is existing.
+        :param has_existed: A boolean to determine if the API version is existing.
         :param query_version: The version of the API that is being queried.
         :param latest_version: The latest version of the API.
         """
 
-        if is_existing:
+        if has_existed:
             if query_version == latest_version:
-                return {'isLatest': True, 'is_existent': True, 'latestVersion': latest_version, 'message': Exceptions.USING_LATEST_API_VERSION.message}
+                return {'isLatest': True, 'hasExisted': True, 'latestVersion': latest_version, 'message': Exceptions.USING_LATEST_API_VERSION.message}
             else:
-                return {'isLatest': False, 'is_existent': True, 'latestVersion': latest_version, 'message': Exceptions.USING_OUTDATED_API_VERSION.message}
+                return {'isLatest': False, 'hasExisted': True, 'latestVersion': latest_version, 'message': Exceptions.USING_OUTDATED_API_VERSION.message}
         else:
-            return {'isLatest': False, 'is_existent': False, 'latestVersion': latest_version, 'message': Exceptions.USING_INVALID_API_VERSION.message}
+            return {'isLatest': False, 'hasExisted': False, 'latestVersion': latest_version, 'message': Exceptions.USING_INVALID_API_VERSION.message}
 
     @staticmethod
     def gen_api_output_dict(elapsed_time: float, data: dict = None) -> dict:
