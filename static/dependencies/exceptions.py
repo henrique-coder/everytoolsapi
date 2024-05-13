@@ -1,10 +1,4 @@
-from typing import *
-
-
 class Exceptions:
-    class INVALID_FLASK_PORT_ENVIRONMENT_VARIABLE:
-        message = 'The FLASK_PORT environment variable must be an integer.'
-
     class USING_LATEST_API_VERSION:
         message = 'This version is the latest version of the API.'
 
@@ -29,9 +23,6 @@ class Exceptions:
     class INVALID_REQUEST_HEADERS:
         message = 'The request headers are invalid. Please check the headers and try again.'
 
-    class USER_AGENT_HEADER_NOT_FOUND:
-        message = 'The "User-Agent" header was not found in the request headers.'
-
     class ONLINE_REQUEST_FAILED:
         message = 'This request failed, please try again or report this error at https://github.com/Henrique-Coder/everytoolsapi/issues.'
 
@@ -43,3 +34,12 @@ class Exceptions:
 
     class IPAPI_RESERVED_RANGE:
         message = 'The IP address is in a reserved range. Please enter a public IP address.'
+
+    class INVALID_YOUTUBE_URL:
+        message = 'The YouTube URL is invalid. Please enter a valid URL.'
+
+    class NOT_VIDEO_YOUTUBE_URL:
+        message = 'The YouTube URL is not a video. Please enter a valid video URL.'
+
+    class YOUTUBE_MEDIA_URL_INACCESSIBLE:
+        message = 'The YouTube URL does not exist. Please choose a URL that does exist, is public and can be accessed elsewhere.'

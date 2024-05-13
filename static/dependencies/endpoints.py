@@ -4,8 +4,9 @@ from typing import *
 from static.dependencies.version import APIVersion
 from static.dependencies.functions import APITools
 
-from static.endpoints.randomizer.v2.services import Randomizer
-from static.endpoints.requester.v2.services import Requester
+from static.endpoints.randomizer.v2 import Randomizer
+from static.endpoints.requester.v2 import Requester
+from static.endpoints.scraper.v2 import Scraper
 
 
 app = flask.current_app
@@ -61,4 +62,11 @@ class Endpoints:
             def ip_address(remote_ip_address_header: Any, value: Any) -> dict:
                 timer = APITools.Timer()
                 response = Requester.ip_address(APITools.set_none_if_empty(remote_ip_address_header), APITools.set_none_if_empty(value))
+                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+
+        class Scraper:
+            @staticmethod
+            def youtube_com(url: Any) -> dict:
+                timer = APITools.Timer()
+                response = Scraper.youtube_com(APITools.set_none_if_empty(url))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)

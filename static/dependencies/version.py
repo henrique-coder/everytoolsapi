@@ -1,5 +1,4 @@
 import flask
-from typing import *
 
 
 app = flask.current_app

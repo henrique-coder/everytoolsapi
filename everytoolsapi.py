@@ -1,6 +1,5 @@
 import flask
 from pathlib import Path
-from dotenv import load_dotenv
 from os import getenv
 from http import HTTPStatus
 from typing import *
@@ -8,17 +7,12 @@ from typing import *
 from static.dependencies.version import APIVersion
 from static.dependencies.functions import APITools
 from static.dependencies.endpoints import Endpoints
-from static.dependencies.exceptions import Exceptions
 
 
 app = flask.Flask(__name__)
 app.app_context().push()
 
 latest_api_version = APIVersion.Latest().version
-
-load_dotenv()
-try: flask_port = int(getenv('FLASK_PORT'))
-except ValueError: raise ValueError(Exceptions.INVALID_FLASK_PORT_ENVIRONMENT_VARIABLE.message)
 
 google_gemini_api_keys = list()
 start_number = 0
@@ -44,6 +38,9 @@ def error_429(e: Exception) -> Tuple[str, int]: return show_error_page(429)
 
 @app.errorhandler(500)
 def error_500(e: Exception) -> Tuple[str, int]: return show_error_page(500)
+
+@app.errorhandler(503)
+def error_503(e: Exception) -> Tuple[str, int]: return show_error_page(503)
 
 @app.route('/', methods=['GET'])
 def initial_page() -> Union[str, Any]:
@@ -72,27 +69,33 @@ def api_version_status(version: str) -> Union[Dict[str, Union[bool, str]], Any]:
 
 @app.route(f'/api/<version>/randomizer/int-number/', methods=['GET'])
 def randomizer_int_number(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, (1, 120, 6000, 16000), version, latest_api_version)
+    APITools.check_main_request(flask.request.remote_addr, (0, 120, 6000, 16000), version, latest_api_version)
     return Endpoints.api_version(version).Randomizer.int_number(flask.request.args.get('min'), flask.request.args.get('max'))
 
 @app.route('/api/<version>/randomizer/float-number/', methods=['GET'])
 def randomizer_float_number(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, (1, 120, 6000, 16000), version, latest_api_version)
+    APITools.check_main_request(flask.request.remote_addr, (0, 120, 6000, 16000), version, latest_api_version)
     return Endpoints.api_version(version).Randomizer.float_number(flask.request.args.get('min'), flask.request.args.get('max'))
 
 @app.route('/api/<version>/requester/user-agent/', methods=['GET'])
 def requester_user_agent(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, None, version, latest_api_version)
+    APITools.check_main_request(flask.request.remote_addr, (1, 60, 4000, 12000), version, latest_api_version)
     return Endpoints.api_version(version).Requester.user_agent(flask.request.user_agent.string, flask.request.args.get('value'))
 
 @app.route('/api/<version>/requester/ip-address/', methods=['GET'])
 def requester_ip_address(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, None, version, latest_api_version)
+    APITools.check_main_request(flask.request.remote_addr, (1, 60, 3000, 10000), version, latest_api_version)
     return Endpoints.api_version(version).Requester.ip_address(flask.request.remote_addr, flask.request.args.get('value'))
+
+@app.route('/api/<version>/scraper/media-youtube.com/', methods=['GET'])
+def scraper_youtube_com(version: str) -> Any:
+    APITools.check_main_request(flask.request.remote_addr, (1, 30, 2000, 6000), version, latest_api_version)
+    APITools.endpoint_api_in_maintenance()
+    return Endpoints.api_version(version).Scraper.youtube_com(flask.request.args.get('url'))
 
 
 if __name__ == '__main__':
     app.config['CACHE_TYPE'] = 'simple'
     app.config['JSON_SORT_KEYS'] = True
     app.template_folder = Path(Path.cwd(), 'templates').resolve()
-    app.run(host='0.0.0.0', port=flask_port, threaded=True, debug=False)
+    app.run(load_dotenv=True, host='0.0.0.0', port=13579, threaded=True, debug=False)

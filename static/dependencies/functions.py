@@ -123,6 +123,15 @@ class APITools:
         return None
 
     @staticmethod
+    def endpoint_api_in_maintenance(error_code: int = 503) -> None:
+        """
+        Return an error response for the API when it is in maintenance.
+        :param error_code: The error code to return.
+        """
+
+        return flask.abort(error_code)
+
+    @staticmethod
     def gen_api_status_response_dict(has_existed: bool, query_version: str = None, latest_version: str = None) -> dict:
         """
         Generate a dictionary with the API response.
