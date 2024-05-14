@@ -77,24 +77,24 @@ def randomizer_float_number(version: str) -> Any:
     APITools.check_main_request(flask.request.remote_addr, (0, 120, 6000, 16000), version, latest_api_version)
     return Endpoints.api_version(version).Randomizer.float_number(flask.request.args.get('min'), flask.request.args.get('max'))
 
-@app.route('/api/<version>/requester/user-agent/', methods=['GET'])
-def requester_user_agent(version: str) -> Any:
+@app.route('/api/<version>/parser/user-agent/', methods=['GET'])
+def parser_user_agent(version: str) -> Any:
     APITools.check_main_request(flask.request.remote_addr, (1, 60, 4000, 12000), version, latest_api_version)
-    return Endpoints.api_version(version).Requester.user_agent(flask.request.user_agent.string, flask.request.args.get('value'))
+    return Endpoints.api_version(version).Parser.user_agent(flask.request.user_agent.string, flask.request.args.get('query'))
 
 @app.route('/api/<version>/requester/ip-address/', methods=['GET'])
 def requester_ip_address(version: str) -> Any:
     APITools.check_main_request(flask.request.remote_addr, (1, 60, 3000, 10000), version, latest_api_version)
-    return Endpoints.api_version(version).Requester.ip_address(flask.request.remote_addr, flask.request.args.get('value'))
+    return Endpoints.api_version(version).Requester.ip_address(flask.request.remote_addr, flask.request.args.get('query'))
 
 @app.route('/api/<version>/scraper/media-youtube.com/', methods=['GET'])
 def scraper_youtube_com(version: str) -> Any:
     APITools.check_main_request(flask.request.remote_addr, (1, 30, 2000, 6000), version, latest_api_version)
-    return Endpoints.api_version(version).Scraper.youtube_com(flask.request.args.get('url'))
+    return Endpoints.api_version(version).Scraper.youtube_com(flask.request.args.get('query'))
 
 
 if __name__ == '__main__':
     app.config['CACHE_TYPE'] = 'simple'
     app.config['JSON_SORT_KEYS'] = True
     app.template_folder = Path(Path.cwd(), 'templates').resolve()
-    app.run(load_dotenv=True, host='0.0.0.0', port=13579, threaded=True, debug=False)
+    app.run(host='0.0.0.0', port=13579, threaded=True, load_dotenv=True, debug=False)

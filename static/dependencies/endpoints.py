@@ -1,15 +1,14 @@
-import flask
 from typing import *
 
 from static.dependencies.version import APIVersion
 from static.dependencies.functions import APITools
 
 from static.endpoints.randomizer.v2 import Randomizer
+from static.endpoints.parser.v2 import Parser
 from static.endpoints.requester.v2 import Requester
 from static.endpoints.scraper.v2 import Scraper
 
 
-app = flask.current_app
 latest_api_version = APIVersion.Latest().version
 
 
@@ -40,33 +39,34 @@ class Endpoints:
 
         class Randomizer:
             @staticmethod
-            def int_number(min_value: Any, max_value: Any) -> dict:
+            def int_number(_min: AnyStr, _max: AnyStr) -> dict:
                 timer = APITools.Timer()
-                response = Randomizer.int_number(APITools.set_none_if_empty(min_value), APITools.set_none_if_empty(max_value))
+                response = Randomizer.int_number(APITools.remove_empty_values_from_dict({'min': _min, 'max': _max}))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
             @staticmethod
-            def float_number(min_value: Any, max_value: Any) -> dict:
+            def float_number(_min: AnyStr, _max: AnyStr) -> dict:
                 timer = APITools.Timer()
-                response = Randomizer.float_number(APITools.set_none_if_empty(min_value), APITools.set_none_if_empty(max_value))
+                response = Randomizer.float_number(APITools.remove_empty_values_from_dict({'min': _min, 'max': _max}))
+                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+
+        class Parser:
+            @staticmethod
+            def user_agent(remote_user_agent_header: AnyStr, query: AnyStr) -> dict:
+                timer = APITools.Timer()
+                response = Parser.user_agent(APITools.remove_empty_values_from_dict({'remoteUserAgentHeader': remote_user_agent_header, 'query': query}))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
         class Requester:
             @staticmethod
-            def user_agent(remote_user_agent_header: Any, value: Any) -> dict:
+            def ip_address(remote_ip_address_header: AnyStr, query: AnyStr) -> dict:
                 timer = APITools.Timer()
-                response = Requester.user_agent(APITools.set_none_if_empty(remote_user_agent_header), APITools.set_none_if_empty(value))
-                return APITools.gen_api_output_dict(timer.stop_timer(), response)
-
-            @staticmethod
-            def ip_address(remote_ip_address_header: Any, value: Any) -> dict:
-                timer = APITools.Timer()
-                response = Requester.ip_address(APITools.set_none_if_empty(remote_ip_address_header), APITools.set_none_if_empty(value))
+                response = Requester.ip_address(APITools.remove_empty_values_from_dict({'remoteIpAddressHeader': remote_ip_address_header, 'query': query}))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
         class Scraper:
             @staticmethod
-            def youtube_com(url: Any) -> dict:
+            def youtube_com(query: AnyStr) -> dict:
                 timer = APITools.Timer()
-                response = Scraper.youtube_com(APITools.set_none_if_empty(url))
+                response = Scraper.youtube_com(APITools.remove_empty_values_from_dict({'query': query}))
                 return APITools.gen_api_output_dict(timer.stop_timer(), response)

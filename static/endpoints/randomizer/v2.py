@@ -9,23 +9,23 @@ from static.dependencies.exceptions import Exceptions
 
 class Randomizer:
     @staticmethod
-    def int_number(min_value: Any, max_value: Any) -> dict:
+    def int_number(input_values: Dict[str, Optional[Any]]) -> dict:
         output_dict = APITools.get_default_output_dict()
 
         # Input parameter validation
-        if not min_value or not max_value:
-            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('min_value, max_value')
+        if not input_values.get('min') or not input_values.get('max'):
+            parameter_name = 'min' if not input_values.get('min') else 'max'
+            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format(parameter_name)
             return output_dict
 
-        try:
-            min_value, max_value = int(min_value), int(max_value)
+        try: min_value, max_value = int(input_values.get('min')), int(input_values.get('max'))
         except ValueError:
-            parameter_name = 'min_value' if not isinstance(min_value, int) else 'max_value'
+            parameter_name = 'min' if not isinstance(input_values.get('min'), int) else 'max'
             output_dict['errorMessage'] = Exceptions.INVALID_PARAMETER_VALUE.message.format(parameter_name, 'integer')
             return output_dict
 
         if min_value >= max_value:
-            output_dict['errorMessage'] = Exceptions.PARAMETER_MUST_BE_LESS_THAN.message.format('min_value', 'max_value')
+            output_dict['errorMessage'] = Exceptions.PARAMETER_MUST_BE_LESS_THAN.message.format('min', 'max')
             return output_dict
 
         #  Main process
@@ -36,18 +36,19 @@ class Randomizer:
         return output_dict
 
     @staticmethod
-    def float_number(min_value: Any, max_value: Any) -> dict:
+    def float_number(input_values: Dict[str, Optional[Any]]) -> dict:
         output_dict = APITools.get_default_output_dict()
 
         # Input parameter validation
-        if not min_value or not max_value:
-            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('min_value, max_value')
+        if not input_values.get('min') or not input_values.get('max'):
+            parameter_name = 'min' if not input_values.get('min') else 'max'
+            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format(parameter_name)
             return output_dict
 
         try:
-            min_value, max_value = float(min_value), float(max_value)
+            min_value, max_value = float(input_values.get('min')), float(input_values.get('max'))
         except ValueError:
-            parameter_name = 'min_value' if not isinstance(min_value, float) else 'max_value'
+            parameter_name = 'min' if not isinstance(input_values.get('min'), float) else 'max'
             output_dict['errorMessage'] = Exceptions.INVALID_PARAMETER_VALUE.message.format(parameter_name, 'float')
             return output_dict
 
