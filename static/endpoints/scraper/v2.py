@@ -11,16 +11,20 @@ from static.dependencies.exceptions import Exceptions
 
 class Scraper:
     @staticmethod
-    def youtube_com(url: str) -> dict:
+    def youtube_com(input_values: Dict[str, Optional[Any]]) -> dict:
         output_dict = APITools.get_default_output_dict()
 
         # Input parameter validation
-        if not url:
-            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('url')
+        if not input_values['query']:
+            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('query')
             return output_dict
 
         # Main process
-        blacklisted_media_url_regexes = [compile(r'https?://(?!manifest\.googlevideo\.com)\S+')]
+        blacklisted_media_url_regexes = list()
+        blacklisted_media_urls = r'https?://(?!manifest\.googlevideo\.com)\S+'
+
+        for url in blacklisted_media_urls.split():
+            blacklisted_media_url_regexes.append(compile(url))
 
         def is_blacklisted_media_url(query: str) -> bool:
             return not any(regex.match(query) for regex in blacklisted_media_url_regexes)
@@ -115,7 +119,7 @@ class Scraper:
 
             return output_subtitle_info
 
-        response = parse_youtube_url(url)
+        response = parse_youtube_url(input_values['query'])
         if not response.get('success', False):
             output_dict['errorMessage'] = Exceptions.INVALID_YOUTUBE_URL.message
             return output_dict
