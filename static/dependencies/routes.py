@@ -1,4 +1,4 @@
-import flask
+# import flask
 
 
-app = flask.current_app
+# app = flask.current_app

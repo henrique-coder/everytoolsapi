@@ -1,12 +1,13 @@
-import flask
+from flask import abort
 from collections import defaultdict
 from time import time, perf_counter
+from fake_useragent import UserAgent
 from typing import *
 
 from static.dependencies.exceptions import Exceptions
 
 
-app = flask.current_app
+fake_user_agent = UserAgent()
 
 
 class WebErrorHandler:
@@ -114,11 +115,11 @@ class APITools:
         """
 
         if not IPRequestLimits.check_request_limits(remote_ipv4_addr, RateLimitFunctions.gen_ratelimit_dict(rate_limits)):
-            return flask.abort(429)
+            return abort(429)
 
         if query_version and latest_api_version:
             if query_version != latest_api_version:
-                return flask.abort(404)
+                return abort(404)
 
         return None
 
@@ -129,7 +130,7 @@ class APITools:
         :param error_code: The error code to return.
         """
 
-        return flask.abort(error_code)
+        return abort(error_code)
 
     @staticmethod
     def gen_api_status_response_dict(has_existed: bool, query_version: str = None, latest_version: str = None) -> dict:
@@ -212,6 +213,21 @@ class APITools:
             return None
 
     @staticmethod
+    def remove_empty_values_from_dict(data: Dict[str, Optional[Any]]) -> Dict[str, Optional[Any]]:
+        """
+        Remove empty values from a dictionary.
+        :param data: The dictionary to remove empty values from.
+        """
+
+        output_data = dict()
+
+        # Get output values from the dictionary values using set_none_if_empty(), and create a new dict with the same keys and the output values.
+        for key, value in data.items():
+            output_data[key] = APITools.set_none_if_empty(value)
+
+        return output_data
+
+    @staticmethod
     def remove_keys_from_dict(data: dict, keys: List[str]) -> dict:
         """
         Remove keys from a dictionary.
@@ -229,3 +245,13 @@ class APITools:
         """
 
         return {'success': False, 'errorMessage': str(), 'response': dict()}
+
+class OtherTools:
+    @staticmethod
+    def get_random_user_agent(browser: Literal['chrome', 'edge', 'firefox', 'safari'] = 'random') -> str:
+        """
+        Generate a fake user agent.
+        :param browser: The browser to generate the fake user agent for.
+        """
+
+        return str(fake_user_agent[browser]).strip()
