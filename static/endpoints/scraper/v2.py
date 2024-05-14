@@ -189,6 +189,14 @@ class Scraper:
         # Add subtitle data
         media_data['subtitles'] = extract_media_subtitles(extracted_data)
 
-        # Add media data to the output dictionary
-        output_dict['response'] = media_data
+        # Add info and media data to the output dictionary
+        output_dict['response'] = {
+            'info': info['info'],
+            'media': {
+                'video': media_data['video'],
+                'audio': media_data['audio'],
+                'subtitles': media_data['subtitles']
+            }
+        }
+
         return output_dict
