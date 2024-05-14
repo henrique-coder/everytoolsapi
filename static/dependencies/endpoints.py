@@ -38,35 +38,50 @@ class Endpoints:
             return APITools.gen_api_status_response_dict(True, version, latest_api_version)
 
         class Randomizer:
-            @staticmethod
-            def int_number(_min: AnyStr, _max: AnyStr) -> dict:
-                timer = APITools.Timer()
-                response = Randomizer.int_number(APITools.remove_empty_values_from_dict({'min': _min, 'max': _max}))
-                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+            class int_number:
+                info = {'methods': ['GET'], 'ratelimit': (0, 120, 6000, 16000), 'cache': 1}
 
-            @staticmethod
-            def float_number(_min: AnyStr, _max: AnyStr) -> dict:
-                timer = APITools.Timer()
-                response = Randomizer.float_number(APITools.remove_empty_values_from_dict({'min': _min, 'max': _max}))
-                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+                @staticmethod
+                def run(input_values: Dict[str, Optional[Any]]) -> dict:
+                    timer = APITools.Timer()
+                    response = Randomizer.int_number(APITools.clean_values_from_dict(input_values))
+                    return APITools.gen_api_output_dict(timer.stop_timer(), response)
+
+            class float_number:
+                info = {'methods': ['GET'], 'ratelimit': (0, 120, 6000, 16000), 'cache': 1}
+
+                @staticmethod
+                def run(input_values: Dict[str, Optional[Any]]) -> dict:
+                    timer = APITools.Timer()
+                    response = Randomizer.float_number(APITools.clean_values_from_dict(input_values))
+                    return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
         class Parser:
-            @staticmethod
-            def user_agent(remote_user_agent_header: AnyStr, query: AnyStr) -> dict:
-                timer = APITools.Timer()
-                response = Parser.user_agent(APITools.remove_empty_values_from_dict({'remoteUserAgentHeader': remote_user_agent_header, 'query': query}))
-                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+            class user_agent:
+                info = {'methods': ['GET'], 'ratelimit': (1, 60, 4000, 12000), 'cache': 3600}
+
+                @staticmethod
+                def run(input_values: Dict[str, Optional[Any]]) -> dict:
+                    timer = APITools.Timer()
+                    response = Parser.user_agent(APITools.clean_values_from_dict(input_values))
+                    return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
         class Requester:
-            @staticmethod
-            def ip_address(remote_ip_address_header: AnyStr, query: AnyStr) -> dict:
-                timer = APITools.Timer()
-                response = Requester.ip_address(APITools.remove_empty_values_from_dict({'remoteIpAddressHeader': remote_ip_address_header, 'query': query}))
-                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+            class ip_address:
+                info = {'methods': ['GET'], 'ratelimit': (1, 60, 4000, 8000), 'cache': 43200}
+
+                @staticmethod
+                def run(input_values: Dict[str, Optional[Any]]) -> dict:
+                    timer = APITools.Timer()
+                    response = Requester.ip_address(APITools.clean_values_from_dict(input_values))
+                    return APITools.gen_api_output_dict(timer.stop_timer(), response)
 
         class Scraper:
-            @staticmethod
-            def youtube_com(query: AnyStr) -> dict:
-                timer = APITools.Timer()
-                response = Scraper.youtube_com(APITools.remove_empty_values_from_dict({'query': query}))
-                return APITools.gen_api_output_dict(timer.stop_timer(), response)
+            class media_youtube_com:
+                info = {'methods': ['GET'], 'ratelimit': (1, 30, 400, 1000), 'cache': 14400}
+
+                @staticmethod
+                def run(input_values: Dict[str, Optional[Any]]) -> dict:
+                    timer = APITools.Timer()
+                    response = Scraper.media_youtube_com(APITools.clean_values_from_dict(input_values))
+                    return APITools.gen_api_output_dict(timer.stop_timer(), response)
