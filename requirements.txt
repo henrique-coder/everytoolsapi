@@ -4,6 +4,7 @@ python-dotenv
 user-agents
 httpx
 yt-dlp
+fake-useragent
 
 # flask-limiter
 # flask-caching
@@ -11,5 +12,4 @@ yt-dlp
 # beautifulsoup4
 # lxml
 # youtube-dl
-# fake-useragent
 # langcodes
