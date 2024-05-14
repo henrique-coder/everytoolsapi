@@ -11,7 +11,7 @@ from static.dependencies.exceptions import Exceptions
 
 class Scraper:
     @staticmethod
-    def youtube_com(input_values: Dict[str, Optional[Any]]) -> dict:
+    def media_youtube_com(input_values: Dict[str, Optional[Any]]) -> dict:
         output_dict = APITools.get_default_output_dict()
 
         # Input parameter validation
