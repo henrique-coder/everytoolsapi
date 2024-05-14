@@ -6,3 +6,5 @@ user-agents
 httpx
 yt-dlp
 fake-useragent
+
+flask_swagger_ui
