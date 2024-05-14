@@ -55,36 +55,36 @@ def error_500(e: Exception) -> Tuple[str, int]: return show_error_page(500)
 def error_503(e: Exception) -> Tuple[str, int]: return show_error_page(503)
 
 
-@app.route('/', methods=['GET'], make_cache_key=CacheFunctions.cache_key)
-@cache.cached(timeout=600)
+@app.route('/', methods=['GET'])
+@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
 def initial_page() -> Union[str, Any]:
     APITools.check_main_request(flask.request.remote_addr, None)
     return flask.render_template('index.html')
 
 
-@app.route('/docs/', methods=['GET'], make_cache_key=CacheFunctions.cache_key)
-@cache.cached(timeout=600)
+@app.route('/docs/', methods=['GET'])
+@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
 def documentation_page() -> Union[str, Any]:
     APITools.check_main_request(flask.request.remote_addr, None)
     return flask.render_template('documentation.html')
 
 
-@app.route('/api/', methods=['GET'], make_cache_key=CacheFunctions.cache_key)
-@cache.cached(timeout=600)
+@app.route('/api/', methods=['GET'])
+@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
 def api() -> Union[Dict[str, Union[bool, str]], Any]:
     APITools.check_main_request(flask.request.remote_addr, None)
     return flask.redirect(f'/api/{latest_api_version}/status', code=302)
 
 
-@app.route('/api/<version>/', methods=['GET'], make_cache_key=CacheFunctions.cache_key)
-@cache.cached(timeout=600)
+@app.route('/api/<version>/', methods=['GET'])
+@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
 def api_version(version: str) -> Union[Dict[str, Union[bool, str]], Any]:
     APITools.check_main_request(flask.request.remote_addr, None)
     return flask.redirect(f'/api/{version}/status', code=302)
 
 
-@app.route('/api/<version>/status/', methods=['GET'], make_cache_key=CacheFunctions.cache_key)
-@cache.cached(timeout=600)
+@app.route('/api/<version>/status/', methods=['GET'])
+@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
 def api_version_status(version: str) -> Union[Dict[str, Union[bool, str]], Any]:
     APITools.check_main_request(flask.request.remote_addr, None)
     return Endpoints.api_version(version).get_status(version)
