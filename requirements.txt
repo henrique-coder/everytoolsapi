@@ -1,15 +1,8 @@
 flask
+flask-caching
 gunicorn
 python-dotenv
 user-agents
 httpx
 yt-dlp
 fake-useragent
-
-# flask-limiter
-# flask-caching
-# redis
-# beautifulsoup4
-# lxml
-# youtube-dl
-# langcodes
