@@ -1,4 +1,4 @@
-from flask import abort
+from flask import abort, request
 from collections import defaultdict
 from time import time, perf_counter
 from fake_useragent import UserAgent
@@ -64,6 +64,15 @@ class RateLimitFunctions:
 
         data = (0, 60, 3600, 86400) if not data else data
         return {'one_every': data[0], 'max_per_minute': data[1], 'max_per_hour': data[2], 'max_per_day': data[3]}
+
+class CacheFunctions:
+    @staticmethod
+    def cache_key(*args, **kwargs) -> str:
+        """
+        Generate a cache key for the request.
+        """
+
+        return request.url
 
 class APITools:
     class Timer:
@@ -213,15 +222,14 @@ class APITools:
             return None
 
     @staticmethod
-    def remove_empty_values_from_dict(data: Dict[str, Optional[Any]]) -> Dict[str, Optional[Any]]:
+    def clean_values_from_dict(data: Dict[str, Optional[Any]]) -> Dict[str, Optional[Any]]:
         """
-        Remove empty values from a dictionary.
+        Set values to None if they are empty in a dictionary.
         :param data: The dictionary to remove empty values from.
         """
 
         output_data = dict()
 
-        # Get output values from the dictionary values using set_none_if_empty(), and create a new dict with the same keys and the output values.
         for key, value in data.items():
             output_data[key] = APITools.set_none_if_empty(value)
 
