@@ -90,7 +90,6 @@ def requester_ip_address(version: str) -> Any:
 @app.route('/api/<version>/scraper/media-youtube.com/', methods=['GET'])
 def scraper_youtube_com(version: str) -> Any:
     APITools.check_main_request(flask.request.remote_addr, (1, 30, 2000, 6000), version, latest_api_version)
-    APITools.endpoint_api_in_maintenance()
     return Endpoints.api_version(version).Scraper.youtube_com(flask.request.args.get('url'))
 
 

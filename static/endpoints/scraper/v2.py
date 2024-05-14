@@ -1,11 +1,8 @@
 from yt_dlp import YoutubeDL
-import yt_dlp
-import re
+from re import compile, search, sub
 from datetime import datetime
 from unicodedata import normalize
-import urllib.parse
-
-
+from urllib.parse import unquote
 from typing import *
 
 from static.dependencies.functions import APITools
@@ -15,6 +12,19 @@ from static.dependencies.exceptions import Exceptions
 class Scraper:
     @staticmethod
     def youtube_com(url: str) -> dict:
+        output_dict = APITools.get_default_output_dict()
+
+        # Input parameter validation
+        if not url:
+            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('url')
+            return output_dict
+
+        # Main process
+        blacklisted_media_url_regexes = [compile(r'https?://(?!manifest\.googlevideo\.com)\S+')]
+
+        def is_blacklisted_media_url(query: str) -> bool:
+            return not any(regex.match(query) for regex in blacklisted_media_url_regexes)
+
         def parse_youtube_url(query: str) -> Dict[str, Optional[Union[bool, str]]]:
             """
             Parse YouTube URL to get video and/or playlist ID.
@@ -27,8 +37,8 @@ class Scraper:
             video_regex = r'(?:(?:youtube\.com\/(?:[^\/\n\s?]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]+))'
             playlist_regex = r'(?:list=)([a-zA-Z0-9_-]+)'
 
-            video_match = re.search(video_regex, query)
-            playlist_match = re.search(playlist_regex, query)
+            video_match = search(video_regex, query)
+            playlist_match = search(playlist_regex, query)
             valid_domain = 'youtube.com' in query or 'youtu.be' in query
 
             if valid_domain:
@@ -46,14 +56,6 @@ class Scraper:
 
             return result
 
-        output_dict = APITools.get_default_output_dict()
-
-        # Input parameter validation
-        if not url:
-            output_dict['errorMessage'] = Exceptions.EMPTY_PARAMETERS_VALUE.message.format('url')
-            return output_dict
-
-        # Main process
         def format_string(query: AnyStr) -> str:
             """
             Format string to remove special characters and normalize it.
@@ -62,7 +64,7 @@ class Scraper:
             """
 
             normalized_string = normalize('NFKD', str(query)).encode('ASCII', 'ignore').decode('utf-8')
-            sanitized_string = str(re.sub(r'\s+', ' ', re.sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string)).strip())
+            sanitized_string = str(sub(r'\s+', ' ', sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string)).strip())
             return sanitized_string
 
         def extract_media_info(data: dict) -> dict:
@@ -96,6 +98,23 @@ class Scraper:
             output_data = {'mediaId': media_id, 'mediaTitle': media_title, 'formattedMediaTitle': media_formatted_title, 'mediaDescription': media_description, 'mediaUploadTime': media_upload_time, 'mediaDurationTime': media_duration_time, 'formattedMediaDurationTime': media_formatted_duration_time, 'mediaCategories': media_categories, 'mediaTags': media_tags, 'viewCount': view_count, 'likeCount': like_count, 'commentCount': comment_count, 'mediaIsStreaming': media_is_streaming, 'mediaIsAgeRestricted': media_is_age_restricted, 'mediaUrl': media_url, 'mediaShortUrl': media_short_url, 'mediaEmbedUrl': media_embed_url, 'channelId': channel_id, 'channelUrl': channel_url, 'channelName': channel_name, 'formattedChannelName': formatted_channel_name}
             return output_data
 
+        def is_video_data(data: Any) -> bool:
+            return data['vcodec'] != 'none' and not data.get('abr')
+
+        def is_audio_data(data: Any) -> bool:
+            return data.get('acodec', str()) != 'none'
+
+        def extract_media_subtitles(data: dict) -> list:
+            subtitles_data = data.get('subtitles', dict())
+            output_subtitle_info = list()
+
+            for lang, subs in subtitles_data.items():
+                for sub_info in subs:
+                    subtitle_data = {'url': str(unquote(sub_info.get('url', str()))), 'lang': str(lang), 'ext': str(sub_info.get('ext', str()))}
+                    output_subtitle_info.append(subtitle_data)
+
+            return output_subtitle_info
+
         response = parse_youtube_url(url)
         if not response.get('success', False):
             output_dict['errorMessage'] = Exceptions.INVALID_YOUTUBE_URL.message
@@ -118,9 +137,54 @@ class Scraper:
 
         try:
             extracted_data = yt.sanitize_info(yt.extract_info(url, download=False), remove_private_keys=True)
+            info = {'info': extract_media_info(extracted_data), 'media': {'video': list(), 'audio': list(), 'subtitles': list()}}
         except BaseException as e:
             output_dict['errorMessage'] = Exceptions.YOUTUBE_MEDIA_URL_INACCESSIBLE.message
             return output_dict
 
-        info = {'info': extract_media_info(extracted_data), 'media': {'video': list(), 'audio': list(), 'subtitles': list()}}
-        return info
+        media_data = info['media']
+
+        for format_data in extracted_data['formats']:
+            # Add video data
+            if is_video_data(format_data):
+                url = str(unquote(format_data.get('url', str())))
+
+                if not is_blacklisted_media_url(url):
+                    size = format_data.get('filesize', None)
+
+                    if size:
+                        data = {
+                            'url': url,
+                            'quality': int(format_data.get('height', 0)),
+                            'codec': str(format_data.get('vcodec', str())).split('.')[0],
+                            'framerate': int(format_data.get('fps', 0)),
+                            'bitrate': int(format_data.get('tbr', 0)),
+                        }
+                        media_data['video'].append(data)
+            # Add audio data
+            elif is_audio_data(format_data):
+                url = str(unquote(format_data.get('url', str())))
+
+                if not is_blacklisted_media_url(url):
+                    size = format_data.get('filesize', None)
+                    bitrate = format_data.get('abr', None)
+
+                    if size and bitrate:
+                        codec = str(format_data.get('acodec', str())).split('.')[0]
+                        samplerate = int(format_data.get('asr', 0))
+
+                        data = {
+                            'url': url,
+                            'codec': codec,
+                            'bitrate': int(bitrate),
+                            'samplerate': samplerate,
+                            'size': int(size),
+                        }
+                        media_data['audio'].append(data)
+
+        # Add subtitle data
+        media_data['subtitles'] = extract_media_subtitles(extracted_data)
+
+        # Add media data to the output dictionary
+        output_dict['response'] = media_data
+        return output_dict
