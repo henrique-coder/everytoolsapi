@@ -1,10 +1,9 @@
 flask
 flask-caching
+flask_swagger_ui
 gunicorn
 python-dotenv
 user-agents
 httpx
 yt-dlp
 fake-useragent
-
-flask_swagger_ui

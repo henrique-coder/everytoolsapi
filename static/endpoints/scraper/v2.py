@@ -199,4 +199,7 @@ class Scraper:
             }
         }
 
+        # Set success status
+        output_dict['success'] = True
+
         return output_dict
