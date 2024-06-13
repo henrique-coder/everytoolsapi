@@ -35,7 +35,7 @@ class OtherTools:
             :return: The formatted time taken by a process.
             """
 
-            return float(round(data, 3))
+            return float(round(data, 10))
 
         def get_time(self) -> float:
             """
@@ -61,7 +61,38 @@ class APITools:
     A class for API tools.
     """
 
-    pass
+    @staticmethod
+    def extract_request_data(request_object: flask.Request) -> Dict[str, Dict[Any, Any]]:
+        """
+        Extract the request data from the current request.
+        :param request_object: The current request object.
+        :return: The request arguments, headers, body, and authentication.
+        """
+
+        args = request_object.args.to_dict()
+        headers = dict(request_object.headers)
+        body = request_object.get_json(force=True, silent=True)
+
+        try: auth = request_object.authorization.__dict__
+        except AttributeError: auth = dict()
+
+        return {'args': args, 'headers': headers, 'body': body, 'auth': auth}
+
+    @staticmethod
+    def get_default_api_output_dict() -> Dict[str, Any]:
+        """
+        Get the default API output dictionary.
+        :return: The default API output dictionary.
+        """
+
+        return {
+            'api': {
+                'status': None,
+                'errorMessage': None,
+                'elapsedTime': 0.0,
+            },
+            'response': dict(),
+        }
 
 
 class LimiterTools:
@@ -70,7 +101,7 @@ class LimiterTools:
     """
 
     @staticmethod
-    def gen_ratelimit(per_sec: Union[int, float] = None, per_min: Union[int, float] = None, per_hour: Union[int, float] = None, per_day: Union[int, float] = None) -> str:
+    def gen_ratelimit_message(per_sec: Union[int, float] = None, per_min: Union[int, float] = None, per_hour: Union[int, float] = None, per_day: Union[int, float] = None) -> str:
         """
         Generate a rate limit string for any endpoint.
         :param per_sec: The number of requests allowed per second.
