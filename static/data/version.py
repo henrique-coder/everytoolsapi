@@ -1,6 +1,11 @@
 class APIVersion:
-    def __init__(self):
-        self.latest_version = 'v2'
+    """
+    A class to API version related information.
+    """
 
-    def get_latest_version(self) -> str:
-        return self.latest_version
+    def __init__(self) -> None:
+        """
+        Initialize the API version.
+        """
+
+        self.latest_version = 'v2'
