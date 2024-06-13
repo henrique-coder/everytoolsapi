@@ -13,13 +13,11 @@ from typing import *
 
 from static.data.version import APIVersion
 from static.data.functions import APITools, LimiterTools, CacheTools
+from static.data.endpoints import APIEndpoints
 
 
 # Load the environment variables
 load_dotenv()
-
-# Get the latest API version
-latest_api_version = APIVersion().latest_version
 
 # Configuration class
 class Config:
@@ -70,23 +68,28 @@ app.config['CACHE_REDIS_URL'] = str(getenv('REDIS_URL'))
 cache = Cache(app)
 
 # Setup Talisman for security headers (with custom options), CSRF protection and Compress for response compression
-talisman = Talisman(app, content_security_policy={'default-src': ['\'self\'', 'https://cdnjs.cloudflare.com'], 'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://cdnjs.cloudflare.com'], 'script-src': ['\'self\'', 'https://cdnjs.cloudflare.com']})
+talisman = Talisman(app, content_security_policy={'default-src': ["'self'", 'https://cdnjs.cloudflare.com'], 'style-src': ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'], 'script-src': ["'self'", 'https://cdnjs.cloudflare.com']})
 csrf = CSRFProtect(app)
 compression = Compress(app)
 
-# Setup Flask routes
+# Setup main routes
 @app.route('/', methods=['GET'])
-@limiter.limit(LimiterTools.gen_ratelimit(per_sec=30))
+@limiter.limit(LimiterTools.gen_ratelimit_message(per_min=60))
 @cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
 def initial_page() -> Any:
     return flask.render_template('index.html')
 
 
-@app.route('/api/<query_version>/parser/user-agent/', methods=['GET'])
-@limiter.limit(LimiterTools.gen_ratelimit(per_sec=10, per_day=1000))
-@cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
-def parser_user_agent(query_version: str) -> Any:
-    return flask.jsonify({'userAgent': flask.request.headers.get('User-Agent')})
+# Setup API routes
+_parser__user_agent = APIEndpoints.v2.parser.user_agent
+@app.route(f'/api/<query_version>{_parser__user_agent.endpoint_url}', methods=_parser__user_agent.allowed_methods)
+@limiter.limit(_parser__user_agent.ratelimit)
+@cache.cached(timeout=_parser__user_agent.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__user_agent(query_version: str) -> Any:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+
+    output_data = APIEndpoints.v2.parser.user_agent.run(APITools.extract_request_data(flask.request))
+    return flask.jsonify(output_data)
 
 
 if __name__ == '__main__':
