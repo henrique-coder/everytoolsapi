@@ -7,3 +7,5 @@ flask-compress
 gunicorn
 python-dotenv
 user-agents
+langdetect
+langcodes
