@@ -87,9 +87,10 @@ class APITools:
 
         return {
             'api': {
-                'status': None,
+                'status': False,
                 'errorMessage': None,
-                'elapsedTime': 0.0,
+                'elapsedTime': None,
+                'version': latest_api_version,
             },
             'response': dict(),
         }
