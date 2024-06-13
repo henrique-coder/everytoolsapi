@@ -1,9 +1,8 @@
 flask
+flask-limiter
 flask-caching
-flask_swagger_ui
+flask-talisman
+flask-wtf
+flask-compress
 gunicorn
 python-dotenv
-user-agents
-httpx
-yt-dlp
-fake-useragent
