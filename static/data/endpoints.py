@@ -4,31 +4,16 @@ from re import compile as re_compile, findall
 from collections import Counter
 from langdetect import detect as detect_lang, DetectorFactory, LangDetectException
 from langcodes import Language
+from googletrans import Translator
 from typing import *
 
 from static.data.functions import OtherTools, APITools, LimiterTools
 
 
 class APIEndpoints:
-    """
-    This class is a placeholder for the API endpoints.
-    """
-
     class v2:
-        """
-        This class is a placeholder for the v2 API endpoints.
-        """
-
         class parser:
-            """
-            This class is a placeholder for the "parser" API endpoints.
-            """
-
             class user_agent:
-                """
-                This class is a placeholder for the "/parser/user-agent" API endpoint.
-                """
-
                 endpoint_url = '/parser/user-agent/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
@@ -36,11 +21,6 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    """
-                    This method runs the "/parser/user-agent" API endpoint.
-                    :param request_data: The request data.
-                    """
-
                     start_time = OtherTools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -79,10 +59,6 @@ class APIEndpoints:
                     return output_data
 
             class url:
-                """
-                This class is a placeholder for the "/parser/url" API endpoint.
-                """
-
                 endpoint_url = '/parser/url/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
@@ -90,11 +66,6 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    """
-                    This method runs the "/parser/url" API endpoint.
-                    :param request_data: The request data.
-                    """
-
                     start_time = OtherTools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -122,10 +93,6 @@ class APIEndpoints:
                     return output_data
 
             class sec_to_hms:
-                """
-                This class is a placeholder for the "/parser/sec-to-hms" API endpoint.
-                """
-
                 endpoint_url = '/parser/sec-to-hms/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
@@ -133,11 +100,6 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    """
-                    This method runs the "/parser/sec-to-hms" API endpoint.
-                    :param request_data: The request data.
-                    """
-
                     start_time = OtherTools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -167,10 +129,6 @@ class APIEndpoints:
                     return output_data
 
             class email:
-                """
-                This class is a placeholder for the "/parser/email" API endpoint.
-                """
-
                 endpoint_url = '/parser/email/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
@@ -178,11 +136,6 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    """
-                    This method runs the "/parser/email" API endpoint.
-                    :param request_data: The request data.
-                    """
-
                     start_time = OtherTools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -209,10 +162,6 @@ class APIEndpoints:
                     return output_data
 
             class text_counter:
-                """
-                This class is a placeholder for the "/parser/text-counter" API endpoint.
-                """
-
                 endpoint_url = '/parser/text-counter/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
@@ -220,11 +169,6 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    """
-                    This method runs the "/parser/text-counter" API endpoint.
-                    :param request_data: The request data.
-                    """
-
                     start_time = OtherTools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -278,10 +222,6 @@ class APIEndpoints:
                     return output_data
 
             class text_lang_detector:
-                """
-                This class is a placeholder for the "/parser/text-lang-detector" API endpoint.
-                """
-
                 endpoint_url = '/parser/text-lang-detector/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
@@ -289,11 +229,6 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    """
-                    This method runs the "/parser/text-lang-detector" API endpoint.
-                    :param request_data: The request data.
-                    """
-
                     start_time = OtherTools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -312,6 +247,44 @@ class APIEndpoints:
                         return output_data
 
                     output_data['response'] = {'detectedLangCode': detected_lang, 'detectedLangName': Language.get(detected_lang).display_name('en')}
+                    output_data['api']['status'] = True
+                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+
+                    return output_data
+
+            class text_translator:
+                endpoint_url = '/parser/text-translator/'
+                allowed_methods = ['GET']
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
+                timeout = 1
+
+                @staticmethod
+                def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                    start_time = OtherTools.Timer()
+                    output_data = APITools.get_default_api_output_dict()
+
+                    # Request data validation
+                    if request_data['args'].get('query'): text = request_data['args']['query']
+                    else:
+                        output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
+                        return output_data
+
+                    if request_data['args'].get('dest_lang'): dest_lang = str(request_data['args']['dest_lang']).replace('-', '_')
+                    else:
+                        output_data['api']['errorMessage'] = 'No "dest_lang" parameter found in the request.'
+                        return output_data
+
+                    src_lang = request_data['args'].get('src_lang', None)
+
+                    # Main process
+                    try:
+                        translator = Translator()
+                        translated_text = translator.translate(text, src='auto' if not src_lang else str(src_lang).replace('-', '_'), dest=dest_lang)
+                    except ValueError as e:
+                        output_data['api']['errorMessage'] = str(e).capitalize()
+                        return output_data
+
+                    output_data['response'] = {'translatedText': translated_text.text}
                     output_data['api']['status'] = True
                     output_data['api']['elapsedTime'] = start_time.stop_timer()
 

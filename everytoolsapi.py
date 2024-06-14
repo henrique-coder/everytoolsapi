@@ -7,7 +7,7 @@ from flask_compress import Compress
 from logging.config import dictConfig
 from dotenv import load_dotenv
 from os import getenv
-from json import load as load_json
+from yaml import safe_load as yaml_safe_load
 from pathlib import Path
 from typing import *
 
@@ -29,9 +29,8 @@ class Config:
             self.__dict__[key] = value
 
 
-# Setup Flask application and context
+# Setup Flask application
 app = flask.Flask(__name__)
-app.app_context().push()
 
 # Setup Flask logging configuration
 logging_config = {
@@ -71,6 +70,7 @@ cache = Cache(app)
 talisman = Talisman(app, content_security_policy={'default-src': ["'self'", 'https://cdnjs.cloudflare.com'], 'style-src': ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'], 'script-src': ["'self'", 'https://cdnjs.cloudflare.com']})
 csrf = CSRFProtect(app)
 compression = Compress(app)
+
 
 # Setup main routes
 @app.route('/', methods=['GET'])
@@ -142,11 +142,21 @@ def parser__text_lang_detector(query_version: str) -> flask.jsonify:
     return flask.jsonify(_parser__text_lang_detector.run(APITools.extract_request_data(flask.request)))
 
 
+_parser__text_translator = APIEndpoints.v2.parser.text_translator
+@app.route(f'/api/<query_version>{_parser__text_translator.endpoint_url}', methods=_parser__text_translator.allowed_methods)
+@limiter.limit(_parser__text_translator.ratelimit)
+@cache.cached(timeout=_parser__text_translator.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__text_translator(query_version: str) -> flask.jsonify:
+    # Example usage: GET /api/v2/parser/text-translator?query=Welcome to my API!&src_lang=en&dest_lang=pt-br
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_parser__text_translator.run(APITools.extract_request_data(flask.request)))
+
+
 if __name__ == '__main__':
     # Load the configuration file
     current_path = Path(__file__).parent
-    config_path = Path(current_path, 'config.json')
-    config = Config(**load_json(config_path.open('r')))
+    config_path = Path(current_path, 'config.yml')
+    config = Config(**yaml_safe_load(config_path.open('r')))
 
     # Setting up Flask default configuration
     app.static_folder = Path(current_path, config.flask.staticFolder)
