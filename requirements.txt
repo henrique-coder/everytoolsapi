@@ -4,6 +4,7 @@ flask-caching
 flask-talisman
 flask-wtf
 flask-compress
+redis
 gunicorn
 python-dotenv
 pyyaml
@@ -11,3 +12,5 @@ user-agents
 langdetect
 langcodes
 googletrans==4.0.0-rc1
+httpx
+fake-useragent
