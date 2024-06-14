@@ -1,0 +1,7 @@
+flask:
+  debugMode: true
+  threadedServer: true
+  host: 0.0.0.0
+  port: 13579
+  staticFolder: static
+  templateFolder: templates
