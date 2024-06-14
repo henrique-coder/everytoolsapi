@@ -55,15 +55,15 @@ logging_config = {
 dictConfig(logging_config)
 
 # Setup Flask limiter with Redis
-limiter = Limiter(flask_limiter_utils.get_remote_address, app=app, storage_uri=str(getenv('REDIS_URL')))
+limiter = Limiter(flask_limiter_utils.get_remote_address, app=app, storage_uri=getenv('REDIS_URL'))
 
 # Setup Flask cache with Redis
 app.config['CACHE_TYPE'] = 'RedisCache'
-app.config['CACHE_REDIS_HOST'] = str(getenv('REDIS_HOST'))
-app.config['CACHE_REDIS_PORT'] = int(getenv('REDIS_PORT'))
-app.config['CACHE_REDIS_DB'] = int(getenv('REDIS_DB'))
-app.config['CACHE_REDIS_PASSWORD'] = str(getenv('REDIS_PASSWORD'))
-app.config['CACHE_REDIS_URL'] = str(getenv('REDIS_URL'))
+app.config['CACHE_REDIS_HOST'] = getenv('REDIS_HOST')
+app.config['CACHE_REDIS_PORT'] = getenv('REDIS_PORT')
+app.config['CACHE_REDIS_DB'] = getenv('REDIS_DB')
+app.config['CACHE_REDIS_PASSWORD'] = getenv('REDIS_PASSWORD')
+app.config['CACHE_REDIS_URL'] = getenv('REDIS_URL')
 cache = Cache(app)
 
 # Setup Talisman for security headers (with custom options), CSRF protection and Compress for response compression
@@ -142,6 +142,24 @@ _tools__text_translator = APIEndpoints.v2.tools.text_translator
 def tools__text_translator(query_version: str) -> flask.jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     return flask.jsonify(_tools__text_translator.run(APITools.extract_request_data(flask.request)))
+
+
+_scraper__google_search = APIEndpoints.v2.scraper.google_search
+@app.route(f'/api/<query_version>{_scraper__google_search.endpoint_url}', methods=_scraper__google_search.allowed_methods)
+@limiter.limit(_scraper__google_search.ratelimit)
+@cache.cached(timeout=_scraper__google_search.timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__google_search(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_scraper__google_search.run(APITools.extract_request_data(flask.request)))
+
+
+_scraper__instagram_reels = APIEndpoints.v2.scraper.instagram_reels
+@app.route(f'/api/<query_version>{_scraper__instagram_reels.endpoint_url}', methods=_scraper__instagram_reels.allowed_methods)
+@limiter.limit(_scraper__instagram_reels.ratelimit)
+@cache.cached(timeout=_scraper__instagram_reels.timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__instagram_reels(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_scraper__instagram_reels.run(APITools.extract_request_data(flask.request)))
 
 
 if __name__ == '__main__':
