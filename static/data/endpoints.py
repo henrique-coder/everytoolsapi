@@ -221,8 +221,9 @@ class APIEndpoints:
 
                     return output_data
 
+        class tools:
             class text_lang_detector:
-                endpoint_url = '/parser/text-lang-detector/'
+                endpoint_url = '/tools/text-lang-detector/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
                 timeout = 1
@@ -253,7 +254,7 @@ class APIEndpoints:
                     return output_data
 
             class text_translator:
-                endpoint_url = '/parser/text-translator/'
+                endpoint_url = '/tools/text-translator/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
                 timeout = 1

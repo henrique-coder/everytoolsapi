@@ -77,7 +77,6 @@ compression = Compress(app)
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=60))
 @cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
 def initial_page() -> flask.render_template:
-    # Example usage: GET /
     return flask.render_template('index.html')
 
 
@@ -87,7 +86,6 @@ _parser__user_agent = APIEndpoints.v2.parser.user_agent
 @limiter.limit(_parser__user_agent.ratelimit)
 @cache.cached(timeout=_parser__user_agent.timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__user_agent(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/user-agent?query=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     return flask.jsonify(_parser__user_agent.run(APITools.extract_request_data(flask.request)))
 
@@ -97,7 +95,6 @@ _parser__url = APIEndpoints.v2.parser.url
 @limiter.limit(_parser__url.ratelimit)
 @cache.cached(timeout=_parser__url.timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__url(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/url?query=https://example.com/path?project=EveryTools API&version=v2#documentation
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     return flask.jsonify(_parser__url.run(APITools.extract_request_data(flask.request)))
 
@@ -107,7 +104,6 @@ _parser__time_hms = APIEndpoints.v2.parser.sec_to_hms
 @limiter.limit(_parser__time_hms.ratelimit)
 @cache.cached(timeout=_parser__time_hms.timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__time_hms(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/sec-to-hms?query=13500
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     return flask.jsonify(_parser__time_hms.run(APITools.extract_request_data(flask.request)))
 
@@ -117,7 +113,6 @@ _parser__email = APIEndpoints.v2.parser.email
 @limiter.limit(_parser__email.ratelimit)
 @cache.cached(timeout=_parser__email.timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__email(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/email?query=everytoolsapi@example.com
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     return flask.jsonify(_parser__email.run(APITools.extract_request_data(flask.request)))
 
@@ -127,29 +122,26 @@ _parser__text_counter = APIEndpoints.v2.parser.text_counter
 @limiter.limit(_parser__text_counter.ratelimit)
 @cache.cached(timeout=_parser__text_counter.timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__text_counter(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/text-counter?query=Hi! I'm EveryTools API. #v2
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     return flask.jsonify(_parser__text_counter.run(APITools.extract_request_data(flask.request)))
 
 
-_parser__text_lang_detector = APIEndpoints.v2.parser.text_lang_detector
-@app.route(f'/api/<query_version>{_parser__text_lang_detector.endpoint_url}', methods=_parser__text_lang_detector.allowed_methods)
-@limiter.limit(_parser__text_lang_detector.ratelimit)
-@cache.cached(timeout=_parser__text_lang_detector.timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__text_lang_detector(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/text-lang-detector?query=Olá, bom dia! Como você está?
+_tools__text_lang_detector = APIEndpoints.v2.tools.text_lang_detector
+@app.route(f'/api/<query_version>{_tools__text_lang_detector.endpoint_url}', methods=_tools__text_lang_detector.allowed_methods)
+@limiter.limit(_tools__text_lang_detector.ratelimit)
+@cache.cached(timeout=_tools__text_lang_detector.timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__text_lang_detector(query_version: str) -> flask.jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return flask.jsonify(_parser__text_lang_detector.run(APITools.extract_request_data(flask.request)))
+    return flask.jsonify(_tools__text_lang_detector.run(APITools.extract_request_data(flask.request)))
 
 
-_parser__text_translator = APIEndpoints.v2.parser.text_translator
-@app.route(f'/api/<query_version>{_parser__text_translator.endpoint_url}', methods=_parser__text_translator.allowed_methods)
-@limiter.limit(_parser__text_translator.ratelimit)
-@cache.cached(timeout=_parser__text_translator.timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__text_translator(query_version: str) -> flask.jsonify:
-    # Example usage: GET /api/v2/parser/text-translator?query=Welcome to my API!&src_lang=en&dest_lang=pt-br
+_tools__text_translator = APIEndpoints.v2.tools.text_translator
+@app.route(f'/api/<query_version>{_tools__text_translator.endpoint_url}', methods=_tools__text_translator.allowed_methods)
+@limiter.limit(_tools__text_translator.ratelimit)
+@cache.cached(timeout=_tools__text_translator.timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__text_translator(query_version: str) -> flask.jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return flask.jsonify(_parser__text_translator.run(APITools.extract_request_data(flask.request)))
+    return flask.jsonify(_tools__text_translator.run(APITools.extract_request_data(flask.request)))
 
 
 if __name__ == '__main__':
