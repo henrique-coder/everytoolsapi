@@ -1,287 +1,185 @@
 import flask
+from flask_limiter import util as flask_limiter_utils, Limiter
 from flask_caching import Cache
-from flask_swagger_ui import get_swaggerui_blueprint
-from pathlib import Path
+from flask_talisman import Talisman
+from flask_wtf.csrf import CSRFProtect
+from flask_compress import Compress
+from logging.config import dictConfig
+from dotenv import load_dotenv
 from os import getenv
-from http import HTTPStatus
+from yaml import safe_load as yaml_safe_load
+from pathlib import Path
 from typing import *
 
-from static.dependencies.version import APIVersion
-from static.dependencies.functions import APITools, CacheFunctions
-from static.dependencies.endpoints import Endpoints
+from static.data.version import APIVersion
+from static.data.functions import APITools, LimiterTools, CacheTools
+from static.data.endpoints import APIEndpoints
 
 
-# Flask application
+# Load the environment variables
+load_dotenv()
+
+# Configuration class
+class Config:
+    def __init__(self, **entries: Dict[str, Any]) -> None:
+        for key, value in entries.items():
+            if isinstance(value, dict):
+                value = Config(**value)
+
+            self.__dict__[key] = value
+
+
+# Setup Flask application
 app = flask.Flask(__name__)
-app.app_context().push()
 
-app.config['CACHE_TYPE'] = 'simple'
+# Setup Flask logging configuration
+logging_config = {
+    'version': 1,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+        },
+    },
+    'handlers': {
+        'wsgi': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://flask.logging.wsgi_errors_stream',
+            'formatter': 'default'
+        },
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+}
+dictConfig(logging_config)
+
+# Setup Flask limiter with Redis
+limiter = Limiter(flask_limiter_utils.get_remote_address, app=app, storage_uri=getenv('REDIS_URL'))
+
+# Setup Flask cache with Redis
+app.config['CACHE_TYPE'] = 'RedisCache'
+app.config['CACHE_REDIS_HOST'] = getenv('REDIS_HOST')
+app.config['CACHE_REDIS_PORT'] = getenv('REDIS_PORT')
+app.config['CACHE_REDIS_DB'] = getenv('REDIS_DB')
+app.config['CACHE_REDIS_PASSWORD'] = getenv('REDIS_PASSWORD')
+app.config['CACHE_REDIS_URL'] = getenv('REDIS_URL')
 cache = Cache(app)
 
-# Get the latest API version
-latest_api_version = APIVersion.Latest().version
-
-# Swagger UI
-SWAGGER_URL = f'/api/{latest_api_version}/docs/'
-SWAGGER_API_URL = f'/api/swagger/data.json'
-swaggerui_blueprint = get_swaggerui_blueprint(SWAGGER_URL, SWAGGER_API_URL, config={'app_name': 'EveryTools API'})
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
-
-google_gemini_api_keys = list()
-start_number = 0
-while True:
-    start_number += 1
-    value = getenv(f'GOOGLE_GEMINI_API_KEY_{start_number}')
-    if value: google_gemini_api_keys.append(str(value))
-    else: break
+# Setup Talisman for security headers (with custom options), CSRF protection and Compress for response compression
+talisman = Talisman(app, content_security_policy={'default-src': ["'self'", 'https://cdnjs.cloudflare.com'], 'style-src': ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'], 'script-src': ["'self'", 'https://cdnjs.cloudflare.com']})
+csrf = CSRFProtect(app)
+compression = Compress(app)
 
 
-def show_error_page(error_code: int, custom_error_name: str = None):
-    if not custom_error_name:
-        error_name = HTTPStatus(error_code).phrase
-        custom_error_name = error_name
-
-    return flask.render_template('web_errors.html', error_code=error_code, error_name=custom_error_name), error_code
-
-
-@app.errorhandler(404)
-@cache.cached(timeout=86400, make_cache_key=CacheFunctions.cache_key)
-def error_404(e: Exception) -> Tuple[str, int]: return show_error_page(404)
-
-
-@app.errorhandler(429)
-@cache.cached(timeout=86400, make_cache_key=CacheFunctions.cache_key)
-def error_429(e: Exception) -> Tuple[str, int]: return show_error_page(429)
-
-
-@app.errorhandler(500)
-@cache.cached(timeout=86400, make_cache_key=CacheFunctions.cache_key)
-def error_500(e: Exception) -> Tuple[str, int]: return show_error_page(500)
-
-
-@app.errorhandler(503)
-@cache.cached(timeout=86400, make_cache_key=CacheFunctions.cache_key)
-def error_503(e: Exception) -> Tuple[str, int]: return show_error_page(503)
-
-
-@app.route(SWAGGER_API_URL, methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
-def create_swagger_spec() -> Any:
-    APITools.check_main_request(flask.request.remote_addr, None)
-    swag_data = {
-        'swagger': '2.0',
-        'info': {
-            'title': 'EveryTools API',
-            'description': 'Welcome to the EveryTools API. Where you can find all the tools you need in one place.',
-            'version': latest_api_version,
-            'contact': {
-                'name': 'Henrique-Coder',
-                'url': 'https://henrique-coder.mindwired.com.br',
-                'email': 'henriquemoreira10fk@gmail.com',
-            },
-            'license': {
-                'name': 'MIT License',
-                'url': 'https://github.com/Henrique-Coder/everytoolsapi/blob/main/LICENSE',
-            }
-        },
-        'servers': [
-            {
-                'url': 'https://everytoolsapi-henrique-coder.koyeb.app/api/v2',
-                'description': 'Production Server'
-            },
-        ],
-        'paths': {
-            f'/api/{latest_api_version}/randomizer/int-number': {
-                'get': {
-                    'description': 'Randomize an integer number',
-                    'parameters': [
-                        {
-                            'name': 'min',
-                            'in': 'query',
-                            'description': 'Minimum number',
-                            'required': True,
-                            'type': 'integer',
-                        },
-                        {
-                            'name': 'max',
-                            'in': 'query',
-                            'description': 'Maximum number',
-                            'required': True,
-                            'type': 'integer',
-                        },
-                    ],
-                    'responses': {
-                        '200': {
-                            'description': 'A random integer number',
-                        }
-                    }
-                }
-            },
-            f'/api/{latest_api_version}/randomizer/float-number': {
-                'get': {
-                    'description': 'Randomize a float number',
-                    'parameters': [
-                        {
-                            'name': 'min',
-                            'in': 'query',
-                            'description': 'Minimum number',
-                            'required': True,
-                            'type': 'number',
-                        },
-                        {
-                            'name': 'max',
-                            'in': 'query',
-                            'description': 'Maximum number',
-                            'required': True,
-                            'type': 'number',
-                        },
-                    ],
-                    'responses': {
-                        '200': {
-                            'description': 'A random float number',
-                        }
-                    }
-                }
-            },
-            f'/api/{latest_api_version}/parser/user-agent': {
-                'get': {
-                    'description': 'Parse your current or a custom user agent string',
-                    'parameters': [
-                        {
-                            'name': 'query',
-                            'in': 'query',
-                            'description': 'User agent string',
-                            'required': False,
-                            'type': 'string',
-                        },
-                    ],
-                    'responses': {
-                        '200': {
-                            'description': 'Parsed user agent string',
-                        }
-                    }
-                }
-            },
-            f'/api/{latest_api_version}/requester/ip-address': {
-                'get': {
-                    'description': 'Fetch information about your current or a custom IP address',
-                    'parameters': [
-                        {
-                            'name': 'query',
-                            'in': 'query',
-                            'description': 'IP address',
-                            'required': False,
-                            'type': 'string',
-                        },
-                    ],
-                    'responses': {
-                        '200': {
-                            'description': 'IP address',
-                        }
-                    }
-                }
-            },
-            f'/api/{latest_api_version}/scraper/media-youtube.com': {
-                'get': {
-                    'description': 'Scrape information from a YouTube media URL',
-                    'parameters': [
-                        {
-                            'name': 'query',
-                            'in': 'query',
-                            'description': 'YouTube media URL',
-                            'required': True,
-                            'type': 'string',
-                        },
-                    ],
-                    'responses': {
-                        '200': {
-                            'description': 'Detailed information about the YouTube media URL',
-                        }
-                    }
-                }
-            },
-        }
-    }
-
-    return flask.jsonify(swag_data)
-
-
+# Setup main routes
 @app.route('/', methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
-def initial_page() -> Union[str, Any]:
-    APITools.check_main_request(flask.request.remote_addr, None)
+@limiter.limit(LimiterTools.gen_ratelimit_message(per_min=60))
+@cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
+def initial_page() -> flask.render_template:
     return flask.render_template('index.html')
 
 
-@app.route('/docs/', methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
-def documentation_page() -> Union[str, Any]:
-    APITools.check_main_request(flask.request.remote_addr, None)
-    return flask.redirect(f'/api/{latest_api_version}/docs/', code=302)
+# Setup API routes
+_parser__user_agent = APIEndpoints.v2.parser.user_agent
+@app.route(f'/api/<query_version>{_parser__user_agent.endpoint_url}', methods=_parser__user_agent.allowed_methods)
+@limiter.limit(_parser__user_agent.ratelimit)
+@cache.cached(timeout=_parser__user_agent.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__user_agent(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_parser__user_agent.run(APITools.extract_request_data(flask.request)))
 
 
-@app.route('/api/', methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
-def api() -> Union[Dict[str, Union[bool, str]], Any]:
-    APITools.check_main_request(flask.request.remote_addr, None)
-    return flask.redirect(f'/api/{latest_api_version}/status', code=302)
+_parser__url = APIEndpoints.v2.parser.url
+@app.route(f'/api/<query_version>{_parser__url.endpoint_url}', methods=_parser__url.allowed_methods)
+@limiter.limit(_parser__url.ratelimit)
+@cache.cached(timeout=_parser__url.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__url(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_parser__url.run(APITools.extract_request_data(flask.request)))
 
 
-@app.route('/api/<version>/', methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
-def api_version(version: str) -> Union[Dict[str, Union[bool, str]], Any]:
-    APITools.check_main_request(flask.request.remote_addr, None)
-    return flask.redirect(f'/api/{version}/status', code=302)
+_parser__time_hms = APIEndpoints.v2.parser.sec_to_hms
+@app.route(f'/api/<query_version>{_parser__time_hms.endpoint_url}', methods=_parser__time_hms.allowed_methods)
+@limiter.limit(_parser__time_hms.ratelimit)
+@cache.cached(timeout=_parser__time_hms.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__time_hms(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_parser__time_hms.run(APITools.extract_request_data(flask.request)))
 
 
-@app.route('/api/<version>/status/', methods=['GET'])
-@cache.cached(timeout=600, make_cache_key=CacheFunctions.cache_key)
-def api_version_status(version: str) -> Union[Dict[str, Union[bool, str]], Any]:
-    APITools.check_main_request(flask.request.remote_addr, None)
-    return Endpoints.api_version(version).get_status(version)
+_parser__email = APIEndpoints.v2.parser.email
+@app.route(f'/api/<query_version>{_parser__email.endpoint_url}', methods=_parser__email.allowed_methods)
+@limiter.limit(_parser__email.ratelimit)
+@cache.cached(timeout=_parser__email.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__email(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_parser__email.run(APITools.extract_request_data(flask.request)))
 
 
-info_randomizer_int_number = Endpoints.V2.Randomizer.int_number.info
-@app.route(f'/api/<version>/randomizer/int-number/', methods=info_randomizer_int_number['methods'])
-@cache.cached(timeout=info_randomizer_int_number['cache'], make_cache_key=CacheFunctions.cache_key)
-def randomizer_int_number(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, info_randomizer_int_number['ratelimit'], version, latest_api_version)
-    return Endpoints.api_version(version).Randomizer.int_number.run({'min': flask.request.args.get('min'), 'max': flask.request.args.get('max')})
+_parser__text_counter = APIEndpoints.v2.parser.text_counter
+@app.route(f'/api/<query_version>{_parser__text_counter.endpoint_url}', methods=_parser__text_counter.allowed_methods)
+@limiter.limit(_parser__text_counter.ratelimit)
+@cache.cached(timeout=_parser__text_counter.timeout, make_cache_key=CacheTools.gen_cache_key)
+def parser__text_counter(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_parser__text_counter.run(APITools.extract_request_data(flask.request)))
 
 
-info_randomizer_float_number = Endpoints.V2.Randomizer.float_number.info
-@app.route('/api/<version>/randomizer/float-number/', methods=info_randomizer_float_number['methods'])
-@cache.cached(timeout=info_randomizer_float_number['cache'], make_cache_key=CacheFunctions.cache_key)
-def randomizer_float_number(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, info_randomizer_float_number['ratelimit'], version, latest_api_version)
-    return Endpoints.api_version(version).Randomizer.float_number.run({'min': flask.request.args.get('min'), 'max': flask.request.args.get('max')})
+_tools__text_lang_detector = APIEndpoints.v2.tools.text_lang_detector
+@app.route(f'/api/<query_version>{_tools__text_lang_detector.endpoint_url}', methods=_tools__text_lang_detector.allowed_methods)
+@limiter.limit(_tools__text_lang_detector.ratelimit)
+@cache.cached(timeout=_tools__text_lang_detector.timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__text_lang_detector(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_tools__text_lang_detector.run(APITools.extract_request_data(flask.request)))
 
 
-info_parser_user_agent = Endpoints.V2.Parser.user_agent.info
-@app.route('/api/<version>/parser/user-agent/', methods=info_parser_user_agent['methods'])
-@cache.cached(timeout=info_parser_user_agent['cache'], make_cache_key=CacheFunctions.cache_key)
-def parser_user_agent(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, info_parser_user_agent['ratelimit'], version, latest_api_version)
-    return Endpoints.api_version(version).Parser.user_agent.run({'remoteUserAgentHeader': flask.request.user_agent.string, 'query': flask.request.args.get('query')})
+_tools__text_translator = APIEndpoints.v2.tools.text_translator
+@app.route(f'/api/<query_version>{_tools__text_translator.endpoint_url}', methods=_tools__text_translator.allowed_methods)
+@limiter.limit(_tools__text_translator.ratelimit)
+@cache.cached(timeout=_tools__text_translator.timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__text_translator(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_tools__text_translator.run(APITools.extract_request_data(flask.request)))
 
 
-info_requester_ip_address = Endpoints.V2.Requester.ip_address.info
-@app.route('/api/<version>/requester/ip-address/', methods=info_requester_ip_address['methods'])
-@cache.cached(timeout=info_requester_ip_address['cache'], make_cache_key=CacheFunctions.cache_key)
-def requester_ip_address(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, info_requester_ip_address['ratelimit'], version, latest_api_version)
-    return Endpoints.api_version(version).Requester.ip_address.run({'remoteIpAddressHeader': flask.request.remote_addr, 'query': flask.request.args.get('query')})
+_scraper__google_search = APIEndpoints.v2.scraper.google_search
+@app.route(f'/api/<query_version>{_scraper__google_search.endpoint_url}', methods=_scraper__google_search.allowed_methods)
+@limiter.limit(_scraper__google_search.ratelimit)
+@cache.cached(timeout=_scraper__google_search.timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__google_search(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_scraper__google_search.run(APITools.extract_request_data(flask.request)))
 
 
-info_scraper_media_youtube_com = Endpoints.V2.Scraper.media_youtube_com.info
-@app.route('/api/<version>/scraper/media-youtube.com/', methods=info_scraper_media_youtube_com['methods'])
-@cache.cached(timeout=info_scraper_media_youtube_com['cache'], make_cache_key=CacheFunctions.cache_key)
-def scraper_media_youtube_com(version: str) -> Any:
-    APITools.check_main_request(flask.request.remote_addr, info_scraper_media_youtube_com['ratelimit'], version, latest_api_version)
-    return Endpoints.api_version(version).Scraper.media_youtube_com.run({'query': flask.request.args.get('query')})
+_scraper__instagram_reels = APIEndpoints.v2.scraper.instagram_reels
+@app.route(f'/api/<query_version>{_scraper__instagram_reels.endpoint_url}', methods=_scraper__instagram_reels.allowed_methods)
+@limiter.limit(_scraper__instagram_reels.ratelimit)
+@cache.cached(timeout=_scraper__instagram_reels.timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__instagram_reels(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_scraper__instagram_reels.run(APITools.extract_request_data(flask.request)))
+
+
+_scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
+@app.route(f'/api/<query_version>{_scraper__youtube_media.endpoint_url}', methods=_scraper__youtube_media.allowed_methods)
+@limiter.limit(_scraper__youtube_media.ratelimit)
+@cache.cached(timeout=_scraper__youtube_media.timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__youtube_media(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_scraper__youtube_media.run(APITools.extract_request_data(flask.request)))
 
 
 if __name__ == '__main__':
-    app.config['JSON_SORT_KEYS'] = True
-    app.template_folder = Path(Path.cwd(), 'templates').resolve()
-    app.run(host='0.0.0.0', port=13579, threaded=True, load_dotenv=True, debug=False)
+    # Load the configuration file
+    current_path = Path(__file__).parent
+    config_path = Path(current_path, 'config.yml')
+    config = Config(**yaml_safe_load(config_path.open('r')))
+
+    # Setting up Flask default configuration
+    app.static_folder = Path(current_path, config.flask.staticFolder)
+    app.template_folder = Path(current_path, config.flask.templateFolder)
+
+    # Run the web server with the specified configuration
+    app.run(host=config.flask.host, port=config.flask.port, threaded=config.flask.threadedServer, debug=config.flask.debugMode)
