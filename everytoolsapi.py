@@ -162,6 +162,15 @@ def scraper__instagram_reels(query_version: str) -> flask.jsonify:
     return flask.jsonify(_scraper__instagram_reels.run(APITools.extract_request_data(flask.request)))
 
 
+_scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
+@app.route(f'/api/<query_version>{_scraper__youtube_media.endpoint_url}', methods=_scraper__youtube_media.allowed_methods)
+@limiter.limit(_scraper__youtube_media.ratelimit)
+@cache.cached(timeout=_scraper__youtube_media.timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__youtube_media(query_version: str) -> flask.jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    return flask.jsonify(_scraper__youtube_media.run(APITools.extract_request_data(flask.request)))
+
+
 if __name__ == '__main__':
     # Load the configuration file
     current_path = Path(__file__).parent
