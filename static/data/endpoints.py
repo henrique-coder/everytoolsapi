@@ -24,11 +24,11 @@ fake_useragent = FakeUserAgent()
 class APIEndpoints:
     class v2:
         class parser:
-            class user_agent:
-                endpoint_url = '/parser/user-agent/'
+            class useragent:
+                endpoint_url = '/parser/useragent/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -73,7 +73,7 @@ class APIEndpoints:
                 endpoint_url = '/parser/url/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -107,7 +107,7 @@ class APIEndpoints:
                 endpoint_url = '/parser/sec-to-hms/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -143,7 +143,7 @@ class APIEndpoints:
                 endpoint_url = '/parser/email/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -176,7 +176,7 @@ class APIEndpoints:
                 endpoint_url = '/parser/text-counter/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -237,7 +237,7 @@ class APIEndpoints:
                 endpoint_url = '/tools/text-lang-detector/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -268,7 +268,7 @@ class APIEndpoints:
                 endpoint_url = '/tools/text-translator/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=600)
-                timeout = 43200
+                cache_timeout = 43200
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -307,7 +307,7 @@ class APIEndpoints:
                 endpoint_url = '/scraper/google-search/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
-                timeout = 600
+                cache_timeout = 600
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -352,7 +352,7 @@ class APIEndpoints:
                 endpoint_url = '/scraper/instagram-reels/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=300)
-                timeout = 86400
+                cache_timeout = 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -465,7 +465,7 @@ class APIEndpoints:
                 endpoint_url = '/scraper/youtube-media/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=300)
-                timeout = 14400
+                cache_timeout = 14400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
