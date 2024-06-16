@@ -13,7 +13,12 @@ from fake_useragent import FakeUserAgent
 from yt_dlp import YoutubeDL
 from typing import *
 
-from static.data.functions import OtherTools, APITools, LimiterTools
+from static.data.version import APIVersion
+from static.data.functions import DBTools, APITools, LimiterTools
+
+
+# Get the latest API version
+latest_api_version = APIVersion().latest_version
 
 
 # Global variables/constants
@@ -32,7 +37,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -63,9 +68,11 @@ class APIEndpoints:
                         }
                     }
 
+                    timer.stop()
+
                     output_data['response'] = parsed_ua_data
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
 
@@ -73,12 +80,14 @@ class APIEndpoints:
                 endpoint_url = '/parser/url/'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                cache_timeout = 86400
+                cache_timeout = 1  # 86400
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
+
+                    # DBTools.APIRequestLogs.start_request_log(request_data['pathRoute'], request_data['ipAddress'], timer.start_time)
 
                     # Request data validation
                     if request_data['args'].get('query'): url = request_data['args']['query']
@@ -97,9 +106,11 @@ class APIEndpoints:
                         'fragment': parsed_url.fragment
                     }
 
+                    timer.stop()
+
                     output_data['response'] = parsed_url_data
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
 
@@ -111,7 +122,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -133,9 +144,11 @@ class APIEndpoints:
                     minutes, seconds = divmod(seconds, 60)
                     hms_string = f'{hours:02}:{minutes:02}:{seconds:02}'
 
+                    timer.stop()
+
                     output_data['response'] = {'hmsString': hms_string}
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer = APITools.Timer()
 
                     return output_data
 
@@ -147,7 +160,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -166,9 +179,11 @@ class APIEndpoints:
 
                     parsed_email_data = match.groupdict()
 
+                    timer.stop()
+
                     output_data['response'] = parsed_email_data
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer = APITools.Timer()
 
                     return output_data
 
@@ -180,7 +195,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -228,7 +243,7 @@ class APIEndpoints:
                         },
                     }
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer = APITools.Timer()
 
                     return output_data
 
@@ -241,7 +256,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -258,9 +273,11 @@ class APIEndpoints:
                         output_data['api']['errorMessage'] = "There aren't enough resources in the text to detect your language."
                         return output_data
 
+                    timer.stop()
+
                     output_data['response'] = {'detectedLangCode': detected_lang, 'detectedLangName': Language.get(detected_lang).display_name('en')}
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
 
@@ -272,7 +289,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -296,9 +313,11 @@ class APIEndpoints:
                         output_data['api']['errorMessage'] = str(e).capitalize()
                         return output_data
 
+                    timer.stop()
+
                     output_data['response'] = {'translatedText': translated_text.text}
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
 
@@ -311,7 +330,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -342,9 +361,11 @@ class APIEndpoints:
 
                     search_results = list(set(search_results))
 
+                    timer.stop()
+
                     output_data['response'] = {'searchResults': search_results}
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
 
@@ -356,7 +377,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -455,9 +476,11 @@ class APIEndpoints:
                         output_data['api']['errorMessage'] = 'An error occurred while fetching Instagram reel data. Please try again later.'
                         return output_data
 
+                    timer.stop()
+
                     output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'mediaUrl': media_url}
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
 
@@ -469,7 +492,7 @@ class APIEndpoints:
 
                 @staticmethod
                 def run(request_data: Dict[str, Dict[Any, Any]]) -> dict:
-                    start_time = OtherTools.Timer()
+                    timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
                     # Request data validation
@@ -641,8 +664,10 @@ class APIEndpoints:
                     # Subtitle data adjustment
                     yt_media_data['subtitles'] = extract_media_subtitles(raw_yt_extracted_data)
 
+                    timer.stop()
+
                     output_data['response'] = adjusted_yt_data
                     output_data['api']['status'] = True
-                    output_data['api']['elapsedTime'] = start_time.stop_timer()
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
 
                     return output_data
