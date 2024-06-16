@@ -1,5 +1,7 @@
-import flask
+from flask import request, Request
+from psycopg2 import Error as psycopg2Error, connect as psycopg2_connect
 from time import perf_counter
+from datetime import timedelta, datetime, UTC
 from typing import *
 
 from static.data.version import APIVersion
@@ -9,51 +11,78 @@ from static.data.version import APIVersion
 latest_api_version = APIVersion().latest_version
 
 
-class OtherTools:
+class DBTools:
     """
-    A class for miscellaneous tools.
+    A class for database tools.
     """
 
-    class Timer:
+    @staticmethod
+    def initialize_db_connection(db_name: str, db_user: str, db_password: str, db_host: str, db_port: str, ssl_mode: str) -> psycopg2_connect:
         """
-        A class for measuring the time taken by a process.
+        Connect to a PostgreSQL database and return the connection object.
+        :param db_name: The name of the database to connect to.
+        :param db_user: The username to use for authentication.
+        :param db_password: The password to use for authentication.
+        :param db_host: The hostname of the database server.
+        :param db_port: The port number to connect to.
+        :param ssl_mode: The SSL mode to use for the connection.
+        :return: A connection object to the database.
         """
 
-        def __init__(self) -> None:
-            """
-            Initialize the Timer class.
-            """
+        try:
+            return psycopg2_connect(dbname=db_name, user=db_user, password=db_password, host=db_host, port=db_port, sslmode=ssl_mode)
+        except psycopg2Error as e:
+            raise Exception(f'Error while connecting to the database: {e}')
 
-            self._start_time = perf_counter()
-            self._end_time = 0
+    class APIRequestLogs:
+        """
+        A class for API request logs.
+        """
 
         @staticmethod
-        def _format_time(data: float) -> float:
+        def create_required_tables(conn_object: psycopg2_connect) -> None:
             """
-            Format the time taken by a process.
-            :param data: The time taken by a process.
-            :return: The formatted time taken by a process.
-            """
-
-            return float(round(data, 10))
-
-        def get_time(self) -> float:
-            """
-            Get the time taken by a process.
-            :return: The time taken by a process.
+            Create the required tables in the database.
+            :param conn_object: The connection object to the database.
+            :return: True if the tables were created successfully, False otherwise.
             """
 
-            return OtherTools.Timer._format_time(perf_counter() - self._start_time)
+            try:
+                cursor = conn_object.cursor()
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS api_request_logs (
+                        id SERIAL PRIMARY KEY,
+                        status VARCHAR(16) NOT NULL,
+                        route VARCHAR(255) NOT NULL,
+                        origin_ip_address INET NOT NULL,
+                        created_at TIMESTAMP NOT NULL
+                    );
+                ''')
+                conn_object.commit()
+                cursor.close()
+            except psycopg2Error as e:
+                raise Exception(f'Error while creating tables: {e}')
 
-        def stop_timer(self, return_time: bool = True) -> Optional[float]:
+        @staticmethod
+        def start_request_log(conn: psycopg2_connect, route: str, origin_ip_address: str, created_at: datetime) -> None:
             """
-            Stop the timer and get the time taken by a process.
-            :param return_time: A boolean to determine if the time taken by a process should be returned.
-            :return: The time taken by a process.
+            Log the start of a request.
+            :param conn: The connection object to the database.
+            :param route: The route of the current request.
+            :param origin_ip_address: The origin IP address of the current request.
+            :param created_at: The timestamp of the current request.
             """
 
-            if return_time: return OtherTools.Timer._format_time(perf_counter() - self._start_time)
-            else: return None
+            try:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO api_request_logs (status, route, origin_ip_address, created_at)
+                    VALUES (%s, %s);
+                ''', ('started', route, origin_ip_address, created_at))
+                conn.commit()
+                cursor.close()
+            except psycopg2Error as e:
+                raise Exception(f'Error while logging request start: {e}')
 
 
 class APITools:
@@ -62,13 +91,15 @@ class APITools:
     """
 
     @staticmethod
-    def extract_request_data(request_object: flask.Request) -> Dict[str, Dict[Any, Any]]:
+    def extract_request_data(request_object: Request) -> Dict[str, Dict[Any, Any]]:
         """
         Extract the request data from the current request.
         :param request_object: The current request object.
         :return: The request arguments, headers, body, and authentication.
         """
 
+        route = str(request_object.path)
+        remote_addr = request_object.remote_addr
         args = request_object.args.to_dict()
         headers = dict(request_object.headers)
         body = request_object.get_json(force=True, silent=True)
@@ -76,7 +107,7 @@ class APITools:
         try: auth = request_object.authorization.__dict__
         except AttributeError: auth = dict()
 
-        return {'args': args, 'headers': headers, 'body': body, 'auth': auth}
+        return {'pathRoute': route, 'ipAddress': remote_addr, 'args': args, 'headers': headers, 'body': body, 'auth': auth}
 
     @staticmethod
     def get_default_api_output_dict() -> Dict[str, Any]:
@@ -94,6 +125,56 @@ class APITools:
             },
             'response': dict(),
         }
+
+    class Timer:
+        """
+        A class for measuring the time taken by a process.
+        """
+
+        def __init__(self, start: bool = True) -> None:
+            """
+            Initialize the Timer class.
+            :param start: Whether to start the timer immediately.
+            """
+
+            self.start_time = None
+            self.end_time = None
+            self._start_perf_counter = None
+            self._stop_perf_counter = None
+
+            if start: self.start()
+
+        def start(self) -> None:
+            """
+            Start the timer.
+            """
+
+            self.start_time = datetime.now(UTC)
+            self._start_perf_counter = perf_counter()
+
+        def get_time(self) -> float:
+            """
+            Get the time taken by a process.
+            :return: The time taken by a process.
+            """
+
+            return (datetime.now(UTC) - self.start_time).total_seconds()
+
+        def elapsed_time(self) -> float:
+            """
+            Get the elapsed time.
+            :return: The elapsed time.
+            """
+
+            return (self.end_time - self.start_time).total_seconds()
+
+        def stop(self) -> None:
+            """
+            Stop the timer.
+            """
+
+            self._stop_perf_counter = perf_counter()
+            self.end_time = self.start_time + timedelta(seconds=self._stop_perf_counter - self._start_perf_counter)
 
 
 class LimiterTools:
@@ -135,4 +216,4 @@ class CacheTools:
         :return: A cache key for the current request.
         """
 
-        return str(flask.request.url)
+        return str(request.url)
