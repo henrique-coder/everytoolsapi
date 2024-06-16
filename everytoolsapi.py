@@ -4,7 +4,7 @@ from flask_caching import Cache
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
-from logging.config import dictConfig
+from logging import config as logging_config, getLogger
 from dotenv import load_dotenv
 from os import getenv
 from yaml import safe_load as yaml_safe_load
@@ -12,12 +12,9 @@ from pathlib import Path
 from typing import *
 
 from static.data.version import APIVersion
-from static.data.functions import APITools, LimiterTools, CacheTools
+from static.data.functions import DBTools, APITools, LimiterTools, CacheTools
 from static.data.endpoints import APIEndpoints
 
-
-# Load the environment variables
-load_dotenv()
 
 # Configuration class
 class Config:
@@ -32,8 +29,8 @@ class Config:
 # Setup Flask application
 app = Flask(__name__)
 
-# Setup Flask logging configuration
-logging_config = {
+# Setup logging configuration
+logging_config_data = {
     'version': 1,
     'formatters': {
         'default': {
@@ -52,18 +49,26 @@ logging_config = {
         'handlers': ['wsgi']
     }
 }
-dictConfig(logging_config)
+logging_config.dictConfig(logging_config_data)
+logger = getLogger(__name__)
+logger.info('Flask application and logger successfully initialized')
 
-# Setup Redis URL
+# Load the environment variables
+load_dotenv()
+logger.info('Environment variables loaded successfully')
+
+# Setup Redis configuration
+redis_username = getenv('REDIS_USERNAME')
+redis_password = getenv('REDIS_PASSWORD')
 redis_host = getenv('REDIS_HOST')
 redis_port = int(getenv('REDIS_PORT'))
 redis_db = int(getenv('REDIS_DB'))
-redis_username = getenv('REDIS_USERNAME')
-redis_password = getenv('REDIS_PASSWORD')
 redis_url = f'redis://{redis_username}:{redis_password}@{redis_host}:{redis_port}/{redis_db}'
+logger.info('Redis server configuration loaded successfully')
 
 # Setup Flask limiter with Redis
 limiter = Limiter(flask_limiter_utils.get_remote_address, app=app, storage_uri=redis_url)
+logger.info('Flask limiter successfully initialized')
 
 # Setup Flask cache with Redis
 app.config['CACHE_TYPE'] = 'RedisCache'
@@ -74,11 +79,34 @@ app.config['CACHE_REDIS_USERNAME'] = redis_username
 app.config['CACHE_REDIS_PASSWORD'] = redis_password
 app.config['CACHE_REDIS_URL'] = redis_url
 cache = Cache(app)
+logger.info('Flask cache successfully initialized')
 
-# Setup Talisman for security headers (with custom options), CSRF protection and Compress for response compression
+# Setup Talisman for security headers
 talisman = Talisman(app, content_security_policy={'default-src': ["'self'", 'https://cdnjs.cloudflare.com'], 'style-src': ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'], 'script-src': ["'self'", 'https://cdnjs.cloudflare.com']})
+logger.info('Talisman successfully initialized')
+
+# Setup CSRF protection
 csrf = CSRFProtect(app)
+logger.info('CSRF protection successfully initialized')
+
+# Setup response compression
 compression = Compress(app)
+logger.info('Response compression successfully initialized')
+
+# Setup PostgreSQL configuration
+postgresql_username = getenv('POSTGRESQL_USERNAME')
+postgresql_password = getenv('POSTGRESQL_PASSWORD')
+postgresql_host = getenv('POSTGRESQL_HOST')
+postgresql_port = getenv('POSTGRESQL_PORT')
+postgresql_ssl_mode = getenv('POSTGRESQL_SSL_MODE')
+postgresql_db_name = getenv('POSTGRESQL_DB_NAME')
+postgresql_url = f'postgresql://{postgresql_username}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_db_name}?sslmode={postgresql_ssl_mode}'
+logger.info('PostgreSQL server configuration loaded successfully')
+
+# Initialize the database connection (PostgreSQL) and create the required tables
+db_conn = DBTools.initialize_db_connection(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
+DBTools.APIRequestLogs.create_required_tables(db_conn)
+logger.info('PostgreSQL database connection and required tables successfully initialized')
 
 
 # Setup main routes
@@ -191,4 +219,5 @@ if __name__ == '__main__':
     app.template_folder = Path(current_path, config.flask.templateFolder)
 
     # Run the web server with the specified configuration
-    app.run(debug=False, host=config.flask.host, port=config.flask.port, threaded=config.flask.threadedServer)
+    logger.info(f'Starting web server at {config.flask.host}:{config.flask.port}')
+    app.run(debug=True, host=config.flask.host, port=config.flask.port, threaded=config.flask.threadedServer)
