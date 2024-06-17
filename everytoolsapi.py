@@ -4,6 +4,7 @@ from flask_caching import Cache
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
+from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from logging import config as logging_config, getLogger
 from dotenv import load_dotenv
@@ -94,6 +95,10 @@ logger.info('CSRF protection successfully initialized')
 # Setup response compression
 compression = Compress(app)
 logger.info('Response compression successfully initialized')
+
+# Setup CORS
+cors = CORS(app, resources={r'/*': {'origins': '*'}})
+logger.info('CORS successfully initialized')
 
 # Setup proxy fix for the Flask application
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
