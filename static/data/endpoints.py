@@ -14,12 +14,7 @@ from fake_useragent import FakeUserAgent
 from yt_dlp import YoutubeDL
 from typing import *
 
-from static.data.version import APIVersion
 from static.data.functions import APITools, LimiterTools
-
-
-# Get the latest API version
-latest_api_version = APIVersion().latest_version
 
 
 # Global variables/constants
@@ -31,10 +26,10 @@ class APIEndpoints:
     class v2:
         class parser:
             class useragent:
-                endpoint_url = '/parser/useragent/'
+                endpoint_url = 'parser/useragent'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                cache_timeout = 300
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
+                cache_timeout = 5
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -83,10 +78,10 @@ class APIEndpoints:
                     return output_data
 
             class url:
-                endpoint_url = '/parser/url/'
+                endpoint_url = 'parser/url'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                cache_timeout = 300
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
+                cache_timeout = 5
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -124,10 +119,10 @@ class APIEndpoints:
                     return output_data
 
             class sec_to_hms:
-                endpoint_url = '/parser/sec-to-hms/'
+                endpoint_url = 'parser/sec-to-hms'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                cache_timeout = 300
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
+                cache_timeout = 5
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -167,10 +162,10 @@ class APIEndpoints:
                     return output_data
 
             class email:
-                endpoint_url = '/parser/email/'
+                endpoint_url = 'parser/email'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                cache_timeout = 300
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
+                cache_timeout = 5
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -208,10 +203,10 @@ class APIEndpoints:
                     return output_data
 
             class text_counter:
-                endpoint_url = '/parser/text-counter/'
+                endpoint_url = 'parser/text-counter'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=1000)
-                cache_timeout = 300
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
+                cache_timeout = 5
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
@@ -274,7 +269,7 @@ class APIEndpoints:
 
         class tools:
             class text_lang_detector:
-                endpoint_url = '/tools/text-lang-detector/'
+                endpoint_url = 'tools/text-lang-detector'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
                 cache_timeout = 3600
@@ -313,7 +308,7 @@ class APIEndpoints:
                     return output_data
 
             class text_translator:
-                endpoint_url = '/tools/text-translator/'
+                endpoint_url = 'tools/text-translator'
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=600)
                 cache_timeout = 3600
@@ -359,11 +354,27 @@ class APIEndpoints:
 
                     return output_data
 
+            class ip:
+                endpoint_url = 'tools/ip'
+                allowed_methods = ['GET']
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
+                cache_timeout = 5
+
+                @staticmethod
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                    timer = APITools.Timer()
+                    output_data = APITools.get_default_api_output_dict()
+
+                    api_request_id = db_client.start_request(request_data, timer.start_time)
+
+                    # Request data validation
+                    return output_data
+
         class scraper:
             class google_search:
-                endpoint_url = '/scraper/google-search/'
+                endpoint_url = 'scraper/google-search'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=400)
                 cache_timeout = 3600
 
                 @staticmethod
@@ -416,9 +427,9 @@ class APIEndpoints:
                     return output_data
 
             class instagram_reels:
-                endpoint_url = '/scraper/instagram-reels/'
+                endpoint_url = 'scraper/instagram-reels'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=300)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
                 cache_timeout = 3600
 
                 @staticmethod
@@ -539,9 +550,9 @@ class APIEndpoints:
                     return output_data
 
             class youtube_media:
-                endpoint_url = '/scraper/youtube-media/'
+                endpoint_url = 'scraper/youtube-media'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=300)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_day=400)
                 cache_timeout = 14400
 
                 @staticmethod
