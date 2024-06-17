@@ -4,6 +4,8 @@ flask-caching
 flask-talisman
 flask-wtf
 flask-compress
+flask-cors
+werkzeug
 redis
 gunicorn
 psycopg2-binary
