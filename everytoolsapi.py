@@ -4,6 +4,7 @@ from flask_caching import Cache
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
+from werkzeug.middleware.proxy_fix import ProxyFix
 from logging import config as logging_config, getLogger
 from dotenv import load_dotenv
 from os import getenv
@@ -94,6 +95,9 @@ logger.info('CSRF protection successfully initialized')
 compression = Compress(app)
 logger.info('Response compression successfully initialized')
 
+# Setup proxy fix for the Flask application
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # Setup PostgreSQL configuration
 postgresql_username = getenv('POSTGRESQL_USERNAME')
 postgresql_password = getenv('POSTGRESQL_PASSWORD')
@@ -121,7 +125,7 @@ def initial_page() -> render_template:
 
 # Setup API routes
 _parser__useragent = APIEndpoints.v2.parser.useragent
-@app.route(f'/api/<query_version>{_parser__useragent.endpoint_url}', methods=_parser__useragent.allowed_methods)
+@app.route(f'/api/<query_version>/{_parser__useragent.endpoint_url}/', methods=_parser__useragent.allowed_methods)
 @limiter.limit(_parser__useragent.ratelimit)
 @cache.cached(timeout=_parser__useragent.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__useragent(query_version: str) -> jsonify:
@@ -130,7 +134,7 @@ def parser__useragent(query_version: str) -> jsonify:
 
 
 _parser__url = APIEndpoints.v2.parser.url
-@app.route(f'/api/<query_version>{_parser__url.endpoint_url}', methods=_parser__url.allowed_methods)
+@app.route(f'/api/<query_version>/{_parser__url.endpoint_url}/', methods=_parser__url.allowed_methods)
 @limiter.limit(_parser__url.ratelimit)
 @cache.cached(timeout=_parser__url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__url(query_version: str) -> jsonify:
@@ -139,7 +143,7 @@ def parser__url(query_version: str) -> jsonify:
 
 
 _parser__time_hms = APIEndpoints.v2.parser.sec_to_hms
-@app.route(f'/api/<query_version>{_parser__time_hms.endpoint_url}', methods=_parser__time_hms.allowed_methods)
+@app.route(f'/api/<query_version>/{_parser__time_hms.endpoint_url}/', methods=_parser__time_hms.allowed_methods)
 @limiter.limit(_parser__time_hms.ratelimit)
 @cache.cached(timeout=_parser__time_hms.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__time_hms(query_version: str) -> jsonify:
@@ -148,7 +152,7 @@ def parser__time_hms(query_version: str) -> jsonify:
 
 
 _parser__email = APIEndpoints.v2.parser.email
-@app.route(f'/api/<query_version>{_parser__email.endpoint_url}', methods=_parser__email.allowed_methods)
+@app.route(f'/api/<query_version>/{_parser__email.endpoint_url}/', methods=_parser__email.allowed_methods)
 @limiter.limit(_parser__email.ratelimit)
 @cache.cached(timeout=_parser__email.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__email(query_version: str) -> jsonify:
@@ -157,7 +161,7 @@ def parser__email(query_version: str) -> jsonify:
 
 
 _parser__text_counter = APIEndpoints.v2.parser.text_counter
-@app.route(f'/api/<query_version>{_parser__text_counter.endpoint_url}', methods=_parser__text_counter.allowed_methods)
+@app.route(f'/api/<query_version>/{_parser__text_counter.endpoint_url}/', methods=_parser__text_counter.allowed_methods)
 @limiter.limit(_parser__text_counter.ratelimit)
 @cache.cached(timeout=_parser__text_counter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__text_counter(query_version: str) -> jsonify:
@@ -166,7 +170,7 @@ def parser__text_counter(query_version: str) -> jsonify:
 
 
 _tools__text_lang_detector = APIEndpoints.v2.tools.text_lang_detector
-@app.route(f'/api/<query_version>{_tools__text_lang_detector.endpoint_url}', methods=_tools__text_lang_detector.allowed_methods)
+@app.route(f'/api/<query_version>/{_tools__text_lang_detector.endpoint_url}/', methods=_tools__text_lang_detector.allowed_methods)
 @limiter.limit(_tools__text_lang_detector.ratelimit)
 @cache.cached(timeout=_tools__text_lang_detector.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__text_lang_detector(query_version: str) -> jsonify:
@@ -175,7 +179,7 @@ def tools__text_lang_detector(query_version: str) -> jsonify:
 
 
 _tools__text_translator = APIEndpoints.v2.tools.text_translator
-@app.route(f'/api/<query_version>{_tools__text_translator.endpoint_url}', methods=_tools__text_translator.allowed_methods)
+@app.route(f'/api/<query_version>/{_tools__text_translator.endpoint_url}/', methods=_tools__text_translator.allowed_methods)
 @limiter.limit(_tools__text_translator.ratelimit)
 @cache.cached(timeout=_tools__text_translator.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__text_translator(query_version: str) -> jsonify:
@@ -183,8 +187,26 @@ def tools__text_translator(query_version: str) -> jsonify:
     return jsonify(_tools__text_translator.run(db_client, APITools.extract_request_data(request)))
 
 
+_tools__ip = APIEndpoints.v2.tools.ip
+@app.route(f'/api/<query_version>/{_tools__ip.endpoint_url}/', methods=_tools__ip.allowed_methods)
+@limiter.limit(_tools__ip.ratelimit)
+@cache.cached(timeout=_tools__ip.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__ip(query_version: str) -> jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    data = {
+        'request.remote_addr (flask)': request.remote_addr,
+        'X-Appengine-User-Ip (headers)': request.headers.get('X-Appengine-User-Ip'),
+        'REMOTE_ADDR (environ)': request.environ.get('REMOTE_ADDR'),
+        'HTTP_X_FORWARDED_FOR (environ)': request.environ.get('HTTP_X_FORWARDED_FOR'),
+        'HTTP_CF_CONNECTING_IP (environ)': request.environ.get('CF-Connecting-IP'),
+    }
+    logger.warning(data)
+
+    return 'Route in maintenance', 503
+
+
 _scraper__google_search = APIEndpoints.v2.scraper.google_search
-@app.route(f'/api/<query_version>{_scraper__google_search.endpoint_url}', methods=_scraper__google_search.allowed_methods)
+@app.route(f'/api/<query_version>/{_scraper__google_search.endpoint_url}/', methods=_scraper__google_search.allowed_methods)
 @limiter.limit(_scraper__google_search.ratelimit)
 @cache.cached(timeout=_scraper__google_search.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def scraper__google_search(query_version: str) -> jsonify:
@@ -193,7 +215,7 @@ def scraper__google_search(query_version: str) -> jsonify:
 
 
 _scraper__instagram_reels = APIEndpoints.v2.scraper.instagram_reels
-@app.route(f'/api/<query_version>{_scraper__instagram_reels.endpoint_url}', methods=_scraper__instagram_reels.allowed_methods)
+@app.route(f'/api/<query_version>/{_scraper__instagram_reels.endpoint_url}/', methods=_scraper__instagram_reels.allowed_methods)
 @limiter.limit(_scraper__instagram_reels.ratelimit)
 @cache.cached(timeout=_scraper__instagram_reels.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def scraper__instagram_reels(query_version: str) -> jsonify:
@@ -202,7 +224,7 @@ def scraper__instagram_reels(query_version: str) -> jsonify:
 
 
 _scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
-@app.route(f'/api/<query_version>{_scraper__youtube_media.endpoint_url}', methods=_scraper__youtube_media.allowed_methods)
+@app.route(f'/api/<query_version>/{_scraper__youtube_media.endpoint_url}/', methods=_scraper__youtube_media.allowed_methods)
 @limiter.limit(_scraper__youtube_media.ratelimit)
 @cache.cached(timeout=_scraper__youtube_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def scraper__youtube_media(query_version: str) -> jsonify:
