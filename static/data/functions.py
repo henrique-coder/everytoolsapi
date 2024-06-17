@@ -1,5 +1,4 @@
 from flask import request, Request
-from psycopg2 import Error as psycopg2Error, connect as psycopg2_connect
 from time import perf_counter
 from datetime import timedelta, datetime, UTC
 from typing import *
@@ -9,80 +8,6 @@ from static.data.version import APIVersion
 
 # Get the latest API version
 latest_api_version = APIVersion().latest_version
-
-
-class DBTools:
-    """
-    A class for database tools.
-    """
-
-    @staticmethod
-    def initialize_db_connection(db_name: str, db_user: str, db_password: str, db_host: str, db_port: str, ssl_mode: str) -> psycopg2_connect:
-        """
-        Connect to a PostgreSQL database and return the connection object.
-        :param db_name: The name of the database to connect to.
-        :param db_user: The username to use for authentication.
-        :param db_password: The password to use for authentication.
-        :param db_host: The hostname of the database server.
-        :param db_port: The port number to connect to.
-        :param ssl_mode: The SSL mode to use for the connection.
-        :return: A connection object to the database.
-        """
-
-        try:
-            return psycopg2_connect(dbname=db_name, user=db_user, password=db_password, host=db_host, port=db_port, sslmode=ssl_mode)
-        except psycopg2Error as e:
-            raise Exception(f'Error while connecting to the database: {e}')
-
-    class APIRequestLogs:
-        """
-        A class for API request logs.
-        """
-
-        @staticmethod
-        def create_required_tables(conn_object: psycopg2_connect) -> None:
-            """
-            Create the required tables in the database.
-            :param conn_object: The connection object to the database.
-            :return: True if the tables were created successfully, False otherwise.
-            """
-
-            try:
-                cursor = conn_object.cursor()
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS api_request_logs (
-                        id SERIAL PRIMARY KEY,
-                        status VARCHAR(16) NOT NULL,
-                        route VARCHAR(255) NOT NULL,
-                        origin_ip_address INET NOT NULL,
-                        created_at TIMESTAMP NOT NULL
-                    );
-                ''')
-                conn_object.commit()
-                cursor.close()
-            except psycopg2Error as e:
-                raise Exception(f'Error while creating tables: {e}')
-
-        @staticmethod
-        def start_request_log(conn: psycopg2_connect, route: str, origin_ip_address: str, created_at: datetime) -> None:
-            """
-            Log the start of a request.
-            :param conn: The connection object to the database.
-            :param route: The route of the current request.
-            :param origin_ip_address: The origin IP address of the current request.
-            :param created_at: The timestamp of the current request.
-            """
-
-            try:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    INSERT INTO api_request_logs (status, route, origin_ip_address, created_at)
-                    VALUES (%s, %s);
-                ''', ('started', route, origin_ip_address, created_at))
-                conn.commit()
-                cursor.close()
-            except psycopg2Error as e:
-                raise Exception(f'Error while logging request start: {e}')
 
 
 class APITools:
@@ -154,11 +79,11 @@ class APITools:
 
         def get_time(self) -> float:
             """
-            Get the time taken by a process.
+            Get the time taken by a process without stopping the timer.
             :return: The time taken by a process.
             """
 
-            return (datetime.now(UTC) - self.start_time).total_seconds()
+            return self.start_time + timedelta(seconds=perf_counter() - self._start_perf_counter)
 
         def elapsed_time(self) -> float:
             """
