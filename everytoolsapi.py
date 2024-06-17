@@ -193,16 +193,7 @@ _tools__ip = APIEndpoints.v2.tools.ip
 @cache.cached(timeout=_tools__ip.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__ip(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    data = {
-        'request.remote_addr (flask)': request.remote_addr,
-        'X-Appengine-User-Ip (headers)': request.headers.get('X-Appengine-User-Ip'),
-        'REMOTE_ADDR (environ)': request.environ.get('REMOTE_ADDR'),
-        'HTTP_X_FORWARDED_FOR (environ)': request.environ.get('HTTP_X_FORWARDED_FOR'),
-        'HTTP_CF_CONNECTING_IP (environ)': request.environ.get('CF-Connecting-IP'),
-    }
-    logger.warning(data)
-
-    return 'Route in maintenance', 503
+    return jsonify(_tools__ip.run(db_client, APITools.extract_request_data(request)))
 
 
 _scraper__google_search = APIEndpoints.v2.scraper.google_search

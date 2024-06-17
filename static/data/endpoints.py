@@ -368,6 +368,18 @@ class APIEndpoints:
                     api_request_id = db_client.start_request(request_data, timer.start_time)
 
                     # Request data validation
+                    if request_data['args'].get('query'): ip = request_data['args']['query']
+                    else: ip = request_data['ipAddress']
+
+                    # Main process
+                    timer.stop()
+
+                    output_data['response'] = {'originIpAddress': ip}
+                    output_data['api']['status'] = True
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+                    db_client.update_request_status('success', api_request_id, timer.end_time)
+
                     return output_data
 
         class scraper:

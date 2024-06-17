@@ -23,8 +23,8 @@ class APITools:
         :return: The request arguments, headers, body, and authentication.
         """
 
+        remote_addr = request_object.environ.get('HTTP_X_FORWARDED_FOR', request_object.remote_addr)
         route = str(request_object.path)
-        remote_addr = request_object.remote_addr
         args = request_object.args.to_dict()
         headers = dict(request_object.headers)
         body = request_object.get_json(force=True, silent=True)
@@ -32,7 +32,7 @@ class APITools:
         try: auth = request_object.authorization.__dict__
         except AttributeError: auth = dict()
 
-        return {'pathRoute': route, 'ipAddress': remote_addr, 'args': args, 'headers': headers, 'body': body, 'auth': auth}
+        return {'ipAddress': remote_addr, 'pathRoute': route, 'args': args, 'headers': headers, 'body': body, 'auth': auth}
 
     @staticmethod
     def get_default_api_output_dict() -> Dict[str, Any]:
