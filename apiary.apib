@@ -11,7 +11,7 @@ Parse user-agent string to get OS, browser, and device information. If no "query
 - Cache duration: 5s
 
 + Parameters
-  + query (string, optional) - Any user-agent string.
+  + query (string, optional) - User-Agent string to be parsed.
 
 ## Responses [GET]
 
@@ -41,5 +41,35 @@ Parse user-agent string to get OS, browser, and device information. If no "query
                     "versionString": string
                 },
                 "uaString": string
+            }
+        }
+
+## parser/url [/parser/url/?query={query}]
+Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.
+
+- Rate limiting: 10/s; 10000/d
+- Cache duration: 5s
+
++ Parameters
+  + query (string) - Parse URL to get protocol, hostname, path, parameters, and fragment information.
+
+## Responses [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float or None,
+                "errorMessage": string or None,
+                "status": True or False,
+                "version": string
+            },
+            "response": {
+                "fragment": string,
+                "hostname": string,
+                "params": dict,
+                "path": string,
+                "protocol": string
+                }
             }
         }
