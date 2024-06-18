@@ -76,7 +76,7 @@ compression = Compress(app)
 logger.info('Response compression successfully initialized')
 
 # Setup CORS
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 logger.info('CORS successfully initialized')
 
 # Setup proxy fix for the Flask application
@@ -102,15 +102,15 @@ logger.info('PostgreSQL database connection and required tables successfully ini
 # Setup main routes
 @app.route('/', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
-@cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
+@cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
 def initial_page() -> render_template:
     return render_template('index.html')
 
 
-@app.route('/docs', methods=['GET'])
+@app.route('/docs/', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
-@cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
-def docs_page() -> render_template:
+@cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
+def docs_page() -> redirect:
     return redirect('https://everytoolsapi.docs.apiary.io', code=302), 302
 
 

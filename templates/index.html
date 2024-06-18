@@ -12,9 +12,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #222;
+        background-color: #171c20;
         color: #fff;
         font-family: Arial, sans-serif;
+        flex-direction: column;
       }
 
       .title {
@@ -23,10 +24,26 @@
         text-transform: uppercase;
         letter-spacing: 2px;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        margin-bottom: 20px;
+      }
+
+      .link {
+        font-size: 1.5rem;
+        text-align: center;
+        color: #1e90ff;
+        cursor: pointer;
+        transition: color 0.3s, text-shadow 0.3s;
+        text-decoration: none;
+      }
+
+      .link:hover {
+        color: #00bfff;
+        text-shadow: 0 0 5px #00bfff;
       }
     </style>
   </head>
   <body>
     <div class="title">EveryTools API</div>
+    <a href="/docs" class="link">Open official API documentation</a>
   </body>
 </html>
