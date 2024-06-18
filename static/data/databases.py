@@ -102,7 +102,6 @@ class APIRequestLogs:
             cursor = self.client.cursor()
 
             # Create request in PostgreSQL and get the generated ID
-            print(f'[debug] request_data: {request_data}')
             data = {
                 'route': request_data['pathRoute'],
                 'params': '?' + '&'.join(f'{k}={v}' for k, v in request_data['args'].items()),
