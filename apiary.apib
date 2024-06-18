@@ -1,0 +1,45 @@
+FORMAT: 1A
+HOST: https://everytoolsapi-henrique-coder.koyeb.app/api/v2/
+
+# Everytools API
+Welcome to the EveryTools API. Where you can find all the tools you need in one place.
+
+## parser/useragent [/parser/useragent/?query={query}]
+Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.
+
+- Rate limiting: 10/s; 10000/d
+- Cache duration: 5s
+
++ Parameters
+  + query (string, optional) - Any user-agent string.
+
+## Responses [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float or None,
+                "errorMessage": string or None,
+                "status": True or False,
+                "version": string
+            },
+            "response": {
+                "browser": {
+                    "family": string,
+                    "version": list,
+                    "versionString": string
+                },
+                "device": {
+                    "brand": string,
+                    "family": string,
+                    "model": string
+                },
+                "os": {
+                    "family": string,
+                    "version": list,
+                    "versionString": string
+                },
+                "uaString": string
+            }
+        }
