@@ -4,9 +4,8 @@ HOST: https://everytoolsapi-henrique-coder.koyeb.app/api/v2/
 # Everytools API
 Welcome to the EveryTools API. Where you can find all the tools you need in one place.
 
-## parser/useragent [/parser/useragent/?query={query}]
+## User-Agent Parser [/parser/useragent/?query={query}]
 Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.
-
 - Rate limiting: 10/s; 10000/d
 - Cache duration: 5s
 
@@ -27,7 +26,7 @@ Parse user-agent string to get OS, browser, and device information. If no "query
             "response": {
                 "browser": {
                     "family": string,
-                    "version": list,
+                    "version": list[int],
                     "versionString": string
                 },
                 "device": {
@@ -37,21 +36,20 @@ Parse user-agent string to get OS, browser, and device information. If no "query
                 },
                 "os": {
                     "family": string,
-                    "version": list,
+                    "version": list[int],
                     "versionString": string
                 },
                 "uaString": string
             }
         }
 
-## parser/url [/parser/url/?query={query}]
-Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.
-
+## URL Parser [/parser/url/?query={query}]
+Parse URL to get protocol, hostname, path, parameters, and fragment information.
 - Rate limiting: 10/s; 10000/d
 - Cache duration: 5s
 
 + Parameters
-  + query (string) - Parse URL to get protocol, hostname, path, parameters, and fragment information.
+  + query (string) - URL to be parsed.
 
 ## Responses [GET]
 
@@ -67,9 +65,104 @@ Parse user-agent string to get OS, browser, and device information. If no "query
             "response": {
                 "fragment": string,
                 "hostname": string,
-                "params": dict,
+                "params": dict[str, str],
                 "path": string,
                 "protocol": string
+                }
+            }
+        }
+
+## Seconds to HH:MM:SS Converter [/parser/sec-to-hms/?query={query}]
+Convert seconds to HH:MM:SS format.
+- Rate limiting: 10/s; 10000/d
+- Cache duration: 5s
+
++ Parameters
+  + query (number) - Seconds to be converted.
+
+## Responses [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float or None,
+                "errorMessage": string or None,
+                "status": True or False,
+                "version": string
+            },
+            "response": {
+                "hmsString": string
+            }
+        }
+
+## E-mail Address Parser [/parser/email/?query={query}]
+Parse e-mail address to get user and domain information.
+- Rate limiting: 10/s; 10000/d
+- Cache duration: 5s
+
++ Parameters
+  + query (string) - E-mail address to be parsed.
+
+## Responses [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float or None,
+                "errorMessage": string or None,
+                "status": True or False,
+                "version": string
+            },
+            "response": {
+                "domain": string,
+                "user": string
+            }
+        }
+
+## Advanced Text Counter [/text/text-counter/?query={query}]
+Count the number of characters, words, and many other elements in a text.
+
++ Parameters
+  + query (string) - Text to be analyzed.
+
+## Responses [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float or None,
+                "errorMessage": string or None,
+                "status": True or False,
+                "version": string
+            },
+            "response": {
+                "letters": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "lowercase": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "numbers": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "otherSymbols": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "spaces": int,
+                "uppercase": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "words": {
+                    "characters": dict[str, int],
+                    "total": int
                 }
             }
         }
