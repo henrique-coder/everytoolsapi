@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, redirect
 from flask_limiter import util as flask_limiter_utils, Limiter
 from flask_caching import Cache
 from flask_talisman import Talisman
@@ -97,7 +97,7 @@ compression = Compress(app)
 logger.info('Response compression successfully initialized')
 
 # Setup CORS
-cors = CORS(app, resources={r'/*': {'origins': '*'}})
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 logger.info('CORS successfully initialized')
 
 # Setup proxy fix for the Flask application
@@ -122,10 +122,17 @@ logger.info('PostgreSQL database connection and required tables successfully ini
 
 # Setup main routes
 @app.route('/', methods=['GET'])
-@limiter.limit(LimiterTools.gen_ratelimit_message(per_min=60))
+@limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
 @cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
 def initial_page() -> render_template:
     return render_template('index.html')
+
+
+@app.route('/docs', methods=['GET'])
+@limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
+@cache.cached(timeout=300, make_cache_key=CacheTools.gen_cache_key)
+def docs_page() -> render_template:
+    return redirect('https://everytoolsapi.docs.apiary.io', code=302), 302
 
 
 # Setup API routes
@@ -135,7 +142,8 @@ _parser__useragent = APIEndpoints.v2.parser.useragent
 @cache.cached(timeout=_parser__useragent.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__useragent(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_parser__useragent.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _parser__useragent.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _parser__url = APIEndpoints.v2.parser.url
@@ -144,7 +152,8 @@ _parser__url = APIEndpoints.v2.parser.url
 @cache.cached(timeout=_parser__url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__url(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_parser__url.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _parser__url.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _parser__time_hms = APIEndpoints.v2.parser.sec_to_hms
@@ -153,7 +162,8 @@ _parser__time_hms = APIEndpoints.v2.parser.sec_to_hms
 @cache.cached(timeout=_parser__time_hms.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__time_hms(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_parser__time_hms.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _parser__time_hms.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _parser__email = APIEndpoints.v2.parser.email
@@ -162,7 +172,8 @@ _parser__email = APIEndpoints.v2.parser.email
 @cache.cached(timeout=_parser__email.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__email(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_parser__email.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _parser__email.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _parser__text_counter = APIEndpoints.v2.parser.text_counter
@@ -171,7 +182,8 @@ _parser__text_counter = APIEndpoints.v2.parser.text_counter
 @cache.cached(timeout=_parser__text_counter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def parser__text_counter(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_parser__text_counter.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _parser__text_counter.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _tools__text_lang_detector = APIEndpoints.v2.tools.text_lang_detector
@@ -180,7 +192,8 @@ _tools__text_lang_detector = APIEndpoints.v2.tools.text_lang_detector
 @cache.cached(timeout=_tools__text_lang_detector.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__text_lang_detector(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_tools__text_lang_detector.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _tools__text_lang_detector.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _tools__text_translator = APIEndpoints.v2.tools.text_translator
@@ -189,7 +202,8 @@ _tools__text_translator = APIEndpoints.v2.tools.text_translator
 @cache.cached(timeout=_tools__text_translator.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__text_translator(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_tools__text_translator.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _tools__text_translator.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _tools__ip = APIEndpoints.v2.tools.ip
@@ -198,7 +212,8 @@ _tools__ip = APIEndpoints.v2.tools.ip
 @cache.cached(timeout=_tools__ip.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__ip(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_tools__ip.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _tools__ip.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _scraper__google_search = APIEndpoints.v2.scraper.google_search
@@ -207,7 +222,8 @@ _scraper__google_search = APIEndpoints.v2.scraper.google_search
 @cache.cached(timeout=_scraper__google_search.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def scraper__google_search(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_scraper__google_search.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _scraper__google_search.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _scraper__instagram_reels = APIEndpoints.v2.scraper.instagram_reels
@@ -216,7 +232,8 @@ _scraper__instagram_reels = APIEndpoints.v2.scraper.instagram_reels
 @cache.cached(timeout=_scraper__instagram_reels.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def scraper__instagram_reels(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_scraper__instagram_reels.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _scraper__instagram_reels.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 _scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
@@ -225,7 +242,8 @@ _scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
 @cache.cached(timeout=_scraper__youtube_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def scraper__youtube_media(query_version: str) -> jsonify:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    return jsonify(_scraper__youtube_media.run(db_client, APITools.extract_request_data(request)))
+    generated_data = _scraper__youtube_media.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 if __name__ == '__main__':
