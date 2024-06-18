@@ -2,6 +2,12 @@ from psycopg2 import connect as psycopg2_connect, Error as psycopg2Error, extens
 from datetime import datetime
 from typing import Any, Dict
 
+from static.data.logger import logger
+
+
+# Initialize the clients dictionary
+clients = dict()
+
 
 class APIRequestLogs:
     """
@@ -28,8 +34,16 @@ class APIRequestLogs:
 
         try:
             self.client = psycopg2_connect(dbname=db_name, user=db_user, password=db_password, host=db_host, port=db_port, sslmode=ssl_mode)
+            clients['postgresql'] = self.client
         except psycopg2Error as e:
             raise Exception(f'Error while connecting to the database: {e}')
+
+    def disconnect(self) -> None:
+        """
+        Disconnect from the database.
+        """
+
+        self.client.close()
 
     @staticmethod
     def _insert_into(cursor: psycopg2_extensions.cursor, table_name: str, data: Dict[str, str], return_column: str = None) -> Any:
@@ -169,3 +183,18 @@ class APIRequestLogs:
             cursor.close()
         except psycopg2Error as e:
             raise Exception(f'Error while logging exception: {e}')
+
+
+def refresh_connection(postgresql_db_name: str, postgresql_username: str, postgresql_password: str, postgresql_host: str, postgresql_port: str, postgresql_ssl_mode: str) -> None:
+    """
+    Start the connection to the PostgreSQL database.
+    """
+
+    clients_refresh_list = ['postgresql']
+
+    for db_client_name, db_client in [(client_name, client) for client_name, client in clients.items() if client in clients_refresh_list]:
+        db_client.disconnect()
+        db_client.connect(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
+        logger.info(f'PostgreSQL connection refreshed for {db_client_name}')
+
+    logger.info('All database connections refreshed')

@@ -6,17 +6,20 @@ from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
-from logging import config as logging_config, getLogger
 from dotenv import load_dotenv
 from os import getenv
 from yaml import safe_load as yaml_safe_load
+from schedule import every as schedule_every, run_pending as schedule_run_pending
+from threading import Thread
+from time import sleep
 from pathlib import Path
 from typing import *
 
+from static.data.logger import logger
 from static.data.version import APIVersion
 from static.data.functions import APITools, LimiterTools, CacheTools
 from static.data.endpoints import APIEndpoints
-from static.data.databases import APIRequestLogs
+from static.data.databases import APIRequestLogs, refresh_connection
 
 
 # Configuration class
@@ -31,30 +34,6 @@ class Config:
 
 # Setup Flask application
 app = Flask(__name__)
-
-# Setup logging configuration
-logging_config_data = {
-    'version': 1,
-    'formatters': {
-        'default': {
-            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-        },
-    },
-    'handlers': {
-        'wsgi': {
-            'class': 'logging.StreamHandler',
-            'stream': 'ext://flask.logging.wsgi_errors_stream',
-            'formatter': 'default'
-        },
-    },
-    'root': {
-        'level': 'INFO',
-        'handlers': ['wsgi']
-    }
-}
-logging_config.dictConfig(logging_config_data)
-logger = getLogger(__name__)
-logger.info('Flask application and logger successfully initialized')
 
 # Load the environment variables
 load_dotenv()
@@ -112,12 +91,6 @@ postgresql_port = getenv('POSTGRESQL_PORT')
 postgresql_ssl_mode = getenv('POSTGRESQL_SSL_MODE')
 postgresql_url = f'postgresql://{postgresql_username}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_db_name}?sslmode={postgresql_ssl_mode}'
 logger.info('PostgreSQL server configuration loaded successfully')
-
-# Initialize the database connection (PostgreSQL) and create the required tables
-db_client = APIRequestLogs()
-db_client.connect(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
-db_client.create_required_tables()
-logger.info('PostgreSQL database connection and required tables successfully initialized')
 
 
 # Setup main routes
@@ -255,6 +228,27 @@ if __name__ == '__main__':
     # Setting up Flask default configuration
     app.static_folder = Path(current_path, config.flask.staticFolder)
     app.template_folder = Path(current_path, config.flask.templateFolder)
+
+    # Initialize the database connection (PostgreSQL) and create the required tables
+    db_client = APIRequestLogs()
+    db_client.connect(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
+    db_client.create_required_tables()
+    logger.info('PostgreSQL database connection and required tables successfully initialized')
+
+    # Schedule the database connection refresh
+    def db_refresh_scheduler() -> None:
+        while True:
+            schedule_run_pending()
+            sleep(60)
+
+    def db_refresh_connection_job() -> None:
+        refresh_connection(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
+
+    schedule_every(1).hour.do(db_refresh_connection_job)
+    scheduler_thread = Thread(target=db_refresh_scheduler)
+    scheduler_thread.daemon = True
+    scheduler_thread.start()
+    logger.info('Database connection refresh scheduler successfully initialized')
 
     # Run the web server with the specified configuration
     logger.info(f'Starting web server at {config.flask.host}:{config.flask.port}')
