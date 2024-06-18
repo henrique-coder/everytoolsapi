@@ -24,7 +24,8 @@ class APITools:
         """
 
         remote_addr = request_object.environ.get('HTTP_X_FORWARDED_FOR', request_object.remote_addr)
-        if isinstance(remote_addr, list): remote_addr = remote_addr[0]
+        print(type(remote_addr) + ' - ' + remote_addr)
+        if ',' in remote_addr: remote_addr = remote_addr.split(',')[0].strip()
         route = str(request_object.path)
         args = request_object.args.to_dict()
         headers = dict(request_object.headers)
