@@ -32,7 +32,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -44,7 +44,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter or "User-Agent" header found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     user_agent = UserAgentParser(ua_string)
@@ -75,7 +75,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class url:
                 endpoint_url = 'parser/url'
@@ -84,7 +84,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -95,7 +95,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     parsed_url = urlparse(url)
@@ -116,7 +116,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class sec_to_hms:
                 endpoint_url = 'parser/sec-to-hms'
@@ -125,7 +125,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -137,14 +137,14 @@ class APIEndpoints:
                             seconds = int(request_data['args']['query'])
                             if seconds < 0:
                                 output_data['api']['errorMessage'] = 'The "query" parameter cannot be negative.'
-                                return output_data
+                                return output_data, 400
                         except ValueError:
                             output_data['api']['errorMessage'] = 'The "query" parameter must be an integer.'
-                            return output_data
+                            return output_data, 400
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     hours, seconds = divmod(seconds, 3600)
@@ -159,7 +159,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class email:
                 endpoint_url = 'parser/email'
@@ -168,7 +168,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -179,7 +179,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     email_regex = re_compile(r'^(?P<user>[a-zA-Z0-9._%+-]+)@(?P<domain>[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$')
                     match = email_regex.match(email)
@@ -187,7 +187,7 @@ class APIEndpoints:
                     if not match:
                         output_data['api']['errorMessage'] = 'The e-mail address format is invalid.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     parsed_email_data = match.groupdict()
@@ -200,7 +200,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class text_counter:
                 endpoint_url = 'parser/text-counter'
@@ -209,7 +209,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -220,7 +220,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     lowercase_counts = dict(Counter(char for char in text if char.islower()))
@@ -265,7 +265,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
         class tools:
             class text_lang_detector:
@@ -275,7 +275,7 @@ class APIEndpoints:
                 cache_timeout = 3600
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -286,7 +286,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     DetectorFactory.seed = 0
@@ -295,7 +295,7 @@ class APIEndpoints:
                     except LangDetectException:
                         output_data['api']['errorMessage'] = "There aren't enough resources in the text to detect your language."
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     timer.stop()
 
@@ -305,7 +305,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class text_translator:
                 endpoint_url = 'tools/text-translator'
@@ -314,7 +314,7 @@ class APIEndpoints:
                 cache_timeout = 3600
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -325,13 +325,13 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     if request_data['args'].get('dest_lang'): dest_lang = str(request_data['args']['dest_lang']).replace('-', '_')
                     else:
                         output_data['api']['errorMessage'] = 'No "dest_lang" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     src_lang = request_data['args'].get('src_lang', None)
 
@@ -342,7 +342,7 @@ class APIEndpoints:
                     except ValueError as e:
                         output_data['api']['errorMessage'] = str(e).capitalize()
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 500
 
                     timer.stop()
 
@@ -352,7 +352,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class ip:
                 endpoint_url = 'tools/ip'
@@ -361,7 +361,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -369,7 +369,11 @@ class APIEndpoints:
 
                     # Request data validation
                     if request_data['args'].get('query'): ip = request_data['args']['query']
-                    else: ip = request_data['ipAddress']
+                    elif request_data.get('ipAddress'): ip = request_data['ipAddress']
+                    else:
+                        output_data['api']['errorMessage'] = 'No "query" parameter or your IP address found in the request.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
 
                     # Main process
                     timer.stop()
@@ -380,7 +384,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
         class scraper:
             class google_search:
@@ -390,7 +394,7 @@ class APIEndpoints:
                 cache_timeout = 3600
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -401,7 +405,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     max_results = request_data['args'].get('max_results', 10)
                     if not max_results: max_results = 10
@@ -411,15 +415,15 @@ class APIEndpoints:
                         if max_results < 1:
                             output_data['api']['errorMessage'] = 'The "max_results" parameter must be greater than 0.'
                             db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                            return output_data
+                            return output_data, 400
                         elif max_results > 50:
                             output_data['api']['errorMessage'] = 'The "max_results" parameter must be less than or equal to 50.'
                             db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                            return output_data
+                            return output_data, 400
                     except ValueError:
                         output_data['api']['errorMessage'] = 'The "max_results" parameter must be an integer.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     search_results = list()
@@ -436,7 +440,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class instagram_reels:
                 endpoint_url = 'scraper/instagram-reels'
@@ -445,7 +449,7 @@ class APIEndpoints:
                 cache_timeout = 3600
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -456,7 +460,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     def is_valid_instagram_reel_url(query: AnyStr) -> bool:
                         """
@@ -470,7 +474,7 @@ class APIEndpoints:
 
                     if not is_valid_instagram_reel_url(query):
                         output_data['api']['errorMessage'] = r'The URL provided is not a valid Instagram Reels URL. A valid URL should look like: https://www.instagram.com/reel/{your_reel_id}'
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     def format_string(query: AnyStr, max_length: int = 128) -> str:
@@ -533,12 +537,12 @@ class APIEndpoints:
                         except httpx_exceptions.HTTPError:
                             output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
                             db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                            return output_data
+                            return output_data, 500
 
                     if response.status_code != 200 or not response.json():
                         output_data['api']['errorMessage'] = 'Some external error occurred during the data search. Please try again later.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 500
 
                     response_data = response.json()
 
@@ -549,7 +553,7 @@ class APIEndpoints:
                     except BaseException:
                         output_data['api']['errorMessage'] = 'An error occurred while fetching Instagram reel data. Please try again later.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 500
 
                     timer.stop()
 
@@ -559,7 +563,7 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
 
             class youtube_media:
                 endpoint_url = 'scraper/youtube-media'
@@ -568,7 +572,7 @@ class APIEndpoints:
                 cache_timeout = 14400
 
                 @staticmethod
-                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> dict:
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
                     output_data = APITools.get_default_api_output_dict()
 
@@ -579,7 +583,7 @@ class APIEndpoints:
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     def parse_youtube_url(query: str) -> Dict[str, Optional[Union[bool, str]]]:
                         """
@@ -616,11 +620,11 @@ class APIEndpoints:
                     if not parsed_url_data['status']:
                         output_data['api']['errorMessage'] = 'The URL provided is not a valid YouTube media URL.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
                     elif parsed_url_data['urlType'] != 'video':
                         output_data['api']['errorMessage'] = 'Only video URLs are supported for now.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     # Main process
                     def format_string(query: AnyStr) -> str:
@@ -713,10 +717,10 @@ class APIEndpoints:
                     try:
                         raw_yt_extracted_data = yt.sanitize_info(yt.extract_info(query_url, download=False), remove_private_keys=True)
                         adjusted_yt_data = {'info': extract_media_info(raw_yt_extracted_data), 'media': {'video': list(), 'audio': list(), 'subtitles': list()}}
-                    except Exception:
+                    except BaseException:
                         output_data['api']['errorMessage'] = 'The URL you have chosen does not exist or is temporarily unavailable.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data
+                        return output_data, 400
 
                     yt_media_data = adjusted_yt_data['media']
 
@@ -755,4 +759,4 @@ class APIEndpoints:
 
                     db_client.update_request_status('success', api_request_id, timer.end_time)
 
-                    return output_data
+                    return output_data, 200
