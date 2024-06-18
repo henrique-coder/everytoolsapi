@@ -187,7 +187,7 @@ class APIRequestLogs:
 
 def refresh_connection(postgresql_db_name: str, postgresql_username: str, postgresql_password: str, postgresql_host: str, postgresql_port: str, postgresql_ssl_mode: str) -> None:
     """
-    Start the connection to the PostgreSQL database.
+    Refresh the database connections.
     """
 
     clients_refresh_list = ['postgresql']

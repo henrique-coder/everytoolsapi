@@ -92,6 +92,12 @@ postgresql_ssl_mode = getenv('POSTGRESQL_SSL_MODE')
 postgresql_url = f'postgresql://{postgresql_username}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_db_name}?sslmode={postgresql_ssl_mode}'
 logger.info('PostgreSQL server configuration loaded successfully')
 
+# Initialize the database connection (PostgreSQL) and create the required tables
+db_client = APIRequestLogs()
+db_client.connect(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
+db_client.create_required_tables()
+logger.info('PostgreSQL database connection and required tables successfully initialized')
+
 
 # Setup main routes
 @app.route('/', methods=['GET'])
@@ -228,12 +234,6 @@ if __name__ == '__main__':
     # Setting up Flask default configuration
     app.static_folder = Path(current_path, config.flask.staticFolder)
     app.template_folder = Path(current_path, config.flask.templateFolder)
-
-    # Initialize the database connection (PostgreSQL) and create the required tables
-    db_client = APIRequestLogs()
-    db_client.connect(postgresql_db_name, postgresql_username, postgresql_password, postgresql_host, postgresql_port, postgresql_ssl_mode)
-    db_client.create_required_tables()
-    logger.info('PostgreSQL database connection and required tables successfully initialized')
 
     # Schedule the database connection refresh
     def db_refresh_scheduler() -> None:
