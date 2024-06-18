@@ -31,6 +31,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                title = 'User-Agent Parser'
                 description = 'Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.'
                 parameters = {
                     'query': {'description': 'User-Agent string to be parsed.', 'required': False, 'type': 'string'}
@@ -88,6 +89,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                title = 'URL Parser'
                 description = 'Parse URL to get protocol, hostname, path, parameters, and fragment information.'
                 parameters = {
                     'query': {'description': 'URL to be parsed.', 'required': True, 'type': 'string'}
@@ -134,7 +136,8 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
-                description = 'Convert seconds to hours, minutes, and seconds format (HH:MM:SS).'
+                title = 'Seconds to HH:MM:SS Converter'
+                description = 'Convert seconds to HH:MM:SS format.'
                 parameters = {
                     'query': {'description': 'Seconds to be converted.', 'required': True, 'type': 'integer'}
                 }
@@ -182,6 +185,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                title = 'E-mail Address Parser'
                 description = 'Parse e-mail address to get user and domain information.'
                 parameters = {
                     'query': {'description': 'E-mail address to be parsed.', 'required': True, 'type': 'string'}
@@ -228,6 +232,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                title = 'Advanced Text Counter'
                 description = 'Count the number of characters, words, and many other elements in a text.'
                 parameters = {
                     'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
@@ -299,6 +304,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
                 cache_timeout = 3600
 
+                title = 'Text Language Detector'
                 description = 'Detects the predominant language in a text.'
                 parameters = {
                     'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
@@ -343,6 +349,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=600)
                 cache_timeout = 3600
 
+                title = 'Text Translator'
                 description = 'Translate text from one language to another.'
                 parameters = {
                     'query': {'description': 'Text to be translated.', 'required': True, 'type': 'string'},
@@ -397,6 +404,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                title = 'IP Address Retriever'
                 description = 'Get your IP address from the request.'
                 parameters = {}
 
@@ -432,6 +440,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=400)
                 cache_timeout = 3600
 
+                title = 'Google Search'
                 description = 'Searches and returns Google results according to your query.'
                 parameters = {
                     'query': {'description': 'Search query.', 'required': True, 'type': 'string'},
@@ -493,6 +502,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
                 cache_timeout = 3600
 
+                title = 'Instagram Reels Scraper'
                 description = 'Fetches data from any Instagram reels URL.'
                 parameters = {
                     'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
@@ -621,6 +631,7 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_day=400)
                 cache_timeout = 14400
 
+                title = 'YouTube Media Scraper'
                 description = 'Get detailed data from any YouTube video URL.'
                 parameters = {
                     'query': {'description': 'YouTube video URL.', 'required': True, 'type': 'string'}
