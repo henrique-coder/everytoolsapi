@@ -248,7 +248,7 @@ if __name__ == '__main__':
     scheduler_thread = Thread(target=db_refresh_scheduler)
     scheduler_thread.daemon = True
     scheduler_thread.start()
-    logger.info('Database connection refresh scheduler successfully initialized')
+    logger.info('PostgreSQL connection auto-refresh scheduler successfully initialized')
 
     # Run the web server with the specified configuration
     logger.info(f'Starting web server at {config.flask.host}:{config.flask.port}')

@@ -31,6 +31,11 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                description = 'Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.'
+                parameters = {
+                    'query': {'description': 'User-Agent string to be parsed.', 'required': False, 'type': 'string'}
+                }
+
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
@@ -83,6 +88,11 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                description = 'Parse URL to get protocol, hostname, path, parameters, and fragment information.'
+                parameters = {
+                    'query': {'description': 'URL to be parsed.', 'required': True, 'type': 'string'}
+                }
+
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
@@ -123,6 +133,11 @@ class APIEndpoints:
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
+
+                description = 'Convert seconds to hours, minutes, and seconds format (HH:MM:SS).'
+                parameters = {
+                    'query': {'description': 'Seconds to be converted.', 'required': True, 'type': 'integer'}
+                }
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -167,6 +182,11 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                description = 'Parse e-mail address to get user and domain information.'
+                parameters = {
+                    'query': {'description': 'E-mail address to be parsed.', 'required': True, 'type': 'string'}
+                }
+
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
@@ -207,6 +227,11 @@ class APIEndpoints:
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
+
+                description = 'Count the number of characters, words, and many other elements in a text.'
+                parameters = {
+                    'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
+                }
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -274,6 +299,11 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=800)
                 cache_timeout = 3600
 
+                description = 'Detects the predominant language in a text.'
+                parameters = {
+                    'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
+                }
+
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
@@ -312,6 +342,13 @@ class APIEndpoints:
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=600)
                 cache_timeout = 3600
+
+                description = 'Translate text from one language to another.'
+                parameters = {
+                    'query': {'description': 'Text to be translated.', 'required': True, 'type': 'string'},
+                    'src_lang': {'description': 'Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.', 'required': False, 'type': 'string'},
+                    'dest_lang': {'description': 'Destination language code (e.g., "en" for English).', 'required': True, 'type': 'string'}
+                }
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -360,6 +397,9 @@ class APIEndpoints:
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_day=10000)
                 cache_timeout = 5
 
+                description = 'Get your IP address from the request.'
+                parameters = {}
+
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
                     timer = APITools.Timer()
@@ -368,10 +408,9 @@ class APIEndpoints:
                     api_request_id = db_client.start_request(request_data, timer.start_time)
 
                     # Request data validation
-                    if request_data['args'].get('query'): ip = request_data['args']['query']
-                    elif request_data.get('ipAddress'): ip = request_data['ipAddress']
+                    if request_data.get('ipAddress'): ip = request_data['ipAddress']
                     else:
-                        output_data['api']['errorMessage'] = 'No "query" parameter or your IP address found in the request.'
+                        output_data['api']['errorMessage'] = 'Your IP address was not found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
 
@@ -392,6 +431,12 @@ class APIEndpoints:
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=400)
                 cache_timeout = 3600
+
+                description = 'Searches and returns Google results according to your query.'
+                parameters = {
+                    'query': {'description': 'Search query.', 'required': True, 'type': 'string'},
+                    'max_results': {'description': 'Maximum number of results to be returned (default: 10, max: 50).', 'required': False, 'type': 'integer'}
+                }
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -447,6 +492,11 @@ class APIEndpoints:
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
                 cache_timeout = 3600
+
+                description = 'Fetches data from any Instagram reels URL.'
+                parameters = {
+                    'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
+                }
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -570,6 +620,11 @@ class APIEndpoints:
                 allowed_methods = ['GET']
                 ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_day=400)
                 cache_timeout = 14400
+
+                description = 'Get detailed data from any YouTube video URL.'
+                parameters = {
+                    'query': {'description': 'YouTube video URL.', 'required': True, 'type': 'string'}
+                }
 
                 @staticmethod
                 def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
