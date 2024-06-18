@@ -405,7 +405,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 title = 'IP Address Retriever'
-                description = 'Get your IP address from the request.'
+                description = 'Get your IP address.'
                 parameters = {}
 
                 @staticmethod
@@ -437,7 +437,7 @@ class APIEndpoints:
             class google_search:
                 endpoint_url = 'scraper/google-search'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=400)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
                 cache_timeout = 3600
 
                 title = 'Google Search'
@@ -499,11 +499,11 @@ class APIEndpoints:
             class instagram_reels:
                 endpoint_url = 'scraper/instagram-reels'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
                 cache_timeout = 3600
 
                 title = 'Instagram Reels Scraper'
-                description = 'Fetches data from any Instagram reels URL.'
+                description = 'Fetches permanent data from any Instagram reels URL.'
                 parameters = {
                     'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
                 }
@@ -628,11 +628,11 @@ class APIEndpoints:
             class youtube_media:
                 endpoint_url = 'scraper/youtube-media'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_day=400)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_min=20, per_day=300)
                 cache_timeout = 14400
 
                 title = 'YouTube Media Scraper'
-                description = 'Get detailed data from any YouTube video URL.'
+                description = 'Fetches updated and detailed data from any YouTube video URL.'
                 parameters = {
                     'query': {'description': 'YouTube video URL.', 'required': True, 'type': 'string'}
                 }
