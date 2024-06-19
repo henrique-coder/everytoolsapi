@@ -225,6 +225,16 @@ def scraper__youtube_media(query_version: str) -> jsonify:
     return jsonify(generated_data[0]), generated_data[1]
 
 
+_scraper__tiktok_media = APIEndpoints.v2.scraper.tiktok_media
+@app.route(f'/api/<query_version>/{_scraper__tiktok_media.endpoint_url}/', methods=_scraper__tiktok_media.allowed_methods)
+@limiter.limit(_scraper__tiktok_media.ratelimit)
+@cache.cached(timeout=_scraper__tiktok_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__tiktok_media(query_version: str) -> jsonify:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    generated_data = _scraper__tiktok_media.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
+
+
 if __name__ == '__main__':
     # Load the configuration file
     current_path = Path(__file__).parent

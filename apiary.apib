@@ -485,7 +485,7 @@ Searches and returns Google results according to your query.
 ## Scraper: Instagram Reels Scraper [/scraper/instagram-reels?query={query}]
 Fetches permanent data from any Instagram reels URL.
 - Rate limiting: 2/sec; 30/min; 400/day
-- Cache duration: 1 hour
+- Cache duration: 8 hours
 
 + Parameters
   + query (string) - Instagram reels URL.
@@ -602,6 +602,56 @@ Fetches updated and detailed data from any YouTube video URL.
                         }
                     ]
                 }
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Scraper: TikTok Media Scraper [/scraper/tiktok-media?query={query}]
+Fetches permanent data from any TikTok video URL.
+- Rate limiting: 2/sec; 30/min; 400/day
+- Cache duration: 8 hours
+
++ Parameters
+  + query (string) - TikTok video URL.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "filename": str,
+                "mediaUrl": str,
+                "thumbnailUrl": str
             }
         }
 
