@@ -20,3 +20,4 @@ httpx
 fake-useragent
 googlesearch-python
 yt-dlp
+beautifulsoup4
