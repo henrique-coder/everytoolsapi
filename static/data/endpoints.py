@@ -283,34 +283,34 @@ class APIEndpoints:
                     word_counts = dict(Counter(re_findall(r'\b[a-zA-Z]+(?:\'[a-zA-Z]+)*\b', text.lower())))
                     space_count = int(text.count(' '))
 
+                    timer.stop()
+
                     output_data['response'] = {
-                        'counts': {
-                            'lowercase': {
-                                'total': len(lowercase_counts),
-                                'characters': lowercase_counts,
-                            },
-                            'uppercase': {
-                                'total': len(uppercase_counts),
-                                'characters': uppercase_counts,
-                            },
-                            'numbers': {
-                                'total': len(digit_counts),
-                                'characters': digit_counts,
-                            },
-                            'letters': {
-                                'total': len(letter_counts),
-                                'characters': letter_counts,
-                            },
-                            'otherSymbols': {
-                                'total': len(other_symbol_counts),
-                                'characters': other_symbol_counts,
-                            },
-                            'words': {
-                                'total': len(word_counts),
-                                'characters': word_counts,
-                            },
-                            'spaces': space_count,
+                        'lowercase': {
+                            'total': len(lowercase_counts),
+                            'characters': lowercase_counts,
                         },
+                        'uppercase': {
+                            'total': len(uppercase_counts),
+                            'characters': uppercase_counts,
+                        },
+                        'numbers': {
+                            'total': len(digit_counts),
+                            'characters': digit_counts,
+                        },
+                        'letters': {
+                            'total': len(letter_counts),
+                            'characters': letter_counts,
+                        },
+                        'otherSymbols': {
+                            'total': len(other_symbol_counts),
+                            'characters': other_symbol_counts,
+                        },
+                        'words': {
+                            'total': len(word_counts),
+                            'characters': word_counts,
+                        },
+                        'spaces': space_count,
                     }
                     output_data['api']['status'] = True
                     output_data['api']['elapsedTime'] = timer.elapsed_time()
@@ -459,7 +459,7 @@ class APIEndpoints:
             class google_search:
                 endpoint_url = 'scraper/google-search'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_day=400)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
                 cache_timeout = 3600
 
                 title = 'Google Search'
@@ -521,11 +521,11 @@ class APIEndpoints:
             class instagram_reels:
                 endpoint_url = 'scraper/instagram-reels'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_day=400)
-                cache_timeout = 3600
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
+                cache_timeout = 28800
 
                 title = 'Instagram Reels Scraper'
-                description = 'Fetches data from any Instagram reels URL.'
+                description = 'Fetches permanent data from any Instagram reels URL.'
                 parameters = {
                     'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
                 }
@@ -559,26 +559,6 @@ class APIEndpoints:
                         return output_data, 400
 
                     # Main process
-                    def format_string(query: AnyStr, max_length: int = 128) -> str:
-                        """
-                        Format string to remove special characters and normalize it.
-                        :param query: String to be sanitized.
-                        :param max_length: Maximum length of the string (if exceeds, it will be truncated).
-                        :return: Sanitized string.
-                        """
-
-                        # Normalize string and remove special characters
-                        normalized_string = str(normalize('NFKD', query).encode('ASCII', 'ignore').decode('utf-8')).strip()
-
-                        # Remove extra spaces and special characters
-                        sanitized_string = str(re_sub(r'\s+', ' ', re_sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string)).strip())
-
-                        # Truncate string if it exceeds the maximum length
-                        if len(sanitized_string) > max_length: sanitized_string = str(sanitized_string[:max_length].rsplit(' ', 1)[0])
-
-                        # Return sanitized string
-                        return sanitized_string
-
                     def safe_unquote_url(url: AnyStr) -> str:
                         """
                         Safely unquote URL.
@@ -650,7 +630,7 @@ class APIEndpoints:
             class youtube_media:
                 endpoint_url = 'scraper/youtube-media'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_day=400)
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_min=20, per_day=300)
                 cache_timeout = 14400
 
                 title = 'YouTube Media Scraper'

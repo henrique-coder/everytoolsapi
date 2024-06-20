@@ -132,7 +132,7 @@ def docs_page() -> redirect:
 def status_page() -> Tuple[jsonify, int]:
     success_response = jsonify({'status': 'ok', 'message': 'The API server is running successfully', 'latestAPIVersion': APIVersion().latest_version}), 200
     error_response = jsonify({'status': 'error', 'message': 'The API server is not running successfully', 'latestAPIVersion': APIVersion().latest_version}), 500
-
+    
     return success_response if db_client.client else error_response
 
 
