@@ -8,6 +8,7 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from http import HTTPStatus
 from dotenv import load_dotenv
+import dotenv
 from os import getenv
 from yaml import safe_load as yaml_safe_load
 from pathlib import Path
@@ -30,11 +31,21 @@ class Config:
             self.__dict__[key] = value
 
 
-# Setup Flask application
+# Setup Flask application and debugging mode
 app = Flask(__name__)
+debugging_mode = False
 
 # Load the environment variables
-load_dotenv()
+production_env_path = Path(Path(__file__).parent, '.env')
+development_env_path = Path(Path(__file__).parent, '.env.dev')
+
+if not debugging_mode:
+    if Path(production_env_path).exists(): load_dotenv(dotenv_path=production_env_path)
+    else: load_dotenv()
+else:
+    if Path(development_env_path).exists(): load_dotenv(dotenv_path=development_env_path)
+    else: logger.error(f'No environment file found at "{development_env_path}"')
+
 logger.info('Environment variables loaded successfully')
 
 # Setup Redis configuration
@@ -132,7 +143,6 @@ def docs_page() -> redirect:
 def status_page() -> Tuple[jsonify, int]:
     success_response = jsonify({'status': 'ok', 'message': 'The API server is running successfully', 'latestAPIVersion': APIVersion().latest_version}), 200
     error_response = jsonify({'status': 'error', 'message': 'The API server is not running successfully', 'latestAPIVersion': APIVersion().latest_version}), 500
-    
     return success_response if db_client.client else error_response
 
 
@@ -269,4 +279,4 @@ if __name__ == '__main__':
 
     # Run the web server with the specified configuration
     logger.info(f'Starting web server at {config.flask.host}:{config.flask.port}')
-    app.run(debug=False, host=config.flask.host, port=config.flask.port, threaded=config.flask.threadedServer)
+    app.run(debug=debugging_mode, host=config.flask.host, port=config.flask.port, threaded=config.flask.threadedServer)
