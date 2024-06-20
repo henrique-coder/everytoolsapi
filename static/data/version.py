@@ -1,5 +1,5 @@
-from flask import jsonify, Response
-from typing import *
+from flask import jsonify
+from typing import Tuple
 
 
 class APIVersion:
@@ -25,7 +25,7 @@ class APIVersion:
         return bool(query == APIVersion().latest_version)
 
     @staticmethod
-    def send_invalid_api_version_response(query: str, status_code: int = 400) -> Tuple[Response, int]:
+    def send_invalid_api_version_response(query: str, status_code: int = 400) -> Tuple[jsonify, int]:
         """
         Send an invalid API version response.
         :param query: The invalid API version.
