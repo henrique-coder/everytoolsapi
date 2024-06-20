@@ -46,6 +46,23 @@ def format_string(query: AnyStr, max_length: int = 128) -> str:
 # Main endpoints classes
 class APIEndpoints:
     class v2:
+        @staticmethod
+        def status(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
+            timer = APITools.Timer()
+            output_data = APITools.get_default_api_output_dict()
+
+            api_request_id = db_client.start_request(request_data, timer.start_time)
+
+            timer.stop()
+
+            output_data['response'] = {'status': 'ok', 'message': 'API server is successfully running.'}
+            output_data['api']['status'] = True
+            output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+            db_client.update_request_status('success', api_request_id, timer.end_time)
+
+            return output_data, 200
+
         class parser:
             class useragent:
                 endpoint_url = 'parser/useragent'
