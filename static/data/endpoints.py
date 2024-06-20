@@ -11,14 +11,36 @@ from googletrans import Translator
 from googlesearch import search as google_search
 from httpx import Client as httpx_client, _exceptions as httpx_exceptions
 from fake_useragent import FakeUserAgent
+from bs4 import BeautifulSoup
 from yt_dlp import YoutubeDL
-from typing import *
+from typing import Any, AnyStr, Dict, Tuple, Optional, Union
 
 from static.data.functions import APITools, LimiterTools
 
 
 # Global variables/constants
 fake_useragent = FakeUserAgent()
+
+# Helper functions
+def format_string(query: AnyStr, max_length: int = 128) -> str:
+    """
+    Format string to remove special characters and normalize it.
+    :param query: String to be sanitized.
+    :param max_length: Maximum length of the string (if exceeds, it will be truncated).
+    :return: Sanitized string.
+    """
+
+    # Normalize string and remove special characters
+    normalized_string = str(normalize('NFKD', query).encode('ASCII', 'ignore').decode('utf-8')).strip()
+
+    # Remove extra spaces and special characters
+    sanitized_string = str(re_sub(r'\s+', ' ', re_sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string)).strip())
+
+    # Truncate string if it exceeds the maximum length
+    if len(sanitized_string) > max_length: sanitized_string = str(sanitized_string[:max_length].rsplit(' ', 1)[0])
+
+    # Return sanitized string
+    return sanitized_string
 
 
 # Main endpoints classes
@@ -820,6 +842,89 @@ class APIEndpoints:
                     timer.stop()
 
                     output_data['response'] = adjusted_yt_data
+                    output_data['api']['status'] = True
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+                    db_client.update_request_status('success', api_request_id, timer.end_time)
+
+                    return output_data, 200
+
+            class tiktok_media:
+                endpoint_url = 'scraper/tiktok-media'
+                allowed_methods = ['GET']
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
+                cache_timeout = 28800
+
+                title = 'TikTok Media Scraper'
+                description = 'Fetches permanent data from any TikTok video URL.'
+                parameters = {
+                    'query': {'description': 'TikTok video URL.', 'required': True, 'type': 'string'}
+                }
+
+                @staticmethod
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
+                    timer = APITools.Timer()
+                    output_data = APITools.get_default_api_output_dict()
+
+                    api_request_id = db_client.start_request(request_data, timer.start_time)
+
+                    # Request data validation
+                    if request_data['args'].get('query'): query = request_data['args']['query']
+                    else:
+                        output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    def is_valid_tiktok_url(query: str) -> bool:
+                        pattern = re_compile(r'(https?://(?:www\.)?tiktok\.com/@[\w.-]+/video/\d+|https?://vm\.tiktok\.com/[\w\d]+)')
+                        return bool(pattern.match(query))
+
+                    if not is_valid_tiktok_url(query):
+                        output_data['api']['errorMessage'] = 'The URL provided is not a valid TikTok video URL.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    with httpx_client() as client:
+                        try:
+                            _response = client.get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake_useragent.random}, timeout=10)
+                        except httpx_exceptions.HTTPError:
+                            output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
+                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                            return output_data, 500
+
+                    if not _response or not _response.json():
+                        output_data['api']['errorMessage'] = 'Some external error occurred during the data lookup. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+
+                    response_data = _response.json()
+
+                    if response_data.get('type') != 'video':
+                        output_data['api']['errorMessage'] = 'Only video URLs are supported for now.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    # Main process
+                    filename = format_string(response_data.get('title', 'tiktok_video')) + '.mp4'
+                    thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
+
+                    with httpx_client() as client:
+                        try:
+                            response = client.post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake_useragent.random, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
+                        except httpx_exceptions.HTTPError:
+                            output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
+                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                            return output_data, 500
+
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    download_urls = set(re_findall(r'https://[^/]+\.akamaized\.net/[^\s\"\'>]+', soup.prettify()))
+                    urls = {unquote(url.split('?')[0]) + f'?mime_type=video_mp4&filename={soup.find('h3').text.strip()}.mp4' for url in download_urls}
+
+                    media_url = next(iter(urls), None)
+
+                    timer.stop()
+
+                    output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'mediaUrl': media_url}
                     output_data['api']['status'] = True
                     output_data['api']['elapsedTime'] = timer.elapsed_time()
 
