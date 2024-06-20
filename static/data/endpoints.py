@@ -897,10 +897,10 @@ class APIEndpoints:
                             return output_data, 500
 
                     soup = BeautifulSoup(response.text, 'html.parser')
-                    download_urls = set(re_findall(r'https://[^/]+\.akamaized\.net/[^\s\"\'>]+', soup.prettify()))
-                    urls = {unquote(url.split('?')[0]) + f'?mime_type=video_mp4&filename={soup.find('h3').text.strip()}.mp4' for url in download_urls}
+                    found_urls = set(re_findall(r'https://[^/]+\.akamaized\.net/[^\s\"\'>]+', soup.prettify()))
+                    fixed_urls = {unquote(url.split('?')[0]) + f'?mime_type=video_mp4&filename={soup.find('h3').text.strip()}.mp4' for url in found_urls}
 
-                    media_url = next(iter(urls), None)
+                    media_url = next(iter(fixed_urls), None)
 
                     timer.stop()
 
