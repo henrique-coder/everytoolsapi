@@ -4,94 +4,677 @@ HOST: https://everytoolsapi-henrique-coder.koyeb.app/api/v2/
 # Everytools API
 Welcome to the EveryTools API. Where you can find all the tools you need in one place.
 
-## User-Agent Parser [/parser/useragent/?query={query}]
+## Parser: User-Agent Parser [/parser/useragent/?query={query}]
 Parse user-agent string to get OS, browser, and device information. If no "query" parameter is provided, the "User-Agent" header will be used.
-- Rate limiting: 10/s; 10000/d
-- Cache duration: 5s
+- Rate limiting: 10/sec; 10000/day
+- Cache duration: 5 seconds
 
 + Parameters
   + query (string, optional) - User-Agent string to be parsed.
 
-## Responses [GET]
+## Responses (GET) [GET]
 
 + Response 200 (application/json)
 
         {
             "api": {
-                "elapsedTime": float or None,
-                "errorMessage": string or None,
-                "status": True or False,
-                "version": string
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
             },
             "response": {
                 "browser": {
-                    "family": string,
-                    "version": list,
-                    "versionString": string
+                    "family": str,
+                    "version": list[int],
+                    "versionString": str
                 },
                 "device": {
-                    "brand": string,
-                    "family": string,
-                    "model": string
+                    "brand": str,
+                    "family": str,
+                    "model": str
                 },
                 "os": {
-                    "family": string,
-                    "version": list,
-                    "versionString": string
+                    "family": str,
+                    "version": list[int],
+                    "versionString": str
                 },
-                "uaString": string
+                "uaString": str
             }
         }
 
-## URL Parser [/parser/url/?query={query}]
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Parser: URL Parser [/parser/url/?query={query}]
 Parse URL to get protocol, hostname, path, parameters, and fragment information.
-- Rate limiting: 10/s; 10000/d
-- Cache duration: 5s
+- Rate limiting: 10/sec; 10000/day
+- Cache duration: 5 seconds
 
 + Parameters
   + query (string) - URL to be parsed.
 
-## Responses [GET]
+## Responses (GET) [GET]
 
 + Response 200 (application/json)
 
         {
             "api": {
-                "elapsedTime": float or None,
-                "errorMessage": string or None,
-                "status": True or False,
-                "version": string
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
             },
             "response": {
-                "fragment": string,
-                "hostname": string,
-                "params": dict,
-                "path": string,
-                "protocol": string
+                "fragment": str,
+                "hostname": str,
+                "params": dict[str, str],
+                "path": str,
+                "protocol": str
                 }
             }
         }
 
-## Seconds to HH:MM:SS Converter [/parser/sec-to-hms/?query={query}]
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Parser: Seconds to HH:MM:SS Converter [/parser/sec-to-hms/?query={query}]
 Convert seconds to HH:MM:SS format.
-- Rate limiting: 10/s; 10000/d
-- Cache duration: 5s
+- Rate limiting: 10/sec; 10000/day
+- Cache duration: 5 seconds
 
 + Parameters
   + query (number) - Seconds to be converted.
 
-## Responses [GET]
+## Responses (GET) [GET]
 
 + Response 200 (application/json)
 
         {
             "api": {
-                "elapsedTime": float or None,
-                "errorMessage": string or None,
-                "status": True or False,
-                "version": string
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
             },
             "response": {
-                "hmsString": string
+                "hmsString": str
             }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Parser: E-mail Address Parser [/parser/email/?query={query}]
+Parse e-mail address to get user and domain information.
+- Rate limiting: 10/sec; 10000/day
+- Cache duration: 5 seconds
+
++ Parameters
+  + query (string) - E-mail address to be parsed.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "domain": str,
+                "user": str
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Parser: Advanced Text Counter [/text/text-counter/?query={query}]
+Count the number of characters, words, and many other elements in a text.
+- Rate limiting: 10/sec; 10000/day
+- Cache duration: 5 seconds
+
++ Parameters
+  + query (string) - Text to be analyzed.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "letters": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "lowercase": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "numbers": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "otherSymbols": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "spaces": int,
+                "uppercase": {
+                    "characters": dict[str, int],
+                    "total": int
+                },
+                "words": {
+                    "characters": dict[str, int],
+                    "total": int
+                }
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Tools: Text Language Detector [/tools/text-lang-detector?query={query}]
+Detects the predominant language in a text.
+- Rate limiting: 4/sec; 800/day
+- Cache duration: 1 hour
+
++ Parameters
+  + query (string) - Text to be analyzed.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "detectedLangCode": str,
+                "detectedLangName": str,
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Tools: Text Translator [/tools/text-translator?query={query}&src_lang={src_lang}&dest_lang={dest_lang}]
+Translate text from one language to another.
+- Rate limiting: 4/sec; 600/day
+- Cache duration: 1 hour
+
++ Parameters
+  + query (string) - Text to be translated.
+  + dest_lang (string) - Destination language code (e.g., "en" for English).
+  + src_lang (string, optional) - Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "translatedText": str
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Tools: IP Address Retriever [/tools/ip]
+Get your IP address.
+- Rate limiting: 10/sec; 10000/day
+- Cache duration: 5 seconds
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "originIpAddress": str
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Scraper: Google Search [/scraper/google-search?query={query}&max_results={max_results}]
+Searches and returns Google results according to your query.
+- Rate limiting: 2/sec; 30/min; 400/day
+- Cache duration: 1 hour
+
++ Parameters
+  + query (string) - Search query.
+  + max_results (number, optional) - Maximum number of results to be returned (default: 10, max: 50).
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "searchResults": list[str]
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Scraper: Instagram Reels Scraper [/scraper/instagram-reels?query={query}]
+Fetches permanent data from any Instagram reels URL.
+- Rate limiting: 2/sec; 30/min; 400/day
+- Cache duration: 8 hours
+
++ Parameters
+  + query (string) - Instagram reels URL.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "filename": str,
+                "mediaUrl": str,
+                "thumbnailUrl": str
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Scraper: YouTube Media Scraper [/scraper/youtube-media?query={query}]
+Fetches updated and detailed data from any YouTube video URL.
+- Rate limiting: 1/sec; 10/min; 300/day
+- Cache duration: 4 hours
+
++ Parameters
+  + query (string) - YouTube video URL.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "info": {
+                    "channelId": str,
+                    "channelName": str,
+                    "channelUrl": str,
+                    "commentCount": int,
+                    "formattedChannelName": str,
+                    "formattedMediaDurationTime": str,
+                    "formattedMediaTitle": str,
+                    "likeCount": int,
+                    "mediaCategories": list[str],
+                    "mediaDescription": str,
+                    "mediaDurationTime": int,
+                    "mediaEmbedUrl": str,
+                    "mediaId": str,
+                    "mediaIsAgeRestricted": bool,
+                    "mediaIsStreaming": bool,
+                    "mediaShortUrl": str,
+                    "mediaTags": list[str],
+                    "mediaTitle": str,
+                    "mediaUploadedAt": int,
+                    "mediaUrl": str,
+                    "viewCount": int
+                },
+                "media": {
+                    "audio": [
+                        {
+                            "bitrate": int,
+                            "codec": str,
+                            "samplerate": int,
+                            "size": int,
+                            "url": str
+                        }
+                    ],
+                    "subtitles": [
+                        {
+                            "ext": str,
+                            "lang": str,
+                            "url": str
+                        }
+                    ],
+                    "video": [
+                        {
+                            "bitrate": int,
+                            "codec": str,
+                            "framerate": int,
+                            "quality": str,
+                            "url": str
+                        }
+                    ]
+                }
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
+## Scraper: TikTok Media Scraper [/scraper/tiktok-media?query={query}]
+Fetches permanent data from any TikTok video URL.
+- Rate limiting: 2/sec; 30/min; 400/day
+- Cache duration: 8 hours
+
++ Parameters
+  + query (string) - TikTok video URL.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": float,
+                "errorMessage": None,
+                "status": True,
+                "version": str
+            },
+            "response": {
+                "filename": str,
+                "mediaUrl": str,
+                "thumbnailUrl": str
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": None,
+                "errorMessage": str,
+                "status": False,
+                "version": str
+            },
+            "response": {}
         }
