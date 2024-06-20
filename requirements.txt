@@ -9,7 +9,6 @@ werkzeug
 redis
 gunicorn
 psycopg2-binary
-schedule
 python-dotenv
 pyyaml
 user-agents

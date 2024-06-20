@@ -1,7 +1,7 @@
 from flask import request, Request
 from time import perf_counter
 from datetime import timedelta, datetime, UTC
-from typing import *
+from typing import Any, Dict, Union
 
 from static.data.version import APIVersion
 

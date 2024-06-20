@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error {% if error_code %}{{ error_code }}{% endif %} - {{ error_name }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #222;
+        color: #fff;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        animation: fadeIn 0.5s ease;
+      }
+
+      .error-container {
+        text-align: center;
+      }
+
+      .error-number,
+      .error-text {
+        cursor: pointer;
+        transition: color 0.3s ease;
+        text-decoration: none;
+      }
+
+      .error-number:hover {
+        color: #ffc107;
+      }
+
+      .error-text:hover {
+        color: #fff;
+      }
+
+      .error-number {
+        font-size: 10em;
+        color: #fff;
+      }
+
+      .error-text {
+        font-size: 2em;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="error-container">
+      <span class="error-link" onclick="window.open('https://developer.mozilla.org/docs/Web/HTTP/Status/{{ error_code }}', '_blank');">
+        <span class="error-number">{{ error_code }}</span>
+      </span>
+      <div class="error-text" onclick="location.reload();">{{ error_name }}</div>
+    </div>
+  </body>
+</html>

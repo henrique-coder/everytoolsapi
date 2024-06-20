@@ -13,7 +13,7 @@ from httpx import Client as httpx_client, _exceptions as httpx_exceptions
 from fake_useragent import FakeUserAgent
 from bs4 import BeautifulSoup
 from yt_dlp import YoutubeDL
-from typing import *
+from typing import Any, AnyStr, Dict, Tuple, Optional, Union
 
 from static.data.functions import APITools, LimiterTools
 
@@ -427,7 +427,7 @@ class APIEndpoints:
                 cache_timeout = 5
 
                 title = 'IP Address Retriever'
-                description = 'Get your IP address.'
+                description = 'Get your IP address from the request.'
                 parameters = {}
 
                 @staticmethod
@@ -634,7 +634,7 @@ class APIEndpoints:
                 cache_timeout = 14400
 
                 title = 'YouTube Media Scraper'
-                description = 'Fetches updated and detailed data from any YouTube video URL.'
+                description = 'Get detailed data from any YouTube video URL.'
                 parameters = {
                     'query': {'description': 'YouTube video URL.', 'required': True, 'type': 'string'}
                 }
@@ -886,14 +886,7 @@ class APIEndpoints:
 
                     # Main process
                     filename = format_string(response_data.get('title', 'tiktok_video')) + '.mp4'
-                    source_thumbnail_url = response_data.get('thumbnail_url', str())
-
-                    try:
-                        thumbnail_url_regex = r'https://p16-sign\.tiktokcdn-us\.com/obj/(tos-useast5-p-[\w-]+)/([\w]+)\?x-expires=[\d]+&x-signature=[\w%]+'
-                        thumbnail_url_sub = r'https://p16.tiktokcdn-us.com/origin/\1/\2'
-                        thumbnail_url = unquote(re_sub(thumbnail_url_regex, thumbnail_url_sub, source_thumbnail_url))
-                    except BaseException:
-                        thumbnail_url = unquote(source_thumbnail_url)
+                    thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
 
                     with httpx_client() as client:
                         try:
