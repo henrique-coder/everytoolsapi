@@ -8,7 +8,6 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from http import HTTPStatus
 from dotenv import load_dotenv
-import dotenv
 from os import getenv
 from yaml import safe_load as yaml_safe_load
 from pathlib import Path
@@ -137,13 +136,13 @@ def docs_page() -> redirect:
     return redirect('https://everytoolsapi.docs.apiary.io', code=302)
 
 
+_api__status = APIEndpoints.v2.status
 @app.route('/api/status/', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_sec=2, per_min=120))
 @cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
 def status_page() -> Tuple[jsonify, int]:
-    success_response = jsonify({'status': 'ok', 'message': 'The API server is running successfully', 'latestAPIVersion': APIVersion().latest_version}), 200
-    error_response = jsonify({'status': 'error', 'message': 'The API server is not running successfully', 'latestAPIVersion': APIVersion().latest_version}), 500
-    return success_response if db_client.client else error_response
+    generated_data = _api__status(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
 
 
 # Setup API routes
