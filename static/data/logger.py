@@ -24,4 +24,5 @@ logging_config_data = {
 logging_config.dictConfig(logging_config_data)
 logger = getLogger(__name__)
 
+# Log initialization
 logger.info('Flask application and logger successfully initialized')
