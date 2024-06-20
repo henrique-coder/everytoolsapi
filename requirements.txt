@@ -9,7 +9,6 @@ werkzeug
 redis
 gunicorn
 psycopg2-binary
-schedule
 python-dotenv
 pyyaml
 user-agents
@@ -20,3 +19,4 @@ httpx
 fake-useragent
 googlesearch-python
 yt-dlp
+beautifulsoup4
