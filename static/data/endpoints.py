@@ -545,15 +545,18 @@ class APIEndpoints:
                         }
 
                     if os and os not in CheckBuildVersion.os.keys():
-                        output_data['api']['errorMessage'] = f'The "os" parameter must be one of the following: \"{"\", \"".join(CheckBuildVersion.os.keys())}\"'
+                        valid_os = [key for key in CheckBuildVersion.os.keys() if key is not None]
+                        output_data['api']['errorMessage'] = f'The "os" parameter must be one of the following: \"{"\", \"".join(valid_os)}\"'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
                     elif arch and arch not in CheckBuildVersion.arch.keys():
-                        output_data['api']['errorMessage'] = f'The "arch" parameter must be one of the following: \"{"\", \"".join(CheckBuildVersion.arch.keys())}\"'
+                        valid_arch = [key for key in CheckBuildVersion.arch.keys() if key is not None]
+                        output_data['api']['errorMessage'] = f'The "arch" parameter must be one of the following: \"{"\", \"".join(valid_arch)}\"'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
                     elif license_name and license_name not in CheckBuildVersion.license_name.keys():
-                        output_data['api']['errorMessage'] = f'The "license" parameter must be one of the following: \"{"\", \"".join(CheckBuildVersion.license_name.keys())}\"'
+                        valid_license = [key for key in CheckBuildVersion.license_name.keys() if key is not None]
+                        output_data['api']['errorMessage'] = f'The "license" parameter must be one of the following: \"{"\", \"".join(valid_license)}\"'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
                     match shared:
@@ -561,7 +564,7 @@ class APIEndpoints:
                         case 'false': shared = False
                         case None: shared = None
                         case _:
-                            output_data['api']['errorMessage'] = 'The "shared" parameter must be a boolean.'
+                            output_data['api']['errorMessage'] = 'The "shared" parameter must be a boolean: "true" or "false".'
                             db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                             return output_data, 400
 
