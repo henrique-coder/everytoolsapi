@@ -16,6 +16,7 @@ from langdetect import detect as detect_lang, DetectorFactory, LangDetectExcepti
 from psycopg2 import connect as psycopg2_connect
 from unicodedata import normalize
 from user_agents import parse as UserAgentParser
+from youtubesearchpython import SearchVideos as SearchYouTubeVideos
 from yt_dlp import YoutubeDL
 
 # Local modules
@@ -765,6 +766,87 @@ class APIEndpoints:
 
                     return output_data, 200
 
+            class tiktok_media:
+                endpoint_url = 'scraper/tiktok-media'
+                allowed_methods = ['GET']
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
+                cache_timeout = 28800
+
+                title = 'TikTok Media Scraper'
+                description = 'Fetches permanent data from any TikTok video URL.'
+                parameters = {
+                    'query': {'description': 'TikTok video URL.', 'required': True, 'type': 'string'}
+                }
+
+                @staticmethod
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
+                    timer = APITools.Timer()
+                    output_data = APITools.get_default_api_output_dict()
+
+                    api_request_id = db_client.start_request(request_data, timer.start_time)
+
+                    # Request data validation
+                    if request_data['args'].get('query'): query = request_data['args']['query']
+                    else:
+                        output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    def is_valid_tiktok_url(query: str) -> bool:
+                        pattern = re_compile(r'(https?://(?:www\.)?tiktok\.com/@[\w.-]+/video/\d+|https?://vm\.tiktok\.com/[\w\d]+)')
+                        return bool(pattern.match(query))
+
+                    if not is_valid_tiktok_url(query):
+                        output_data['api']['errorMessage'] = 'The URL provided is not a valid TikTok video URL.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    try:
+                        temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake_useragent.random}, timeout=10)
+                    except HTTPError:
+                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+
+                    if not temp_response or not temp_response.json():
+                        output_data['api']['errorMessage'] = 'Some external error occurred during the data lookup. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+
+                    response_data = temp_response.json()
+
+                    if response_data.get('type') != 'video':
+                        output_data['api']['errorMessage'] = 'Only video URLs are supported for now.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    # Main process
+                    filename = format_string(response_data.get('title', 'tiktok_video')) + '.mp4'
+                    thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
+
+                    try:
+                        response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake_useragent.random, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
+                    except HTTPError:
+                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    found_urls = set(re_findall(r'https://[^/]+\.akamaized\.net/[^\s\"\'>]+', soup.prettify()))
+                    fixed_urls = {unquote(url.split('?')[0]) + f'?mime_type=video_mp4&filename={soup.find('h3').text.strip()}.mp4' for url in found_urls}
+
+                    media_url = next(iter(fixed_urls), None)
+
+                    timer.stop()
+
+                    output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'mediaUrl': media_url}
+                    output_data['api']['status'] = True
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+                    db_client.update_request_status('success', api_request_id, timer.end_time)
+
+                    return output_data, 200
+
             class youtube_media:
                 endpoint_url = 'scraper/youtube-media'
                 allowed_methods = ['GET']
@@ -967,16 +1049,16 @@ class APIEndpoints:
 
                     return output_data, 200
 
-            class tiktok_media:
-                endpoint_url = 'scraper/tiktok-media'
+            class youtube_video_url_from_query:
+                endpoint_url = 'scraper/youtube-video-url-from-query'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
-                cache_timeout = 28800
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=1000)
+                cache_timeout = 3600
 
-                title = 'TikTok Media Scraper'
-                description = 'Fetches permanent data from any TikTok video URL.'
+                title = 'YouTube Video URL Generator'
+                description = 'Get the YouTube video URL from a search query.'
                 parameters = {
-                    'query': {'description': 'TikTok video URL.', 'required': True, 'type': 'string'}
+                    'query': {'description': 'Search query.', 'required': True, 'type': 'string'}
                 }
 
                 @staticmethod
@@ -987,60 +1069,63 @@ class APIEndpoints:
                     api_request_id = db_client.start_request(request_data, timer.start_time)
 
                     # Request data validation
-                    if request_data['args'].get('query'): query = request_data['args']['query']
+                    if request_data['args'].get('query'):
+                        query = str(request_data['args']['query']).strip()
+
+                        if not query:
+                            output_data['api']['errorMessage'] = 'The "query" parameter must not be empty.'
+                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                            return output_data, 400
                     else:
                         output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
 
-                    def is_valid_tiktok_url(query: str) -> bool:
-                        pattern = re_compile(r'(https?://(?:www\.)?tiktok\.com/@[\w.-]+/video/\d+|https?://vm\.tiktok\.com/[\w\d]+)')
-                        return bool(pattern.match(query))
-
-                    if not is_valid_tiktok_url(query):
-                        output_data['api']['errorMessage'] = 'The URL provided is not a valid TikTok video URL.'
-                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data, 400
-
-                    try:
-                        temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake_useragent.random}, timeout=10)
-                    except HTTPError:
-                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
-                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data, 500
-
-                    if not temp_response or not temp_response.json():
-                        output_data['api']['errorMessage'] = 'Some external error occurred during the data lookup. Please try again later.'
-                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data, 500
-
-                    response_data = temp_response.json()
-
-                    if response_data.get('type') != 'video':
-                        output_data['api']['errorMessage'] = 'Only video URLs are supported for now.'
-                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                        return output_data, 400
-
                     # Main process
-                    filename = format_string(response_data.get('title', 'tiktok_video')) + '.mp4'
-                    thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
-
                     try:
-                        response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake_useragent.random, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
-                    except HTTPError:
-                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
+                        scraped_data = SearchYouTubeVideos(query, offset=1, mode='dict', max_results=1).result()['search_result'][0]
+                    except Exception as e:
+                        output_data['api']['errorMessage'] = str(e)
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 500
 
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    found_urls = set(re_findall(r'https://[^/]+\.akamaized\.net/[^\s\"\'>]+', soup.prettify()))
-                    fixed_urls = {unquote(url.split('?')[0]) + f'?mime_type=video_mp4&filename={soup.find('h3').text.strip()}.mp4' for url in found_urls}
+                    channel_id = str(scraped_data.get('channeId'))
+                    channel_url = f'https://www.youtube.com/channel/{channel_id}'
+                    channel_name = str(scraped_data.get('channel'))
+                    formated_channel_name = format_string(channel_name)
+                    media_title = str(scraped_data.get('title'))
+                    formatted_media_title = format_string(media_title)
+                    media_id = str(scraped_data.get('id'))
+                    view_count = int(scraped_data.get('views'))
+                    media_url = f'https://www.youtube.com/watch?v={media_id}'
+                    media_short_url = f'https://youtu.be/{media_id}'
+                    media_embed_url = f'https://www.youtube.com/embed/{media_id}'
+                    thumbnail_urls = [
+                        f'https://img.youtube.com/vi/{media_id}/maxresdefault.jpg',
+                        f'https://img.youtube.com/vi/{media_id}/sddefault.jpg',
+                        f'https://img.youtube.com/vi/{media_id}/hqdefault.jpg',
+                        f'https://img.youtube.com/vi/{media_id}/mqdefault.jpg',
+                        f'https://img.youtube.com/vi/{media_id}/default.jpg'
+                    ]
 
-                    media_url = next(iter(fixed_urls), None)
+                    adjusted_yt_data = {
+                        'mediaId': media_id,
+                        'mediaTitle': media_title,
+                        'formattedMediaTitle': formatted_media_title,
+                        'viewCount': view_count,
+                        'mediaUrl': media_url,
+                        'mediaShortUrl': media_short_url,
+                        'mediaEmbedUrl': media_embed_url,
+                        'channelId': channel_id,
+                        'channelUrl': channel_url,
+                        'channelName': channel_name,
+                        'formattedChannelName': formated_channel_name,
+                        'thumbnailUrls': thumbnail_urls
+                    }
 
                     timer.stop()
 
-                    output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'mediaUrl': media_url}
+                    output_data['response'] = {'foundUrlData': adjusted_yt_data}
                     output_data['api']['status'] = True
                     output_data['api']['elapsedTime'] = timer.elapsed_time()
 
