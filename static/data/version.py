@@ -1,5 +1,8 @@
-from flask import jsonify
+# Built-in modules
 from typing import Tuple
+
+# Third-party modules
+from flask import jsonify
 
 
 class APIVersion:
