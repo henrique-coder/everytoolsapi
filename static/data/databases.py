@@ -1,6 +1,9 @@
-from psycopg2 import connect as psycopg2_connect, Error as psycopg2Error, extensions as psycopg2_extensions
+# Built-in modules
 from datetime import datetime
 from typing import Any, Dict
+
+# Third-party modules
+from psycopg2 import connect as psycopg2_connect, Error as psycopg2Error, extensions as psycopg2_extensions
 
 
 # Initialize the clients dictionary
