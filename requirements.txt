@@ -11,6 +11,7 @@ gunicorn
 psycopg2-binary
 python-dotenv
 pyyaml
+yt-dlp
 user-agents
 langdetect
 langcodes
@@ -18,5 +19,5 @@ googletrans==4.0.0-rc1
 httpx
 fake-useragent
 googlesearch-python
-yt-dlp
 beautifulsoup4
+youtube-search-python
