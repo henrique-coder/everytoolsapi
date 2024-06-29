@@ -1,20 +1,24 @@
-from psycopg2 import connect as psycopg2_connect
-from user_agents import parse as UserAgentParser
-from urllib.parse import urlparse, parse_qs, unquote, urlencode, unquote_plus
-from re import compile as re_compile, sub as re_sub, findall as re_findall, search as re_search, match as re_match
-from datetime import datetime
-from unicodedata import normalize
+# Built-in modules
 from collections import Counter
-from langdetect import detect as detect_lang, DetectorFactory, LangDetectException
-from langcodes import Language
-from googletrans import Translator
-from googlesearch import search as google_search
-from httpx import Client as httpx_client, _exceptions as httpx_exceptions
-from fake_useragent import FakeUserAgent
-from bs4 import BeautifulSoup
-from yt_dlp import YoutubeDL
+from datetime import datetime
+from re import compile as re_compile, sub as re_sub, findall as re_findall, search as re_search, match as re_match
 from typing import Any, AnyStr, Dict, Tuple, Optional, Union
+from urllib.parse import urlparse, parse_qs, unquote, urlencode, unquote_plus
 
+# Third-party modules
+from bs4 import BeautifulSoup
+from fake_useragent import FakeUserAgent
+from googlesearch import search as google_search
+from googletrans import Translator
+from httpx import get, post, HTTPError
+from langcodes import Language
+from langdetect import detect as detect_lang, DetectorFactory, LangDetectException
+from psycopg2 import connect as psycopg2_connect
+from unicodedata import normalize
+from user_agents import parse as UserAgentParser
+from yt_dlp import YoutubeDL
+
+# Local modules
 from static.data.functions import APITools, LimiterTools
 
 
@@ -472,6 +476,124 @@ class APIEndpoints:
 
                     return output_data, 200
 
+            class latest_ffmpeg_download_url:
+                endpoint_url = 'tools/latest-ffmpeg-download-url'
+                allowed_methods = ['GET']
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_min=20, per_day=600)
+                cache_timeout = 14400
+
+                title = 'Latest FFmpeg Download URL Generator'
+                description = 'Get the latest FFmpeg download url according to your specifications.'
+                parameters = {
+                    'os': {'description': 'Operating system (options: "windows", "linux").', 'required': False, 'type': 'string'},
+                    'arch': {'description': 'Architecture (options: "amd32", "amd64", "arm32", "arm64").', 'required': False, 'type': 'string'},
+                    'license': {'description': 'License type (options: "gpl", "lgpl").', 'required': False, 'type': 'string'},
+                    'shared': {'description': 'Whether the FFmpeg build is shared or not (options: "true", "false").', 'required': False, 'type': 'boolean'}
+                }
+
+                @staticmethod
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
+                    timer = APITools.Timer()
+                    output_data = APITools.get_default_api_output_dict()
+
+                    api_request_id = db_client.start_request(request_data, timer.start_time)
+
+                    # Request data validation
+                    os = request_data['args'].get('os')
+                    arch = request_data['args'].get('arch')
+                    license_name = request_data['args'].get('license')
+                    shared = request_data['args'].get('shared')
+
+                    # Main process
+                    try:
+                        response = get('https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest', timeout=10)
+                    except HTTPError:
+                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+
+                    if response.status_code != 200 or not response.json():
+                        output_data['api']['errorMessage'] = 'Some external error occurred during the data search. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+
+                    response_data = dict(response.json())
+
+                    class CheckBuildVersion:
+                        os = {
+                            'windows': lambda build: '-win' in build,
+                            'linux': lambda build: '-linux' in build,
+                            None: lambda build: True,
+                        }
+                        arch = {
+                            'amd32': lambda build: 'arm' not in build and '32-' in build,
+                            'amd64': lambda build: 'arm' not in build and '64-' in build,
+                            'arm32': lambda build: 'arm32' in build,
+                            'arm64': lambda build: 'arm64' in build,
+                            None: lambda build: True,
+                        }
+                        license_name = {
+                            'gpl': lambda build: '-gpl' in build,
+                            'lgpl': lambda build: '-lgpl' in build,
+                            None: lambda build: True,
+                        }
+                        shared = {
+                            True: lambda build: '-shared' in build,
+                            False: lambda build: '-shared' not in build,
+                            None: lambda build: True,
+                        }
+
+                    if os and os not in CheckBuildVersion.os.keys():
+                        output_data['api']['errorMessage'] = f'The "os" parameter must be one of the following: \"{"\", \"".join(CheckBuildVersion.os.keys())}\"'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+                    elif arch and arch not in CheckBuildVersion.arch.keys():
+                        output_data['api']['errorMessage'] = f'The "arch" parameter must be one of the following: \"{"\", \"".join(CheckBuildVersion.arch.keys())}\"'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+                    elif license_name and license_name not in CheckBuildVersion.license_name.keys():
+                        output_data['api']['errorMessage'] = f'The "license" parameter must be one of the following: \"{"\", \"".join(CheckBuildVersion.license_name.keys())}\"'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+                    match shared:
+                        case 'true': shared = True
+                        case 'false': shared = False
+                        case None: shared = None
+                        case _:
+                            output_data['api']['errorMessage'] = 'The "shared" parameter must be a boolean.'
+                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                            return output_data, 400
+
+                    builds = list()
+                    build_names = [build_data['name'] for build_data in response_data.get('assets', list())]
+
+                    for build_name in build_names:
+                        if (
+                                build_name.startswith('ffmpeg-master-latest-') and
+                                (os is None or CheckBuildVersion.os[os](build_name)) and
+                                (arch is None or CheckBuildVersion.arch[arch](build_name)) and
+                                (license_name is None or CheckBuildVersion.license_name[license_name](build_name)) and
+                                (shared is None or CheckBuildVersion.shared[shared](build_name))
+                        ):
+                            builds.append(f'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/{build_name}')
+
+                    matched_builds = list(set(builds))
+
+                    if not matched_builds:
+                        output_data['api']['errorMessage'] = 'No FFmpeg build found with the specified parameters.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 404
+
+                    timer.stop()
+
+                    output_data['response'] = {'matchedBuilds': matched_builds}
+                    output_data['api']['status'] = True
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+                    db_client.update_request_status('success', api_request_id, timer.end_time)
+
+                    return output_data, 200
+
         class scraper:
             class google_search:
                 endpoint_url = 'scraper/google-search'
@@ -610,13 +732,12 @@ class APIEndpoints:
 
                     if not urlparse(query).scheme: query = 'https://' + query
 
-                    with httpx_client() as client:
-                        try:
-                            response = client.post('https://fastdl.app/api/convert', headers={'User-Agent': fake_useragent.random, 'Accept': 'application/json'}, json={'url': query}, timeout=10)
-                        except httpx_exceptions.HTTPError:
-                            output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
-                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                            return output_data, 500
+                    try:
+                        response = post('https://fastdl.app/api/convert', headers={'User-Agent': fake_useragent.random, 'Accept': 'application/json'}, json={'url': query}, timeout=10)
+                    except HTTPError:
+                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
 
                     if response.status_code != 200 or not response.json():
                         output_data['api']['errorMessage'] = 'Some external error occurred during the data search. Please try again later.'
@@ -881,20 +1002,19 @@ class APIEndpoints:
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
 
-                    with httpx_client() as client:
-                        try:
-                            _response = client.get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake_useragent.random}, timeout=10)
-                        except httpx_exceptions.HTTPError:
-                            output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
-                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                            return output_data, 500
+                    try:
+                        temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake_useragent.random}, timeout=10)
+                    except HTTPError:
+                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
 
-                    if not _response or not _response.json():
+                    if not temp_response or not temp_response.json():
                         output_data['api']['errorMessage'] = 'Some external error occurred during the data lookup. Please try again later.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 500
 
-                    response_data = _response.json()
+                    response_data = temp_response.json()
 
                     if response_data.get('type') != 'video':
                         output_data['api']['errorMessage'] = 'Only video URLs are supported for now.'
@@ -905,13 +1025,12 @@ class APIEndpoints:
                     filename = format_string(response_data.get('title', 'tiktok_video')) + '.mp4'
                     thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
 
-                    with httpx_client() as client:
-                        try:
-                            response = client.post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake_useragent.random, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
-                        except httpx_exceptions.HTTPError:
-                            output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
-                            db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                            return output_data, 500
+                    try:
+                        response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake_useragent.random, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
+                    except HTTPError:
+                        output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
 
                     soup = BeautifulSoup(response.text, 'html.parser')
                     found_urls = set(re_findall(r'https://[^/]+\.akamaized\.net/[^\s\"\'>]+', soup.prettify()))

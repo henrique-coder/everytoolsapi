@@ -1,23 +1,27 @@
-from flask import Flask, jsonify, request, render_template, redirect
-from flask_limiter import util as flask_limiter_utils, Limiter
-from flask_caching import Cache
-from flask_talisman import Talisman
-from flask_wtf.csrf import CSRFProtect
-from flask_compress import Compress
-from flask_cors import CORS
-from werkzeug.middleware.proxy_fix import ProxyFix
+# Built-in modules
 from http import HTTPStatus
-from dotenv import load_dotenv
 from os import getenv
-from yaml import safe_load as yaml_safe_load
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
+# Third-party modules
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request, render_template, redirect
+from flask_caching import Cache
+from flask_compress import Compress
+from flask_cors import CORS
+from flask_limiter import util as flask_limiter_utils, Limiter
+from flask_talisman import Talisman
+from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
+from yaml import safe_load as yaml_safe_load
+
+# Local modules
+from static.data.databases import APIRequestLogs
+from static.data.endpoints import APIEndpoints
+from static.data.functions import APITools, LimiterTools, CacheTools
 from static.data.logger import logger
 from static.data.version import APIVersion
-from static.data.functions import APITools, LimiterTools, CacheTools
-from static.data.endpoints import APIEndpoints
-from static.data.databases import APIRequestLogs
 
 
 # Configuration class
@@ -67,7 +71,6 @@ app.config['CACHE_REDIS_PORT'] = redis_port
 app.config['CACHE_REDIS_DB'] = redis_db
 app.config['CACHE_REDIS_USERNAME'] = redis_username
 app.config['CACHE_REDIS_PASSWORD'] = redis_password
-app.config['CACHE_REDIS_URL'] = redis_url
 cache = Cache(app)
 logger.info('Flask cache successfully initialized')
 
@@ -263,6 +266,16 @@ _scraper__tiktok_media = APIEndpoints.v2.scraper.tiktok_media
 def scraper__tiktok_media(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     generated_data = _scraper__tiktok_media.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
+
+
+_tools__latest_ffmpeg_download_url = APIEndpoints.v2.tools.latest_ffmpeg_download_url
+@app.route(f'/api/<query_version>/{_tools__latest_ffmpeg_download_url.endpoint_url}/', methods=_tools__latest_ffmpeg_download_url.allowed_methods)
+@limiter.limit(_tools__latest_ffmpeg_download_url.ratelimit)
+@cache.cached(timeout=_tools__latest_ffmpeg_download_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    generated_data = _tools__latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 

@@ -1,8 +1,12 @@
-from flask import request, Request
-from time import perf_counter
+# Built-in modules
 from datetime import timedelta, datetime, UTC
+from time import perf_counter
 from typing import Any, Dict, Union
 
+# Third-party modules
+from flask import request, Request
+
+# Local modules
 from static.data.version import APIVersion
 
 
@@ -27,6 +31,7 @@ class APITools:
         if ',' in remote_addr: remote_addr = remote_addr.split(',')[0].strip()
         route = str(request_object.path)
         args = request_object.args.to_dict()
+        args = {k: None if v == str() else v for k, v in args.items()}
         headers = dict(request_object.headers)
         body = request_object.get_json(force=True, silent=True)
 
