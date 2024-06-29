@@ -583,6 +583,56 @@ Fetches permanent data from any Instagram reels URL.
             "response": {}
         }
 
+## Scraper: TikTok Media Scraper [/scraper/tiktok-media?query={query}]
+Fetches permanent data from any TikTok video URL.
+- Rate limiting: 2/sec; 30/min; 400/day
+- Cache duration: 8 hours
+
++ Parameters
+  + query (string) - TikTok video URL.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": "float",
+                "errorMessage": "None",
+                "status": "True",
+                "version": "str"
+            },
+            "response": {
+                "filename": "str",
+                "mediaUrl": "str",
+                "thumbnailUrl": "str"
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": "None",
+                "errorMessage": "str",
+                "status": "False",
+                "version": "str"
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": "None",
+                "errorMessage": "str",
+                "status": "False",
+                "version": "str"
+            },
+            "response": {}
+        }
+
 ## Scraper: YouTube Media Scraper [/scraper/youtube-media?query={query}]
 Fetches updated and detailed data from any YouTube video URL.
 - Rate limiting: 1/sec; 10/min; 300/day
@@ -680,13 +730,13 @@ Fetches updated and detailed data from any YouTube video URL.
             "response": {}
         }
 
-## Scraper: TikTok Media Scraper [/scraper/tiktok-media?query={query}]
-Fetches permanent data from any TikTok video URL.
-- Rate limiting: 2/sec; 30/min; 400/day
-- Cache duration: 8 hours
+## Scraper: YouTube Video URL Generator [/scraper/youtube-video-url-from-query?query={query}]
+Generates a YouTube video URL from a search query.
+- Rate limiting: 2/sec; 60/min; 1000/day
+- Cache duration: 1 hour
 
 + Parameters
-  + query (string) - TikTok video URL.
+  + query (string) - Search query.
 
 ## Responses (GET) [GET]
 
@@ -700,9 +750,20 @@ Fetches permanent data from any TikTok video URL.
                 "version": "str"
             },
             "response": {
-                "filename": "str",
-                "mediaUrl": "str",
-                "thumbnailUrl": "str"
+                "foundUrlData": {
+                    "channelId": "str",
+                    "channelName": "str",
+                    "channelUrl": "str",
+                    "formattedChannelName": "str",
+                    "formattedMediaTitle": "str",
+                    "mediaEmbedUrl": "str",
+                    "mediaId": "str",
+                    "mediaShortUrl": "str",
+                    "mediaTitle": "str",
+                    "mediaUrl": "str",
+                    "thumbnailUrls": "list[str]",
+                    "viewCount": "int"
+                }
             }
         }
 

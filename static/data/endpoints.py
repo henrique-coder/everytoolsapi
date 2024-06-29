@@ -1056,7 +1056,7 @@ class APIEndpoints:
                 cache_timeout = 3600
 
                 title = 'YouTube Video URL Generator'
-                description = 'Get the YouTube video URL from a search query.'
+                description = 'Generates a YouTube video URL from a search query.'
                 parameters = {
                     'query': {'description': 'Search query.', 'required': True, 'type': 'string'}
                 }
