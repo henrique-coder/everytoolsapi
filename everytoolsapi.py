@@ -229,6 +229,16 @@ def tools__ip(query_version: str) -> Tuple[jsonify, int]:
     return jsonify(generated_data[0]), generated_data[1]
 
 
+_tools__latest_ffmpeg_download_url = APIEndpoints.v2.tools.latest_ffmpeg_download_url
+@app.route(f'/api/<query_version>/{_tools__latest_ffmpeg_download_url.endpoint_url}/', methods=_tools__latest_ffmpeg_download_url.allowed_methods)
+@limiter.limit(_tools__latest_ffmpeg_download_url.ratelimit)
+@cache.cached(timeout=_tools__latest_ffmpeg_download_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    generated_data = _tools__latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
+
+
 _scraper__google_search = APIEndpoints.v2.scraper.google_search
 @app.route(f'/api/<query_version>/{_scraper__google_search.endpoint_url}/', methods=_scraper__google_search.allowed_methods)
 @limiter.limit(_scraper__google_search.ratelimit)
@@ -249,16 +259,6 @@ def scraper__instagram_reels(query_version: str) -> Tuple[jsonify, int]:
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
-@app.route(f'/api/<query_version>/{_scraper__youtube_media.endpoint_url}/', methods=_scraper__youtube_media.allowed_methods)
-@limiter.limit(_scraper__youtube_media.ratelimit)
-@cache.cached(timeout=_scraper__youtube_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def scraper__youtube_media(query_version: str) -> Tuple[jsonify, int]:
-    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _scraper__youtube_media.run(db_client, APITools.extract_request_data(request))
-    return jsonify(generated_data[0]), generated_data[1]
-
-
 _scraper__tiktok_media = APIEndpoints.v2.scraper.tiktok_media
 @app.route(f'/api/<query_version>/{_scraper__tiktok_media.endpoint_url}/', methods=_scraper__tiktok_media.allowed_methods)
 @limiter.limit(_scraper__tiktok_media.ratelimit)
@@ -269,20 +269,30 @@ def scraper__tiktok_media(query_version: str) -> Tuple[jsonify, int]:
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__latest_ffmpeg_download_url = APIEndpoints.v2.tools.latest_ffmpeg_download_url
-@app.route(f'/api/<query_version>/{_tools__latest_ffmpeg_download_url.endpoint_url}/', methods=_tools__latest_ffmpeg_download_url.allowed_methods)
-@limiter.limit(_tools__latest_ffmpeg_download_url.ratelimit)
-@cache.cached(timeout=_tools__latest_ffmpeg_download_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def tools__latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
+_scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
+@app.route(f'/api/<query_version>/{_scraper__youtube_media.endpoint_url}/', methods=_scraper__youtube_media.allowed_methods)
+@limiter.limit(_scraper__youtube_media.ratelimit)
+@cache.cached(timeout=_scraper__youtube_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__youtube_media(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
+    generated_data = _scraper__youtube_media.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
+
+
+_scraper__youtube_video_url_from_query = APIEndpoints.v2.scraper.youtube_video_url_from_query
+@app.route(f'/api/<query_version>/{_scraper__youtube_video_url_from_query.endpoint_url}/', methods=_scraper__youtube_video_url_from_query.allowed_methods)
+@limiter.limit(_scraper__youtube_video_url_from_query.ratelimit)
+@cache.cached(timeout=_scraper__youtube_video_url_from_query.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def scraper__youtube_video_url_from_query(query_version: str) -> Tuple[jsonify, int]:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    generated_data = _scraper__youtube_video_url_from_query.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
 if __name__ == '__main__':
     # Load the configuration file
     current_path = Path(__file__).parent
-    config_path = Path(current_path, 'config.yml')
+    config_path = Path(current_path, 'config.yaml')
     config = Config(**yaml_safe_load(config_path.open('r')))
 
     # Setting up Flask default configuration
