@@ -15,8 +15,7 @@ RUN apk update \
         gcc \
         libffi-dev \
         musl-dev \
-        openssl-dev \
-        ffmpeg
+        openssl-dev
 
 # Copy all files from the current directory to the container /app directory and install Python packages from requirements.txt
 COPY requirements.txt .
@@ -33,7 +32,6 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Copy FFmpeg, Python packages and the application code from the build stage
-COPY --from=build /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=build /app /app
 COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=build /usr/local/bin/gunicorn /usr/local/bin/gunicorn
@@ -47,6 +45,8 @@ COPY config.yaml config.yaml
 COPY favicon.ico favicon.ico
 COPY .env .env
 COPY .env.dev .env.dev
+
+RUN apk add --no-cache ffmpeg
 
 # Expose the port Gunicorn will listen on
 EXPOSE 13579
