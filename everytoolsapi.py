@@ -24,23 +24,6 @@ from static.data.logger import logger
 from static.data.version import APIVersion
 
 
-# [debug] Check if ffmpeg and ffprobe are installed
-from subprocess import run
-
-
-try:
-    run(['ffmpeg', '-version'], capture_output=True)
-    print('ffmpeg is installed')
-except BaseException as e:
-    logger.error(f'ffmpeg is not installed: {e}')
-
-try:
-    run(['ffprobe', '-version'], capture_output=True)
-    print('ffprobe is installed')
-except BaseException as e:
-    logger.error(f'ffprobe is not installed: {e}')
-
-
 # Configuration class
 class Config:
     def __init__(self, **entries: Dict[str, Any]) -> None:
@@ -253,6 +236,16 @@ _tools__latest_ffmpeg_download_url = APIEndpoints.v2.tools.latest_ffmpeg_downloa
 def tools__latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
     generated_data = _tools__latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
+
+
+_tools__video_url_information = APIEndpoints.v2.tools.video_url_information
+@app.route(f'/api/<query_version>/{_tools__video_url_information.endpoint_url}/', methods=_tools__video_url_information.allowed_methods)
+@limiter.limit(_tools__video_url_information.ratelimit)
+@cache.cached(timeout=_tools__video_url_information.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def tools__video_url_information(query_version: str) -> Tuple[jsonify, int]:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    generated_data = _tools__video_url_information.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
