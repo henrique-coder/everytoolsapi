@@ -2,6 +2,7 @@
 from collections import Counter
 from datetime import datetime
 from re import compile as re_compile, sub as re_sub, findall as re_findall, search as re_search, match as re_match
+from subprocess import run as run_subprocess, CalledProcessError as SubprocessCalledProcessError
 from typing import Any, AnyStr, Dict, Tuple, Optional, Union
 from urllib.parse import urlparse, parse_qs, unquote, urlencode, unquote_plus
 
@@ -13,6 +14,7 @@ from googletrans import Translator
 from httpx import get, post, HTTPError
 from langcodes import Language
 from langdetect import detect as detect_lang, DetectorFactory, LangDetectException
+from orjson import loads as orjson_loads
 from psycopg2 import connect as psycopg2_connect
 from unicodedata import normalize
 from user_agents import parse as UserAgentParser
@@ -598,6 +600,58 @@ class APIEndpoints:
 
                     return output_data, 200
 
+            class video_url_information:
+                endpoint_url = 'tools/video-url-information'
+                allowed_methods = ['GET']
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
+                cache_timeout = 1  # 3600
+
+                title = 'Video URL Information'
+                description = 'Get information about a video URL.'
+                parameters = {
+                    'query': {'description': 'Video URL to be analyzed.', 'required': True, 'type': 'string'}
+                }
+
+                @staticmethod
+                def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
+                    timer = APITools.Timer()
+                    output_data = APITools.get_default_api_output_dict()
+
+                    api_request_id = db_client.start_request(request_data, timer.start_time)
+
+                    # Request data validation
+                    if request_data['args'].get('query'): url = request_data['args']['query']
+                    else:
+                        output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    # Main process
+                    ffprobe_command = ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', url]
+
+                    try:
+                        process_output = run_subprocess(ffprobe_command, capture_output=True, text=True, check=True)
+                        media_data = orjson_loads(process_output.stdout.encode())
+                    except SubprocessCalledProcessError as e:
+                        print(e)
+                        output_data['api']['errorMessage'] = 'Some error occurred while running the FFprobe command. Please use a valid video URL.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 500
+                    except (IndexError, KeyError):
+                        output_data['api']['errorMessage'] = 'No video data found in the URL provided.'
+                        db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                        return output_data, 400
+
+                    timer.stop()
+
+                    output_data['response'] = media_data
+                    output_data['api']['status'] = True
+                    output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+                    db_client.update_request_status('success', api_request_id, timer.end_time)
+
+                    return output_data, 200
+
         class scraper:
             class google_search:
                 endpoint_url = 'scraper/google-search'
@@ -918,17 +972,6 @@ class APIEndpoints:
                         return output_data, 400
 
                     # Main process
-                    def format_string(query: AnyStr) -> str:
-                        """
-                        Format string to remove special characters and normalize it.
-                        :param query: String to be sanitized.
-                        :return: Sanitized string.
-                        """
-
-                        normalized_string = normalize('NFKD', str(query)).encode('ASCII', 'ignore').decode('utf-8')
-                        sanitized_string = str(re_sub(r'\s+', ' ', re_sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string)).strip())
-                        return sanitized_string
-
                     def extract_media_info(data: dict) -> dict:
                         # Media information
                         media_id = str(data.get('id', str()))

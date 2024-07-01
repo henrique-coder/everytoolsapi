@@ -21,3 +21,4 @@ fake-useragent
 googlesearch-python
 beautifulsoup4
 youtube-search-python
+orjson
