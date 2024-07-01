@@ -633,7 +633,6 @@ class APIEndpoints:
                         process_output = run_subprocess(ffprobe_command, capture_output=True, text=True, check=True)
                         media_data = orjson_loads(process_output.stdout.encode())
                     except SubprocessCalledProcessError as e:
-                        print(e)
                         output_data['api']['errorMessage'] = 'Some error occurred while running the FFprobe command. Please use a valid video URL.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 500
