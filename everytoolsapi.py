@@ -239,13 +239,13 @@ def tools__latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__video_url_information = APIEndpoints.v2.tools.video_url_information
-@app.route(f'/api/<query_version>/{_tools__video_url_information.endpoint_url}/', methods=_tools__video_url_information.allowed_methods)
-@limiter.limit(_tools__video_url_information.ratelimit)
-@cache.cached(timeout=_tools__video_url_information.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+_tools__video_url_info = APIEndpoints.v2.tools.video_url_info
+@app.route(f'/api/<query_version>/{_tools__video_url_info.endpoint_url}/', methods=_tools__video_url_info.allowed_methods)
+@limiter.limit(_tools__video_url_info.ratelimit)
+@cache.cached(timeout=_tools__video_url_info.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def tools__video_url_information(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__video_url_information.run(db_client, APITools.extract_request_data(request))
+    generated_data = _tools__video_url_info.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
