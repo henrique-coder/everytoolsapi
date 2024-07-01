@@ -600,14 +600,14 @@ class APIEndpoints:
 
                     return output_data, 200
 
-            class video_url_information:
-                endpoint_url = 'tools/video-url-information'
+            class video_url_info:
+                endpoint_url = 'tools/video-url-info'
                 allowed_methods = ['GET']
-                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=30, per_day=400)
-                cache_timeout = 1  # 3600
+                ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=600)
+                cache_timeout = 3600
 
-                title = 'Video URL Information'
-                description = 'Get information about a video URL.'
+                title = 'Video URL Information Extractor'
+                description = 'Extracts information from a video URL.'
                 parameters = {
                     'query': {'description': 'Video URL to be analyzed.', 'required': True, 'type': 'string'}
                 }

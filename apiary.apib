@@ -484,6 +484,61 @@ Get the latest FFmpeg download url according to your specifications.
             "response": {}
         }
 
+## Tools: Video URL Information Extractor [/tools/video-url-info?query={query}]
+Extracts information from a video URL.
+- Rate limiting: 2/sec; 60/min; 600/day
+- Cache duration: 1 hour
+
++ Parameters
+  + query (string) - Video URL to be analyzed.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": "float",
+                "errorMessage": "None",
+                "status": "True",
+                "version": "str"
+            },
+            "response": {
+                "format": {
+                    "...": "Any"
+                },
+                "streams": [
+                    {
+                        "...": "Any"
+                    }
+                ]
+            }
+        }
+
++ Response 400 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": "None",
+                "errorMessage": "str",
+                "status": "False",
+                "version": "str"
+            },
+            "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+            "api": {
+                "elapsedTime": "None",
+                "errorMessage": "str",
+                "status": "False",
+                "version": "str"
+            },
+            "response": {}
+        }
+
 ## Scraper: Google Search [/scraper/google-search?query={query}&max_results={max_results}]
 Searches and returns Google results according to your query.
 - Rate limiting: 2/sec; 30/min; 400/day
