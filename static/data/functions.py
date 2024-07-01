@@ -19,44 +19,6 @@ class APITools:
     A class for API tools.
     """
 
-    @staticmethod
-    def extract_request_data(request_object: Request) -> Dict[str, Dict[Any, Any]]:
-        """
-        Extract the request data from the current request.
-        :param request_object: The current request object.
-        :return: The request arguments, headers, body, and authentication.
-        """
-
-        remote_addr = request_object.environ.get('HTTP_X_FORWARDED_FOR', request_object.remote_addr)
-        if ',' in remote_addr: remote_addr = remote_addr.split(',')[0].strip()
-        route = str(request_object.path)
-        args = request_object.args.to_dict()
-        args = {k: None if v == str() else v for k, v in args.items()}
-        headers = dict(request_object.headers)
-        body = request_object.get_json(force=True, silent=True)
-
-        try: auth = request_object.authorization.__dict__
-        except AttributeError: auth = dict()
-
-        return {'ipAddress': remote_addr, 'pathRoute': route, 'args': args, 'headers': headers, 'body': body, 'auth': auth}
-
-    @staticmethod
-    def get_default_api_output_dict() -> Dict[str, Any]:
-        """
-        Get the default API output dictionary.
-        :return: The default API output dictionary.
-        """
-
-        return {
-            'api': {
-                'status': False,
-                'errorMessage': None,
-                'elapsedTime': None,
-                'version': latest_api_version,
-            },
-            'response': dict(),
-        }
-
     class Timer:
         """
         A class for measuring the time taken by a process.
@@ -107,6 +69,43 @@ class APITools:
             self._stop_perf_counter = perf_counter()
             self.end_time = self.start_time + timedelta(seconds=self._stop_perf_counter - self._start_perf_counter)
 
+    @staticmethod
+    def extract_request_data(request_object: Request) -> Dict[str, Dict[Any, Any]]:
+        """
+        Extract the request data from the current request.
+        :param request_object: The current request object.
+        :return: The request arguments, headers, body, and authentication.
+        """
+
+        remote_addr = request_object.remote_addr if request_object.remote_addr else request_object.environ.get('HTTP_X_FORWARDED_FOR', None)
+        if ',' in remote_addr: remote_addr = remote_addr.split(',')[0].strip()
+        route = str(request_object.path)
+        args = request_object.args.to_dict()
+        args = {k: None if v == str() else v for k, v in args.items()}
+        headers = dict(request_object.headers)
+        body = request_object.get_json(force=True, silent=True)
+
+        try: auth = request_object.authorization.__dict__
+        except AttributeError: auth = dict()
+
+        return {'ipAddress': remote_addr, 'pathRoute': route, 'args': args, 'headers': headers, 'body': body, 'auth': auth}
+
+    @staticmethod
+    def get_default_api_output_dict() -> Dict[str, Any]:
+        """
+        Get the default API output dictionary.
+        :return: The default API output dictionary.
+        """
+
+        return {
+            'api': {
+                'status': False,
+                'errorMessage': None,
+                'elapsedTime': None,
+                'version': latest_api_version,
+            },
+            'response': dict(),
+        }
 
 class LimiterTools:
     """
@@ -131,7 +130,6 @@ class LimiterTools:
             f'{per_day}/day' if per_day is not None else str()
         ]
         return ';'.join(filter(None, limits))
-
 
 class CacheTools:
     """
