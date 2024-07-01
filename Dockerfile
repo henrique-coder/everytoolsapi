@@ -43,8 +43,10 @@ COPY requirements.txt requirements.txt
 COPY everytoolsapi.py everytoolsapi.py
 COPY config.yaml config.yaml
 COPY favicon.ico favicon.ico
-COPY .env .env
-# COPY .env.dev .env.dev  # This is for development only
+
+# Development only
+# COPY .env .env
+# COPY .env.dev .env.dev
 
 RUN apk add --no-cache ffmpeg
 
