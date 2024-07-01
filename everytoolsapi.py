@@ -24,6 +24,23 @@ from static.data.logger import logger
 from static.data.version import APIVersion
 
 
+# [debug] Check if ffmpeg and ffprobe are installed
+from subprocess import run
+
+
+try:
+    run(['ffmpeg', '-version'], capture_output=True)
+    print('ffmpeg is installed')
+except BaseException as e:
+    logger.error(f'ffmpeg is not installed: {e}')
+
+try:
+    run(['ffprobe', '-version'], capture_output=True)
+    print('ffprobe is installed')
+except BaseException as e:
+    logger.error(f'ffprobe is not installed: {e}')
+
+
 # Configuration class
 class Config:
     def __init__(self, **entries: Dict[str, Any]) -> None:
