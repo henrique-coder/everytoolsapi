@@ -3,7 +3,7 @@ from collections import Counter
 from datetime import datetime
 from re import compile as re_compile, sub as re_sub, findall as re_findall, search as re_search, match as re_match
 from subprocess import run as run_subprocess, CalledProcessError as SubprocessCalledProcessError
-from typing import Any, AnyStr, Dict, Tuple, Optional, Union
+from typing import Any, AnyStr, Optional, Union, List, Dict, Tuple
 from urllib.parse import urlparse, parse_qs, unquote, urlencode, unquote_plus
 
 # Third-party modules
@@ -79,6 +79,24 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'User-Agent string to be parsed.', 'required': False, 'type': 'string'}
             }
+            expected_output = {
+                'browser': {
+                    'family': 'string',
+                    'version': 'string',
+                    'versionString': 'string'
+                },
+                'device': {
+                    'brand': 'string',
+                    'family': 'string',
+                    'model': 'string'
+                },
+                'os': {
+                    'family': 'string',
+                    'version': 'string',
+                    'versionString': 'string'
+                },
+                'uaString': 'string'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -140,6 +158,13 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'URL to be parsed.', 'required': True, 'type': 'string'}
             }
+            expected_output = {
+                'fragment': 'string',
+                'hostname': 'string',
+                'params': 'dict',
+                'path': 'string',
+                'protocol': 'string'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -187,6 +212,9 @@ class APIEndpoints:
             description = 'Convert seconds to HH:MM:SS format.'
             parameters = {
                 'query': {'description': 'Seconds to be converted.', 'required': True, 'type': 'integer'}
+            }
+            expected_output = {
+                'hmsString': 'string'
             }
 
             @staticmethod
@@ -238,6 +266,10 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'E-mail address to be parsed.', 'required': True, 'type': 'string'}
             }
+            expected_output = {
+                'domain': 'string',
+                'user': 'string'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -285,6 +317,33 @@ class APIEndpoints:
             description = 'Count the number of characters, words, and many other elements in a text.'
             parameters = {
                 'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
+            }
+            expected_output = {
+                'letters': {
+                    'characters': 'dict',
+                    'total': 'integer'
+                },
+                'lowercase': {
+                    'characters': 'dict',
+                    'total': 'integer'
+                },
+                'numbers': {
+                    'characters': 'dict',
+                    'total': 'integer'
+                },
+                'otherSymbols': {
+                    'characters': 'dict',
+                    'total': 'integer'
+                },
+                'spaces': 'integer',
+                'uppercase': {
+                    'characters': 'dict',
+                    'total': 'integer'
+                },
+                'words': {
+                    'characters': 'dict',
+                    'total': 'integer'
+                }
             }
 
             @staticmethod
@@ -358,6 +417,10 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
             }
+            expected_output = {
+                'detectedLangCode': 'string',
+                'detectedLangName': 'string'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -406,6 +469,9 @@ class APIEndpoints:
                 'query': {'description': 'Text to be translated.', 'required': True, 'type': 'string'},
                 'src_lang': {'description': 'Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.', 'required': False, 'type': 'string'},
                 'dest_lang': {'description': 'Destination language code (e.g., "en" for English).', 'required': True, 'type': 'string'}
+            }
+            expected_output = {
+                'translatedText': 'string'
             }
 
             @staticmethod
@@ -460,6 +526,9 @@ class APIEndpoints:
             title = 'My IP Address'
             description = 'Get your IP address.'
             parameters = {}
+            expected_output = {
+                'originIpAddress': 'string'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -500,6 +569,9 @@ class APIEndpoints:
                 'arch': {'description': 'Architecture (options: "amd32", "amd64", "arm32", "arm64").', 'required': False, 'type': 'string'},
                 'license': {'description': 'License type (options: "gpl", "lgpl").', 'required': False, 'type': 'string'},
                 'shared': {'description': 'Whether the FFmpeg build is shared or not (options: "true", "false").', 'required': False, 'type': 'boolean'}
+            }
+            expected_output = {
+                'matchedBuilds': 'list'
             }
 
             @staticmethod
@@ -619,6 +691,10 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'Video URL to be analyzed.', 'required': True, 'type': 'string'}
             }
+            expected_output = {
+                'format': 'dict',
+                'streams': 'list'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -671,6 +747,9 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'Search query.', 'required': True, 'type': 'string'},
                 'max_results': {'description': 'Maximum number of results to be returned (default: 10, min: 1, max: 50).', 'required': False, 'type': 'integer'}
+            }
+            expected_output = {
+                'searchResults': 'list'
             }
 
             @staticmethod
@@ -736,6 +815,11 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
             }
+            expected_output = {
+                'filename': 'string',
+                'mediaUrl': 'string',
+                'thumbnailUrl': 'string'
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -763,7 +847,7 @@ class APIEndpoints:
                     return bool(pattern.match(query))
 
                 if not is_valid_instagram_reel_url(query):
-                    output_data['api']['errorMessage'] = r'The URL provided is not a valid Instagram Reels URL. A valid URL should look like: https://www.instagram.com/reel/{your_reel_id}'
+                    output_data['api']['errorMessage'] = 'The URL provided is not a valid Instagram Reels URL.'
                     return output_data, 400
 
                 # Main process
@@ -845,6 +929,11 @@ class APIEndpoints:
             description = 'Scrapes TikTok video URL to get the media URL and thumbnail URL.'
             parameters = {
                 'query': {'description': 'TikTok video URL.', 'required': True, 'type': 'string'}
+            }
+            expected_output = {
+                'filename': 'string',
+                'mediaUrl': 'string',
+                'thumbnailUrl': 'string'
             }
 
             @staticmethod
@@ -928,6 +1017,54 @@ class APIEndpoints:
             parameters = {
                 'query': {'description': 'YouTube video URL.', 'required': True, 'type': 'string'}
             }
+            expected_output = {
+                'info': {
+                    'channelId': 'string',
+                    'channelName': 'string',
+                    'channelUrl': 'string',
+                    'commentCount': 'integer',
+                    'formattedChannelName': 'string',
+                    'formattedMediaDurationTime': 'string',
+                    'formattedMediaTitle': 'string',
+                    'likeCount': 'integer',
+                    'mediaCategories': 'list',
+                    'mediaDescription': 'string',
+                    'mediaDurationTime': 'integer',
+                    'mediaEmbedUrl': 'string',
+                    'mediaId': 'string',
+                    'mediaIsAgeRestringicted': 'boolean',
+                    'mediaIsstringeaming': 'boolean',
+                    'mediaShortUrl': 'string',
+                    'mediaTags': 'list',
+                    'mediaTitle': 'string',
+                    'mediaUploadedAt': 'integer',
+                    'mediaUrl': 'string',
+                    'viewCount': 'integer'
+                },
+                'media': {
+                    'audio': {
+                        'bitrate': 'integer',
+                        'codec': 'string',
+                        'samplerate': 'integer',
+                        'size': 'integer',
+                        'url': 'string'
+                    },
+                    'subtitle': [
+                        {
+                            'ext': 'string',
+                            'lang': 'string',
+                            'url': 'string'
+                        }
+                    ],
+                    'video': {
+                        'bitrate': 'integer',
+                        'codec': 'string',
+                        'framerate': 'integer',
+                        'quality': 'integer',
+                        'url': 'string'
+                    }
+                }
+            }
 
             @staticmethod
             def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
@@ -977,7 +1114,7 @@ class APIEndpoints:
 
                 parsed_url_data = parse_youtube_url(query)
                 if not parsed_url_data['status']:
-                    output_data['api']['errorMessage'] = 'The URL provided is not a valid YouTube media URL.'
+                    output_data['api']['errorMessage'] = 'The URL provided is not a valid YouTube video URL.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 400
                 elif parsed_url_data['urlType'] != 'video':
@@ -1064,7 +1201,7 @@ class APIEndpoints:
 
                 try:
                     raw_yt_extracted_data = yt.sanitize_info(yt.extract_info(query_url, download=False), remove_private_keys=True)
-                    adjusted_yt_data = {'info': extract_media_info(raw_yt_extracted_data), 'media': {'video': list(), 'audio': list(), 'subtitles': list()}}
+                    adjusted_yt_data = {'info': extract_media_info(raw_yt_extracted_data), 'media': {'video': list(), 'audio': list(), 'subtitle': list()}}
                 except BaseException:
                     output_data['api']['errorMessage'] = 'The URL you have chosen does not exist or is temporarily unavailable.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -1097,7 +1234,7 @@ class APIEndpoints:
                                 yt_media_data['audio'].append(audio_data)
 
                 # Subtitle data adjustment
-                yt_media_data['subtitles'] = extract_media_subtitles(raw_yt_extracted_data)
+                yt_media_data['subtitle'] = extract_media_subtitles(raw_yt_extracted_data)
 
                 timer.stop()
 
@@ -1119,6 +1256,22 @@ class APIEndpoints:
             description = 'Get the YouTube video URL from a search query.'
             parameters = {
                 'query': {'description': 'Search query.', 'required': True, 'type': 'string'}
+            }
+            expected_output = {
+                'foundUrlData': {
+                    'channelId': 'string',
+                    'channelName': 'string',
+                    'channelUrl': 'string',
+                    'formattedChannelName': 'string',
+                    'formattedMediaTitle': 'string',
+                    'mediaEmbedUrl': 'string',
+                    'mediaId': 'string',
+                    'mediaShortUrl': 'string',
+                    'mediaTitle': 'string',
+                    'mediaUrl': 'string',
+                    'thumbnailUrls': 'list',
+                    'viewCount': 'integer',
+                }
             }
 
             @staticmethod
