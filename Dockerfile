@@ -46,7 +46,7 @@ COPY favicon.ico favicon.ico
 
 # Development only
 # COPY .env .env
-# COPY .env.dev .env.dev
+# COPY .dev.env .dev.env
 
 RUN apk add --no-cache ffmpeg
 

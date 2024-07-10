@@ -40,7 +40,7 @@ debugging_mode = False
 
 # Load the environment variables
 production_env_path = Path(Path(__file__).parent, '.env')
-development_env_path = Path(Path(__file__).parent, '.env.dev')
+development_env_path = Path(Path(__file__).parent, '.dev.env')
 
 if not debugging_mode:
     if Path(production_env_path).exists(): load_dotenv(dotenv_path=production_env_path)
