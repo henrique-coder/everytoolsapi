@@ -19,7 +19,7 @@ RUN apk update \
 
 # Copy all files from the current directory to the container /app directory and install Python packages from requirements.txt
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -U --no-cache-dir -r requirements.txt
 
 # Second stage: runtime stage
 FROM python:3.12.4-alpine3.20

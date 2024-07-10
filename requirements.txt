@@ -15,10 +15,10 @@ yt-dlp
 user-agents
 langdetect
 langcodes
-googletrans==4.0.0-rc1
 httpx
 fake-useragent
 googlesearch-python
 beautifulsoup4
-youtube-search-python
 orjson
+googletrans==4.0.0-rc1
+youtube-search-python
