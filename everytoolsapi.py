@@ -149,153 +149,153 @@ def status_page() -> Tuple[jsonify, int]:
 
 
 # Setup API routes
-_parser__useragent = APIEndpoints.v2.parser.useragent
-@app.route(f'/api/<query_version>/{_parser__useragent.endpoint_url}/', methods=_parser__useragent.allowed_methods)
-@limiter.limit(_parser__useragent.ratelimit)
-@cache.cached(timeout=_parser__useragent.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__useragent(query_version: str) -> Tuple[jsonify, int]:
+_useragent_parser = APIEndpoints.v2.useragent_parser
+@app.route(f'/api/<query_version>/{_useragent_parser.endpoint_url}/', methods=_useragent_parser.allowed_methods)
+@limiter.limit(_useragent_parser.ratelimit)
+@cache.cached(timeout=_useragent_parser.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __useragent_parser(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _parser__useragent.run(db_client, APITools.extract_request_data(request))
+    generated_data = _useragent_parser.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_parser__url = APIEndpoints.v2.parser.url
-@app.route(f'/api/<query_version>/{_parser__url.endpoint_url}/', methods=_parser__url.allowed_methods)
-@limiter.limit(_parser__url.ratelimit)
-@cache.cached(timeout=_parser__url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__url(query_version: str) -> Tuple[jsonify, int]:
+_url_parser = APIEndpoints.v2.url_parser
+@app.route(f'/api/<query_version>/{_url_parser.endpoint_url}/', methods=_url_parser.allowed_methods)
+@limiter.limit(_url_parser.ratelimit)
+@cache.cached(timeout=_url_parser.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __url_parser(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _parser__url.run(db_client, APITools.extract_request_data(request))
+    generated_data = _url_parser.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_parser__time_hms = APIEndpoints.v2.parser.sec_to_hms
-@app.route(f'/api/<query_version>/{_parser__time_hms.endpoint_url}/', methods=_parser__time_hms.allowed_methods)
-@limiter.limit(_parser__time_hms.ratelimit)
-@cache.cached(timeout=_parser__time_hms.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__time_hms(query_version: str) -> Tuple[jsonify, int]:
+_seconds_to_hhmmss_format_converter = APIEndpoints.v2.seconds_to_hhmmss_format_converter
+@app.route(f'/api/<query_version>/{_seconds_to_hhmmss_format_converter.endpoint_url}/', methods=_seconds_to_hhmmss_format_converter.allowed_methods)
+@limiter.limit(_seconds_to_hhmmss_format_converter.ratelimit)
+@cache.cached(timeout=_seconds_to_hhmmss_format_converter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __seconds_to_hhmmss_format_converter(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _parser__time_hms.run(db_client, APITools.extract_request_data(request))
+    generated_data = _seconds_to_hhmmss_format_converter.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_parser__email = APIEndpoints.v2.parser.email
-@app.route(f'/api/<query_version>/{_parser__email.endpoint_url}/', methods=_parser__email.allowed_methods)
-@limiter.limit(_parser__email.ratelimit)
-@cache.cached(timeout=_parser__email.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__email(query_version: str) -> Tuple[jsonify, int]:
+_email_parser = APIEndpoints.v2.email_parser
+@app.route(f'/api/<query_version>/{_email_parser.endpoint_url}/', methods=_email_parser.allowed_methods)
+@limiter.limit(_email_parser.ratelimit)
+@cache.cached(timeout=_email_parser.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __email_parser(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _parser__email.run(db_client, APITools.extract_request_data(request))
+    generated_data = _email_parser.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_parser__text_counter = APIEndpoints.v2.parser.text_counter
-@app.route(f'/api/<query_version>/{_parser__text_counter.endpoint_url}/', methods=_parser__text_counter.allowed_methods)
-@limiter.limit(_parser__text_counter.ratelimit)
-@cache.cached(timeout=_parser__text_counter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def parser__text_counter(query_version: str) -> Tuple[jsonify, int]:
+_advanced_text_counter = APIEndpoints.v2.advanced_text_counter
+@app.route(f'/api/<query_version>/{_advanced_text_counter.endpoint_url}/', methods=_advanced_text_counter.allowed_methods)
+@limiter.limit(_advanced_text_counter.ratelimit)
+@cache.cached(timeout=_advanced_text_counter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __advanced_text_counter(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _parser__text_counter.run(db_client, APITools.extract_request_data(request))
+    generated_data = _advanced_text_counter.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__text_lang_detector = APIEndpoints.v2.tools.text_lang_detector
-@app.route(f'/api/<query_version>/{_tools__text_lang_detector.endpoint_url}/', methods=_tools__text_lang_detector.allowed_methods)
-@limiter.limit(_tools__text_lang_detector.ratelimit)
-@cache.cached(timeout=_tools__text_lang_detector.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def tools__text_lang_detector(query_version: str) -> Tuple[jsonify, int]:
+_text_language_detector = APIEndpoints.v2.text_language_detector
+@app.route(f'/api/<query_version>/{_text_language_detector.endpoint_url}/', methods=_text_language_detector.allowed_methods)
+@limiter.limit(_text_language_detector.ratelimit)
+@cache.cached(timeout=_text_language_detector.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __text_language_detector(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__text_lang_detector.run(db_client, APITools.extract_request_data(request))
+    generated_data = _text_language_detector.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__text_translator = APIEndpoints.v2.tools.text_translator
-@app.route(f'/api/<query_version>/{_tools__text_translator.endpoint_url}/', methods=_tools__text_translator.allowed_methods)
-@limiter.limit(_tools__text_translator.ratelimit)
-@cache.cached(timeout=_tools__text_translator.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def tools__text_translator(query_version: str) -> Tuple[jsonify, int]:
+_text_translator = APIEndpoints.v2.text_translator
+@app.route(f'/api/<query_version>/{_text_translator.endpoint_url}/', methods=_text_translator.allowed_methods)
+@limiter.limit(_text_translator.ratelimit)
+@cache.cached(timeout=_text_translator.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __text_translator(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__text_translator.run(db_client, APITools.extract_request_data(request))
+    generated_data = _text_translator.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__ip = APIEndpoints.v2.tools.ip
-@app.route(f'/api/<query_version>/{_tools__ip.endpoint_url}/', methods=_tools__ip.allowed_methods)
-@limiter.limit(_tools__ip.ratelimit)
-@cache.cached(timeout=_tools__ip.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def tools__ip(query_version: str) -> Tuple[jsonify, int]:
+_my_ip = APIEndpoints.v2.my_ip
+@app.route(f'/api/<query_version>/{_my_ip.endpoint_url}/', methods=_my_ip.allowed_methods)
+@limiter.limit(_my_ip.ratelimit)
+@cache.cached(timeout=_my_ip.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __my_ip(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__ip.run(db_client, APITools.extract_request_data(request))
+    generated_data = _my_ip.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__latest_ffmpeg_download_url = APIEndpoints.v2.tools.latest_ffmpeg_download_url
-@app.route(f'/api/<query_version>/{_tools__latest_ffmpeg_download_url.endpoint_url}/', methods=_tools__latest_ffmpeg_download_url.allowed_methods)
-@limiter.limit(_tools__latest_ffmpeg_download_url.ratelimit)
-@cache.cached(timeout=_tools__latest_ffmpeg_download_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def tools__latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
+_get_latest_ffmpeg_download_url = APIEndpoints.v2.get_latest_ffmpeg_download_url
+@app.route(f'/api/<query_version>/{_get_latest_ffmpeg_download_url.endpoint_url}/', methods=_get_latest_ffmpeg_download_url.allowed_methods)
+@limiter.limit(_get_latest_ffmpeg_download_url.ratelimit)
+@cache.cached(timeout=_get_latest_ffmpeg_download_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __get_latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
+    generated_data = _get_latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_tools__video_url_info = APIEndpoints.v2.tools.video_url_info
-@app.route(f'/api/<query_version>/{_tools__video_url_info.endpoint_url}/', methods=_tools__video_url_info.allowed_methods)
-@limiter.limit(_tools__video_url_info.ratelimit)
-@cache.cached(timeout=_tools__video_url_info.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def tools__video_url_information(query_version: str) -> Tuple[jsonify, int]:
+_ffprobe_a_video_url = APIEndpoints.v2.ffprobe_a_video_url
+@app.route(f'/api/<query_version>/{_ffprobe_a_video_url.endpoint_url}/', methods=_ffprobe_a_video_url.allowed_methods)
+@limiter.limit(_ffprobe_a_video_url.ratelimit)
+@cache.cached(timeout=_ffprobe_a_video_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __ffprobe_a_video_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _tools__video_url_info.run(db_client, APITools.extract_request_data(request))
+    generated_data = _ffprobe_a_video_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scraper__google_search = APIEndpoints.v2.scraper.google_search
-@app.route(f'/api/<query_version>/{_scraper__google_search.endpoint_url}/', methods=_scraper__google_search.allowed_methods)
-@limiter.limit(_scraper__google_search.ratelimit)
-@cache.cached(timeout=_scraper__google_search.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def scraper__google_search(query_version: str) -> Tuple[jsonify, int]:
+_scrap_google_search_results = APIEndpoints.v2.scrap_google_search_results
+@app.route(f'/api/<query_version>/{_scrap_google_search_results.endpoint_url}/', methods=_scrap_google_search_results.allowed_methods)
+@limiter.limit(_scrap_google_search_results.ratelimit)
+@cache.cached(timeout=_scrap_google_search_results.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __scrap_google_search_results(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _scraper__google_search.run(db_client, APITools.extract_request_data(request))
+    generated_data = _scrap_google_search_results.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scraper__instagram_reels = APIEndpoints.v2.scraper.instagram_reels
-@app.route(f'/api/<query_version>/{_scraper__instagram_reels.endpoint_url}/', methods=_scraper__instagram_reels.allowed_methods)
-@limiter.limit(_scraper__instagram_reels.ratelimit)
-@cache.cached(timeout=_scraper__instagram_reels.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def scraper__instagram_reels(query_version: str) -> Tuple[jsonify, int]:
+_scrap_instagram_reels_url = APIEndpoints.v2.scrap_instagram_reels_url
+@app.route(f'/api/<query_version>/{_scrap_instagram_reels_url.endpoint_url}/', methods=_scrap_instagram_reels_url.allowed_methods)
+@limiter.limit(_scrap_instagram_reels_url.ratelimit)
+@cache.cached(timeout=_scrap_instagram_reels_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __scrap_instagram_reels_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _scraper__instagram_reels.run(db_client, APITools.extract_request_data(request))
+    generated_data = _scrap_instagram_reels_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scraper__tiktok_media = APIEndpoints.v2.scraper.tiktok_media
-@app.route(f'/api/<query_version>/{_scraper__tiktok_media.endpoint_url}/', methods=_scraper__tiktok_media.allowed_methods)
-@limiter.limit(_scraper__tiktok_media.ratelimit)
-@cache.cached(timeout=_scraper__tiktok_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def scraper__tiktok_media(query_version: str) -> Tuple[jsonify, int]:
+_scrap_tiktok_video_url = APIEndpoints.v2.scrap_tiktok_video_url
+@app.route(f'/api/<query_version>/{_scrap_tiktok_video_url.endpoint_url}/', methods=_scrap_tiktok_video_url.allowed_methods)
+@limiter.limit(_scrap_tiktok_video_url.ratelimit)
+@cache.cached(timeout=_scrap_tiktok_video_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __scrap_tiktok_video_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _scraper__tiktok_media.run(db_client, APITools.extract_request_data(request))
+    generated_data = _scrap_tiktok_video_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scraper__youtube_media = APIEndpoints.v2.scraper.youtube_media
-@app.route(f'/api/<query_version>/{_scraper__youtube_media.endpoint_url}/', methods=_scraper__youtube_media.allowed_methods)
-@limiter.limit(_scraper__youtube_media.ratelimit)
-@cache.cached(timeout=_scraper__youtube_media.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def scraper__youtube_media(query_version: str) -> Tuple[jsonify, int]:
+_scrap_youtube_video_url = APIEndpoints.v2.scrap_youtube_video_url
+@app.route(f'/api/<query_version>/{_scrap_youtube_video_url.endpoint_url}/', methods=_scrap_youtube_video_url.allowed_methods)
+@limiter.limit(_scrap_youtube_video_url.ratelimit)
+@cache.cached(timeout=_scrap_youtube_video_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __scrap_youtube_video_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _scraper__youtube_media.run(db_client, APITools.extract_request_data(request))
+    generated_data = _scrap_youtube_video_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scraper__youtube_video_url_from_query = APIEndpoints.v2.scraper.youtube_video_url_from_query
-@app.route(f'/api/<query_version>/{_scraper__youtube_video_url_from_query.endpoint_url}/', methods=_scraper__youtube_video_url_from_query.allowed_methods)
-@limiter.limit(_scraper__youtube_video_url_from_query.ratelimit)
-@cache.cached(timeout=_scraper__youtube_video_url_from_query.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
-def scraper__youtube_video_url_from_query(query_version: str) -> Tuple[jsonify, int]:
+_get_youtube_video_url_from_search = APIEndpoints.v2.get_youtube_video_url_from_search
+@app.route(f'/api/<query_version>/{_get_youtube_video_url_from_search.endpoint_url}/', methods=_get_youtube_video_url_from_search.allowed_methods)
+@limiter.limit(_get_youtube_video_url_from_search.ratelimit)
+@cache.cached(timeout=_get_youtube_video_url_from_search.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __get_youtube_video_url_from_search(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    generated_data = _scraper__youtube_video_url_from_query.run(db_client, APITools.extract_request_data(request))
+    generated_data = _get_youtube_video_url_from_search.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 
