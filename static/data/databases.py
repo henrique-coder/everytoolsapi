@@ -57,6 +57,11 @@ class APIRequestLogs:
         :return: The insert query for the given table and data.
         """
 
+        # Replace single quotes with empty strings in the params
+        for key in data.keys():
+            if key == 'params':
+                data[key] = data[key].replace("'", str())
+
         query = f'''
             INSERT INTO {table_name} ({', '.join(data.keys())})
             VALUES ('{'\', \''.join(str(v) for v in data.values())}')
