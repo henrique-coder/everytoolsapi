@@ -57,10 +57,11 @@ class APIRequestLogs:
         :return: The insert query for the given table and data.
         """
 
-        # Replace single quotes with empty strings in the params
+        # Escape single quotes in the data values (as required by PostgreSQL) and semicolons (to prevent SQL injection)
         for key in data.keys():
             if key == 'params':
-                data[key] = data[key].replace("'", str())
+                data[key] = data[key].replace("'", "''")
+                data[key] = data[key].replace(';', str())
 
         query = f'''
             INSERT INTO {table_name} ({', '.join(data.keys())})
