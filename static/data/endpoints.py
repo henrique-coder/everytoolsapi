@@ -12,8 +12,7 @@ from fake_useragent import FakeUserAgent
 from googlesearch import search as google_search
 from googletrans import Translator
 from httpx import get, post, HTTPError
-from langcodes import Language
-from langdetect import detect as detect_lang, DetectorFactory, LangDetectException
+from langdetect import detect as lang_detect, DetectorFactory, LangDetectException
 from orjson import loads as orjson_loads
 from psycopg2 import connect as psycopg2_connect
 from unicodedata import normalize
@@ -69,6 +68,8 @@ class APIEndpoints:
             return output_data, 200
 
         class useragent_parser:
+            ready_to_production = True
+
             endpoint_url = 'useragent-parser'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
@@ -148,6 +149,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class url_parser:
+            ready_to_production = True
+
             endpoint_url = 'url-parser'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
@@ -203,6 +206,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class seconds_to_hhmmss_format_converter:
+            ready_to_production = True
+
             endpoint_url = 'seconds-to-hh:mm:ss-format-converter'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
@@ -256,6 +261,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class email_parser:
+            ready_to_production = True
+
             endpoint_url = 'email-parser'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
@@ -308,6 +315,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class advanced_text_counter:
+            ready_to_production = True
+
             endpoint_url = 'advanced-text-counter'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=5, per_min=300, per_day=1000000)
@@ -407,10 +416,12 @@ class APIEndpoints:
                 return output_data, 200
 
         class text_language_detector:
+            ready_to_production = True
+
             endpoint_url = 'text-language-detector'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_min=120, per_day=500000)
-            cache_timeout = 1800
+            cache_timeout = 300
 
             title = 'Text Language Detector'
             description = 'Detects the predominant language in a text.'
@@ -418,8 +429,7 @@ class APIEndpoints:
                 'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
             }
             expected_output = {
-                'detectedLangCode': 'string',
-                'detectedLangName': 'string'
+                'detectedLanguageCode': 'string'
             }
 
             @staticmethod
@@ -441,7 +451,7 @@ class APIEndpoints:
                 DetectorFactory.seed = 0
 
                 try:
-                    detected_lang = detect_lang(text)
+                    detected_lang = lang_detect(text)
                 except LangDetectException:
                     output_data['api']['errorMessage'] = "There aren't enough resources in the text to detect your language."
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -449,7 +459,7 @@ class APIEndpoints:
 
                 timer.stop()
 
-                output_data['response'] = {'detectedLangCode': detected_lang, 'detectedLangName': Language.get(detected_lang).display_name('en')}
+                output_data['response'] = {'detectedLanguageCode': detected_lang}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
@@ -458,10 +468,12 @@ class APIEndpoints:
                 return output_data, 200
 
         class text_translator:
+            ready_to_production = True
+
             endpoint_url = 'text-translator'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=120, per_day=500000)
-            cache_timeout = 1800
+            cache_timeout = 300
 
             title = 'Text Translator'
             description = 'Translate text from one language to another.'
@@ -518,6 +530,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class my_ip:
+            ready_to_production = True
+
             endpoint_url = 'my-ip'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_min=120, per_day=500000)
@@ -557,10 +571,12 @@ class APIEndpoints:
                 return output_data, 200
 
         class get_latest_ffmpeg_download_url:
+            ready_to_production = True
+
             endpoint_url = 'get-latest-ffmpeg-download-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 7200
+            cache_timeout = 3600
 
             title = 'Retrieve Latest FFmpeg Download URL'
             description = 'Get the download url of the latest FFmpeg build according to your specifications.'
@@ -571,7 +587,7 @@ class APIEndpoints:
                 'shared': {'description': 'Whether the FFmpeg build is shared or not (options: "true", "false").', 'required': False, 'type': 'boolean'}
             }
             expected_output = {
-                'matchedBuilds': 'list'
+                'matchedBuildUrls': 'list'
             }
 
             @staticmethod
@@ -663,16 +679,16 @@ class APIEndpoints:
                     ):
                         builds.append(f'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/{build_name}')
 
-                matched_builds = list(set(builds))
+                matched_build_urls = list(set(builds))
 
-                if not matched_builds:
+                if not matched_build_urls:
                     output_data['api']['errorMessage'] = 'No FFmpeg build found with the specified parameters.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 404
 
                 timer.stop()
 
-                output_data['response'] = {'matchedBuilds': matched_builds}
+                output_data['response'] = {'matchedBuildUrls': matched_build_urls}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
@@ -681,6 +697,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class ffprobe_a_video_url:
+            ready_to_production = True
+
             endpoint_url = 'ffprobe-a-video-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=120, per_day=500000)
@@ -737,6 +755,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class scrap_google_search_results:
+            ready_to_production = True
+
             endpoint_url = 'scrap-google-search-results'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_min=30, per_day=500000)
@@ -787,9 +807,16 @@ class APIEndpoints:
                     return output_data, 400
 
                 # Main process
+                scraped_results = list()
                 search_results = list()
 
-                for result in google_search(query, num_results=max_results, lang='en'):
+                try:
+                    scraped_results = google_search(query, num_results=max_results, lang='en')
+                except Exception:
+                    output_data['api']['errorMessage'] = 'Some error occurred while scraping the search results. Please try again later.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+
+                for result in scraped_results:
                     search_results.append(unquote(result))
 
                 search_results = list(set(search_results))
@@ -805,10 +832,12 @@ class APIEndpoints:
                 return output_data, 200
 
         class scrap_instagram_reels_url:
+            ready_to_production = False
+
             endpoint_url = 'scrap-instagram-reels-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 14400
+            cache_timeout = 3600
 
             title = 'Instagram Reels URL Scraper'
             description = 'Scrapes Instagram Reels URL to get the media URL and thumbnail URL.'
@@ -887,7 +916,7 @@ class APIEndpoints:
                     query = 'https://' + query
 
                 try:
-                    response = post('https://fastdl.app/api/convert', headers={'User-Agent': fake_useragent.random, 'Accept': 'application/json'}, json={'url': query}, timeout=10)
+                    response = post('https://fastdl.app/api/convert', headers={'User-Agent': fake_useragent.random, 'accept': 'application/json'}, json={'url': query}, timeout=10)
                 except HTTPError:
                     output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -904,7 +933,7 @@ class APIEndpoints:
                     filename = format_string(response_data['meta']['title']) + '.' + response_data.get('url', list(dict()))[0].get('ext', 'mp4').lower()
                     thumbnail_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['thumb']).query)['uri'][0], 'dl', '0'))
                     media_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['url'][0]['url']).query)['uri'][0], 'dl', '0'))
-                except BaseException:
+                except Exception:
                     output_data['api']['errorMessage'] = 'An error occurred while fetching Instagram reel data. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 500
@@ -920,10 +949,12 @@ class APIEndpoints:
                 return output_data, 200
 
         class scrap_tiktok_video_url:
+            ready_to_production = True
+
             endpoint_url = 'scrap-tiktok-video-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 14400
+            cache_timeout = 3600
 
             title = 'TikTok Video URL Scraper'
             description = 'Scrapes TikTok video URL to get the media URL and thumbnail URL.'
@@ -1007,10 +1038,12 @@ class APIEndpoints:
                 return output_data, 200
 
         class scrap_youtube_video_url:
+            ready_to_production = True
+
             endpoint_url = 'scrap-youtube-video-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 14400
+            cache_timeout = 3600
 
             title = 'YouTube Video URL Scraper'
             description = 'Scrapes YouTube video URL to get all the available information about the video.'
@@ -1247,6 +1280,8 @@ class APIEndpoints:
                 return output_data, 200
 
         class get_youtube_video_url_from_search:
+            ready_to_production = True
+
             endpoint_url = 'get-youtube-video-url-from-search'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_min=120, per_day=500000)
