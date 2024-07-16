@@ -846,7 +846,7 @@ class APIEndpoints:
             }
             expected_output = {
                 'filename': 'string',
-                'videoUrl': 'string',
+                'mediaUrl': 'string',
                 'thumbnailUrl': 'string'
             }
 
@@ -922,9 +922,6 @@ class APIEndpoints:
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 500
 
-                print(response.text)
-                print(response.status_code)
-
                 if response.status_code != 200 or not response.json():
                     output_data['api']['errorMessage'] = 'Some external error occurred during the data search. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -935,7 +932,7 @@ class APIEndpoints:
                 try:
                     filename = format_string(response_data['meta']['title']) + '.' + response_data.get('url', list(dict()))[0].get('ext', 'mp4').lower()
                     thumbnail_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['thumb']).query)['uri'][0], 'dl', '0'))
-                    video_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['url'][0]['url']).query)['uri'][0], 'dl', '0'))
+                    media_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['url'][0]['url']).query)['uri'][0], 'dl', '0'))
                 except Exception:
                     output_data['api']['errorMessage'] = 'An error occurred while fetching Instagram reel data. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -943,7 +940,7 @@ class APIEndpoints:
 
                 timer.stop()
 
-                output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'videoUrl': video_url}
+                output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'mediaUrl': media_url}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
@@ -957,7 +954,7 @@ class APIEndpoints:
             endpoint_url = 'scrap-tiktok-video-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 14400
+            cache_timeout = 3600
 
             title = 'TikTok Video URL Scraper'
             description = 'Scrapes TikTok video URL to get the media URL and thumbnail URL.'
@@ -1046,7 +1043,7 @@ class APIEndpoints:
             endpoint_url = 'scrap-youtube-video-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 14400
+            cache_timeout = 3600
 
             title = 'YouTube Video URL Scraper'
             description = 'Scrapes YouTube video URL to get all the available information about the video.'
