@@ -7,10 +7,11 @@ flask-cors
 flask-limiter
 flask-talisman
 flask-wtf
-googletrans==4.0.0-rc1
 googlesearch-python
+googletrans==4.0.0-rc1
 gunicorn
 httpx
+instaloader
 langdetect
 orjson
 psycopg2-binary
