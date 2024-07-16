@@ -36,7 +36,7 @@ class Config:
 
 # Setup Flask application and debugging mode
 app = Flask(__name__)
-debugging_mode = True
+debugging_mode = False
 
 # Load the environment variables
 production_env_path = Path(Path(__file__).parent, '.env')
@@ -119,11 +119,6 @@ def show_error_page(error_code: int, custom_error_name: str = None) -> Tuple[ren
     return render_template('httpweberrors.html', error_code=error_code, error_name=custom_error_name), error_code
 
 
-@app.errorhandler(500)
-@cache.cached(timeout=1, make_cache_key=CacheTools.gen_cache_key)
-def internal_server_error(error: Exception) -> Tuple[render_template, int]: return show_error_page(error_code=500)
-
-
 @app.errorhandler(404)
 @cache.cached(timeout=1, make_cache_key=CacheTools.gen_cache_key)
 def page_not_found(error: Exception) -> Tuple[render_template, int]: return show_error_page(error_code=404)
@@ -132,6 +127,16 @@ def page_not_found(error: Exception) -> Tuple[render_template, int]: return show
 @app.errorhandler(429)
 @cache.cached(timeout=1, make_cache_key=CacheTools.gen_cache_key)
 def ratelimit_exceeded(error: Exception) -> Tuple[render_template, int]: return show_error_page(error_code=429)
+
+
+@app.errorhandler(500)
+@cache.cached(timeout=1, make_cache_key=CacheTools.gen_cache_key)
+def internal_server_error(error: Exception) -> Tuple[render_template, int]: return show_error_page(error_code=500)
+
+
+@app.errorhandler(503)
+@cache.cached(timeout=1, make_cache_key=CacheTools.gen_cache_key)
+def service_unavailable(error: Exception) -> Tuple[render_template, int]: return show_error_page(error_code=503)
 
 
 # Setup main routes
@@ -165,6 +170,7 @@ _useragent_parser = APIEndpoints.v2.useragent_parser
 @cache.cached(timeout=_useragent_parser.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __useragent_parser(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _useragent_parser.ready_to_production: return show_error_page(error_code=503)
     generated_data = _useragent_parser.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -175,6 +181,7 @@ _url_parser = APIEndpoints.v2.url_parser
 @cache.cached(timeout=_url_parser.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __url_parser(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _url_parser.ready_to_production: return show_error_page(error_code=503)
     generated_data = _url_parser.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -185,6 +192,7 @@ _seconds_to_hhmmss_format_converter = APIEndpoints.v2.seconds_to_hhmmss_format_c
 @cache.cached(timeout=_seconds_to_hhmmss_format_converter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __seconds_to_hhmmss_format_converter(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _seconds_to_hhmmss_format_converter.ready_to_production: return show_error_page(error_code=503)
     generated_data = _seconds_to_hhmmss_format_converter.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -195,6 +203,7 @@ _email_parser = APIEndpoints.v2.email_parser
 @cache.cached(timeout=_email_parser.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __email_parser(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _email_parser.ready_to_production: return show_error_page(error_code=503)
     generated_data = _email_parser.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -205,6 +214,7 @@ _advanced_text_counter = APIEndpoints.v2.advanced_text_counter
 @cache.cached(timeout=_advanced_text_counter.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __advanced_text_counter(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _advanced_text_counter.ready_to_production: return show_error_page(error_code=503)
     generated_data = _advanced_text_counter.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -215,6 +225,7 @@ _text_language_detector = APIEndpoints.v2.text_language_detector
 @cache.cached(timeout=_text_language_detector.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __text_language_detector(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _text_language_detector.ready_to_production: return show_error_page(error_code=503)
     generated_data = _text_language_detector.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -225,6 +236,7 @@ _text_translator = APIEndpoints.v2.text_translator
 @cache.cached(timeout=_text_translator.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __text_translator(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _text_translator.ready_to_production: return show_error_page(error_code=503)
     generated_data = _text_translator.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -235,6 +247,7 @@ _my_ip = APIEndpoints.v2.my_ip
 @cache.cached(timeout=_my_ip.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __my_ip(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _my_ip.ready_to_production: return show_error_page(error_code=503)
     generated_data = _my_ip.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -245,6 +258,7 @@ _get_latest_ffmpeg_download_url = APIEndpoints.v2.get_latest_ffmpeg_download_url
 @cache.cached(timeout=_get_latest_ffmpeg_download_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __get_latest_ffmpeg_download_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _get_latest_ffmpeg_download_url.ready_to_production: return show_error_page(error_code=503)
     generated_data = _get_latest_ffmpeg_download_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -255,6 +269,7 @@ _ffprobe_a_video_url = APIEndpoints.v2.ffprobe_a_video_url
 @cache.cached(timeout=_ffprobe_a_video_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __ffprobe_a_video_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _ffprobe_a_video_url.ready_to_production: return show_error_page(error_code=503)
     generated_data = _ffprobe_a_video_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -265,6 +280,7 @@ _scrap_google_search_results = APIEndpoints.v2.scrap_google_search_results
 @cache.cached(timeout=_scrap_google_search_results.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __scrap_google_search_results(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _scrap_google_search_results.ready_to_production: return show_error_page(error_code=503)
     generated_data = _scrap_google_search_results.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -275,6 +291,7 @@ _scrap_instagram_reels_url = APIEndpoints.v2.scrap_instagram_reels_url
 @cache.cached(timeout=_scrap_instagram_reels_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __scrap_instagram_reels_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _scrap_instagram_reels_url.ready_to_production: return show_error_page(error_code=503)
     generated_data = _scrap_instagram_reels_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -285,6 +302,7 @@ _scrap_tiktok_video_url = APIEndpoints.v2.scrap_tiktok_video_url
 @cache.cached(timeout=_scrap_tiktok_video_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __scrap_tiktok_video_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _scrap_tiktok_video_url.ready_to_production: return show_error_page(error_code=503)
     generated_data = _scrap_tiktok_video_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -295,6 +313,7 @@ _scrap_youtube_video_url = APIEndpoints.v2.scrap_youtube_video_url
 @cache.cached(timeout=_scrap_youtube_video_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __scrap_youtube_video_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _scrap_youtube_video_url.ready_to_production: return show_error_page(error_code=503)
     generated_data = _scrap_youtube_video_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
@@ -305,6 +324,7 @@ _get_youtube_video_url_from_search = APIEndpoints.v2.get_youtube_video_url_from_
 @cache.cached(timeout=_get_youtube_video_url_from_search.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __get_youtube_video_url_from_search(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _get_youtube_video_url_from_search.ready_to_production: return show_error_page(error_code=503)
     generated_data = _get_youtube_video_url_from_search.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
