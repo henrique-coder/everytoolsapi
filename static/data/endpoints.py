@@ -12,6 +12,7 @@ from fake_useragent import FakeUserAgent
 from googlesearch import search as google_search
 from googletrans import Translator
 from httpx import get, post, HTTPError
+from instaloader import Instaloader, Post as instagram_post
 from langdetect import detect as lang_detect, DetectorFactory, LangDetectException
 from orjson import loads as orjson_loads
 from psycopg2 import connect as psycopg2_connect
@@ -24,7 +25,7 @@ from yt_dlp import YoutubeDL
 from static.data.functions import APITools, LimiterTools
 
 
-# Global variables/constants
+# Global variables
 fake_useragent = FakeUserAgent()
 
 # Helper functions
@@ -832,7 +833,7 @@ class APIEndpoints:
                 return output_data, 200
 
         class scrap_instagram_reels_url:
-            ready_to_production = False
+            ready_to_production = True
 
             endpoint_url = 'scrap-instagram-reels-url'
             allowed_methods = ['GET']
@@ -875,11 +876,31 @@ class APIEndpoints:
                     pattern = re_compile(r'^(https?://)?(www\.)?instagram\.com(/[^/]+)?/(reel|p)/[A-Za-z0-9_-]+/?(\?.*)?$')
                     return bool(pattern.match(query))
 
+                def extract_instagram_reel_id(query: str) -> Optional[str]:
+                    """
+                    Extract the ID from a valid Instagram Reels URL.
+                    :param query: URL to be checked.
+                    :return: The ID of the Instagram Reel if the URL is valid, None otherwise.
+                    """
+
+                    pattern = re_compile(r'^(https?://)?(www\.)?instagram\.com(/[^/]+)?/(reel|p)/([A-Za-z0-9_-]+)/?(\?.*)?$')
+                    match = pattern.match(query)
+
+                    if match:
+                        return str(match.group(5))
+
+                    return None
+
                 if not is_valid_instagram_reel_url(query):
                     output_data['api']['errorMessage'] = 'The URL provided is not a valid Instagram Reels URL.'
                     return output_data, 400
 
-                # Main process
+                reel_id = extract_instagram_reel_id(query)
+
+                if not reel_id:
+                    output_data['api']['errorMessage'] = 'The URL provided does not contain a valid Instagram Reel ID.'
+                    return output_data, 400
+
                 def safe_unquote_url(url: str) -> str:
                     """
                     Safely unquote URL.
@@ -889,58 +910,24 @@ class APIEndpoints:
 
                     parsed_url = urlparse(url)
                     unquoted_url_base = unquote_plus(parsed_url.scheme + '://' + parsed_url.netloc + parsed_url.path)
-                    unquoted_url = str(unquoted_url_base + '?' + urlencode(parse_qs(parsed_url.query), doseq=True))
+                    return str(unquoted_url_base + '?' + urlencode(parse_qs(parsed_url.query), doseq=True))
 
-                    return unquoted_url
-
-                def edit_url_param(url: str, param: Any, new_value: Any) -> str:
-                    """
-                    Edit a parameter in the URL.
-                    :param url: URL to be edited.
-                    :param param: Parameter to be edited.
-                    :param new_value: New value for the parameter.
-                    :return: Edited URL with the new parameter value.
-                    """
-
-                    parsed_url = urlparse(url)
-                    query_dict = parse_qs(parsed_url.query)
-
-                    if param in query_dict:
-                        query_dict[param] = new_value
-                    else:
-                        query_dict[param] = [new_value]
-
-                    return parsed_url._replace(query=urlencode(query_dict, doseq=True)).geturl()
-
-                if not urlparse(query).scheme:
-                    query = 'https://' + query
-
+                # Main process
                 try:
-                    response = post('https://fastdl.app/api/convert', headers={'User-Agent': fake_useragent.random, 'accept': 'application/json'}, json={'url': query}, timeout=10)
-                except HTTPError:
-                    output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
-                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                    return output_data, 500
-
-                if response.status_code != 200 or not response.json():
-                    output_data['api']['errorMessage'] = 'Some external error occurred during the data search. Please try again later.'
-                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                    return output_data, 500
-
-                response_data = response.json()
-
-                try:
-                    filename = format_string(response_data['meta']['title']) + '.' + response_data.get('url', list(dict()))[0].get('ext', 'mp4').lower()
-                    thumbnail_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['thumb']).query)['uri'][0], 'dl', '0'))
-                    media_url = safe_unquote_url(edit_url_param(parse_qs(urlparse(response_data['url'][0]['url']).query)['uri'][0], 'dl', '0'))
+                    instaloader = Instaloader()
+                    post_data = instagram_post.from_shortcode(instaloader.context, reel_id)
                 except Exception:
-                    output_data['api']['errorMessage'] = 'An error occurred while fetching Instagram reel data. Please try again later.'
+                    output_data['api']['errorMessage'] = 'Some error occurred while scraping the Instagram Reels URL. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 500
+
+                filename = format_string(post_data.owner_username + '_' + reel_id + '.mp4')
+                media_url = safe_unquote_url(post_data.video_url)
+                thumbnail_url = safe_unquote_url(post_data.url)
 
                 timer.stop()
 
-                output_data['response'] = {'filename': filename, 'thumbnailUrl': thumbnail_url, 'mediaUrl': media_url}
+                output_data['response'] = {'filename': filename, 'mediaUrl': media_url, 'thumbnailUrl': thumbnail_url}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
