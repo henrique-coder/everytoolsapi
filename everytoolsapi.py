@@ -1,9 +1,11 @@
 # Built-in modules
+from base64 import b64decode
 from http import HTTPStatus
 from os import getenv
 from pathlib import Path
 from platform import system as get_os_name
 from typing import Any, Dict, Tuple
+from zlib import decompress as zlib_decompress
 
 # Third-party modules
 from dotenv import load_dotenv
@@ -45,11 +47,11 @@ logger.info('Environment variables loaded successfully')
 
 # If the operating system is Windows, enable debugging mode, otherwise disable it
 if get_os_name() == 'Windows':
-    debugging_mode = True
     logger.info('Running on Windows, enabling debugging mode')
+    debugging_mode = True
 else:
-    debugging_mode = False
     logger.info('Running on a non-Windows operating system, disabling debugging mode')
+    debugging_mode = False
 
 # Load the environment variables based on the debugging mode
 if not debugging_mode:
@@ -117,6 +119,9 @@ db_client.connect(postgresql_db_name, postgresql_username, postgresql_password, 
 db_client.create_required_tables()
 logger.info('PostgreSQL database connection initialized successfully')
 
+# Setup and decompress the favicon base64 data
+compressed_favicon_base64_data = r'eNrtllt3qjwQhn+QF+DZXk4gnFQgCCreVbpFQUU8NC2//ptE7aZddn93e980a02SWXky7yQkrAAAAaBgawCi1UArRNdIsdJEBbJicB+/FwafCxUVuXvPpYPzyEAV/WOEAc0hWJfnKfrLpQrp4cUHW3cVDjB7ToDveY6CscLJy6GVg9qOFzg+Rt89KwNQ9+gDCTYYNYoLCJeZgj7nnBT8dQBg7wswX4fIL8oZBnVWYrynMnLhrymw8rV5jQ/w62zD/Lh8A3237mG8nY/zrWOA46IHL0kKueOav3kK6jxZ1vP5HR/nr8T81wnyC8k/2ZjfXgF7Np2gvxP5WdVt/Db/qofxNaj82/rosFqBRrfqAPdkewJnwhgnwXFOYXIkbRive3aqNdMNh6TbfQbzfT3nZHOYxXAsondwemMfSMkVFUYL5QykscV8vPW5gIOdd8Aql1NG1DelA0F/1EO9SwOgf0J9u7vcA5m+nziEBfqarc9g9NbwUo0n2glWiwsBa7qbcKKWY4bfcJ6CeQkKRpbbYwqzY6WAsSl/AYmzVgzRsH8BemmrQMzygnqHdgx6g+P365U9G7wyy0B/zgcM+O7CYNTVPSAbtwM/5af8lH9UzNE73Ywh/j9uNnzLO56etM0Nn/2Bq5z0hFzacaukjbZ3H1F6dLbCVHJo7RvbtjYd5xNHWKZVH5zUv7NouVFnszr3oX83vUZqda6uL42Pa6h9Y9ZRFN70m87ozgL/qr+O3CzvTjKh/3J0s4UzDR/pr4eC88KtLfWb0HKzuDWJTl/0neFccpINPP1lIjhpu/Wopm+b1Z1DizqdaTRofbBZnNAra+tZjZO2cGqcNP0NcyDRF27rzbZN/ytriGeB9omz4+2g5+VGElc1dlPIBAzeuXPLmX7qexXvedlhvNgld9Y3buvSdLGWdT7NDq5XnfpMP2g+tl5rWka6YOnHBlgtIyRGjrHUvqcGppdjK1mgUStP62eerimdqgZllA28rOj52UmyPmMBTb/ehXzoh+pQcMJYzhu+/gQae3SueZ9VhYzp5Y4p2kD95uLpZwjCJpExq1MD24bPHqJErqM6YdyDGYRnI6gG5HHU5LpmdSz2lMo+T765qlSwT0El1tXVcV/Jd5eaMN4Pwuv60QY6RPA9SxUm2YPmcWr8+beSbPGl5VItff8rfztfqZV0JSoiKrAURQ4LSLzoQL4L9ce+OEuWPFDyqFjXLy/qhqhWNR5fNzK0rogoingH+je/AyiNE1ZiSCT2Obv/AJm6TUk='
+favicon_base64_data = zlib_decompress(b64decode(compressed_favicon_base64_data)).decode('utf-8')
 
 # Setup error handlers
 def show_error_page(error_code: int, custom_error_name: str = None) -> Tuple[render_template, int]:
@@ -124,7 +129,7 @@ def show_error_page(error_code: int, custom_error_name: str = None) -> Tuple[ren
         error_name = HTTPStatus(error_code).phrase
         custom_error_name = error_name
 
-    return render_template('httpweberrors.html', error_code=error_code, error_name=custom_error_name), error_code
+    return render_template('httpweberrors.html', error_code=error_code, error_name=custom_error_name, favicon_base64_data=favicon_base64_data), error_code
 
 
 @app.errorhandler(404)
@@ -150,14 +155,14 @@ def service_unavailable(error: Exception) -> Tuple[render_template, int]: return
 # Setup main routes
 @app.route('/', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
-@cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
+@cache.cached(timeout=3600, make_cache_key=CacheTools.gen_cache_key)
 def initial_page() -> Tuple[render_template, int]:
-    return render_template('index.html'), 200
+    return render_template('index.html', favicon_base64_data=favicon_base64_data), 200
 
 
 @app.route('/docs', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
-@cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
+@cache.cached(timeout=3600, make_cache_key=CacheTools.gen_cache_key)
 def docs_page() -> redirect:
     return redirect('https://everytoolsapi.docs.apiary.io', code=302)
 
@@ -165,7 +170,7 @@ def docs_page() -> redirect:
 _api__status = APIEndpoints.v2.status
 @app.route('/api/status', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_sec=2, per_min=120))
-@cache.cached(timeout=10, make_cache_key=CacheTools.gen_cache_key)
+@cache.cached(timeout=1, make_cache_key=CacheTools.gen_cache_key)
 def status_page() -> Tuple[jsonify, int]:
     generated_data = _api__status(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]

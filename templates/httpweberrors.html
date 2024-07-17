@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Error {% if error_code %}{{ error_code }}{% endif %} - {{ error_name }}</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
+    <meta name="description" content="Welcome to the EveryTools API. Where you can find all the tools you need in one place.">
+    <link rel="icon" href="data:image/x-icon;base64,{{ favicon_base64_data }}">
     <style>
       body {
         font-family: Arial, sans-serif;
