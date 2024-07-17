@@ -2,6 +2,7 @@
 from http import HTTPStatus
 from os import getenv
 from pathlib import Path
+from platform import system as get_os_name
 from typing import Any, Dict, Tuple
 
 # Third-party modules
@@ -36,20 +37,27 @@ class Config:
 
 # Setup Flask application and debugging mode
 app = Flask(__name__)
-debugging_mode = False
 
 # Load the environment variables
 production_env_path = Path(Path(__file__).parent, '.env')
 development_env_path = Path(Path(__file__).parent, '.dev.env')
+logger.info('Environment variables loaded successfully')
 
+# If the operating system is Windows, enable debugging mode, otherwise disable it
+if get_os_name() == 'Windows':
+    debugging_mode = True
+    logger.info('Running on Windows, enabling debugging mode')
+else:
+    debugging_mode = False
+    logger.info('Running on a non-Windows operating system, disabling debugging mode')
+
+# Load the environment variables based on the debugging mode
 if not debugging_mode:
     if Path(production_env_path).exists(): load_dotenv(dotenv_path=production_env_path)
     else: load_dotenv()
 else:
     if Path(development_env_path).exists(): load_dotenv(dotenv_path=development_env_path)
     else: logger.error(f'No environment file found at "{development_env_path}"')
-
-logger.info('Environment variables loaded successfully')
 
 # Setup Redis configuration
 redis_username = getenv('REDIS_USERNAME')
