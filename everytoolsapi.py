@@ -298,14 +298,14 @@ def __scrap_google_search_results(query_version: str) -> Tuple[jsonify, int]:
     return jsonify(generated_data[0]), generated_data[1]
 
 
-_scrap_instagram_reels_url = APIEndpoints.v2.scrap_instagram_reels_url
-@app.route(f'/api/<query_version>/{_scrap_instagram_reels_url.endpoint_url}', methods=_scrap_instagram_reels_url.allowed_methods)
-@limiter.limit(_scrap_instagram_reels_url.ratelimit)
-@cache.cached(timeout=_scrap_instagram_reels_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+_scrap_instagram_reel_url = APIEndpoints.v2.scrap_instagram_reel_url
+@app.route(f'/api/<query_version>/{_scrap_instagram_reel_url.endpoint_url}', methods=_scrap_instagram_reel_url.allowed_methods)
+@limiter.limit(_scrap_instagram_reel_url.ratelimit)
+@cache.cached(timeout=_scrap_instagram_reel_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
 def __scrap_instagram_reels_url(query_version: str) -> Tuple[jsonify, int]:
     if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
-    if not _scrap_instagram_reels_url.ready_to_production: return show_error_page(error_code=503)
-    generated_data = _scrap_instagram_reels_url.run(db_client, APITools.extract_request_data(request))
+    if not _scrap_instagram_reel_url.ready_to_production: return show_error_page(error_code=503)
+    generated_data = _scrap_instagram_reel_url.run(db_client, APITools.extract_request_data(request))
     return jsonify(generated_data[0]), generated_data[1]
 
 

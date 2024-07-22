@@ -832,16 +832,16 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class scrap_instagram_reels_url:
-            ready_to_production = True
+        class scrap_instagram_reel_url:
+            ready_to_production = False
 
-            endpoint_url = 'scrap-instagram-reels-url'
+            endpoint_url = 'scrap-instagram-reel-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
             cache_timeout = 3600
 
-            title = 'Instagram Reels URL Scraper'
-            description = 'Scrapes Instagram Reels URL to get the media URL and thumbnail URL.'
+            title = 'Instagram Reel URL Scraper'
+            description = 'Scrapes Instagram Reel URL to get the media and thumbnail URLs.'
             parameters = {
                 'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
             }
@@ -944,7 +944,7 @@ class APIEndpoints:
             cache_timeout = 3600
 
             title = 'TikTok Video URL Scraper'
-            description = 'Scrapes TikTok video URL to get the media URL and thumbnail URL.'
+            description = 'Scrapes TikTok video URL to get the media and thumbnail URLs.'
             parameters = {
                 'query': {'description': 'TikTok video URL.', 'required': True, 'type': 'string'}
             }
