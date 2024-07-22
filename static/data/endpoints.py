@@ -16,6 +16,7 @@ from instaloader import Instaloader, Post as instagram_post
 from langdetect import detect as lang_detect, DetectorFactory, LangDetectException
 from orjson import loads as orjson_loads
 from psycopg2 import connect as psycopg2_connect
+from sclib import SoundcloudAPI, Track as SoundcloudTrack
 from unicodedata import normalize
 from user_agents import parse as UserAgentParser
 from youtubesearchpython import SearchVideos as SearchYouTubeVideos
@@ -832,16 +833,16 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class scrap_instagram_reels_url:
-            ready_to_production = True
+        class scrap_instagram_reel_url:
+            ready_to_production = False
 
-            endpoint_url = 'scrap-instagram-reels-url'
+            endpoint_url = 'scrap-instagram-reel-url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
             cache_timeout = 3600
 
-            title = 'Instagram Reels URL Scraper'
-            description = 'Scrapes Instagram Reels URL to get the media URL and thumbnail URL.'
+            title = 'Instagram Reel URL Scraper'
+            description = 'Scrapes Instagram Reel URL to get the media and thumbnail URLs.'
             parameters = {
                 'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
             }
@@ -944,7 +945,7 @@ class APIEndpoints:
             cache_timeout = 3600
 
             title = 'TikTok Video URL Scraper'
-            description = 'Scrapes TikTok video URL to get the media URL and thumbnail URL.'
+            description = 'Scrapes TikTok video URL to get the media and thumbnail URLs.'
             parameters = {
                 'query': {'description': 'TikTok video URL.', 'required': True, 'type': 'string'}
             }
@@ -1361,6 +1362,73 @@ class APIEndpoints:
                 timer.stop()
 
                 output_data['response'] = {'foundUrlData': adjusted_yt_data}
+                output_data['api']['status'] = True
+                output_data['api']['elapsedTime'] = timer.elapsed_time()
+
+                db_client.update_request_status('success', api_request_id, timer.end_time)
+
+                return output_data, 200
+
+        class scrap_soundcloud_track_url:
+            ready_to_production = True
+
+            endpoint_url = 'scrap-soundcloud-track-url'
+            allowed_methods = ['GET']
+            ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
+            cache_timeout = 3600
+
+            title = 'SoundCloud Track URL Scraper'
+            description = 'Scrapes SoundCloud track URL to get the media and thumbnail URLs.'
+            parameters = {
+                'query': {'description': 'SoundCloud track URL.', 'required': True, 'type': 'string'}
+            }
+            expected_output = {
+                'filename': 'string',
+                'mediaUrl': 'string',
+                'thumbnailUrl': 'string'
+            }
+
+            @staticmethod
+            def run(db_client: psycopg2_connect, request_data: Dict[str, Dict[Any, Any]]) -> Tuple[dict, int]:
+                timer = APITools.Timer()
+                output_data = APITools.get_default_api_output_dict()
+
+                api_request_id = db_client.start_request(request_data, timer.start_time)
+
+                # Request data validation
+                if request_data['args'].get('query'):
+                    query = request_data['args']['query']
+                else:
+                    output_data['api']['errorMessage'] = 'No "query" parameter found in the request.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 400
+
+                def is_valid_soundcloud_url(query: str) -> bool:
+                    pattern = re_compile(r'^https?://soundcloud\.com/[\w-]+/[\w-]+$')
+                    return bool(pattern.match(query))
+
+                if not is_valid_soundcloud_url(query):
+                    output_data['api']['errorMessage'] = 'The URL provided is not a valid SoundCloud music URL.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 400
+
+                # Main process
+                try:
+                    soundcloud_api = SoundcloudAPI()
+                    track_data = soundcloud_api.resolve(query)
+                    if not isinstance(track_data, SoundcloudTrack): raise Exception
+                except Exception:
+                    output_data['api']['errorMessage'] = 'Some error occurred while scraping the SoundCloud track URL. Please try again later.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 500
+
+                filename = format_string(f'{track_data.title} - {track_data.artist}') + '.mp3'
+                media_url = unquote(track_data.get_stream_url())
+                thumbnail_url = unquote(track_data.artwork_url.replace('-large', '-original'))
+
+                timer.stop()
+
+                output_data['response'] = {'filename': filename, 'mediaUrl': media_url, 'thumbnailUrl': thumbnail_url}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
