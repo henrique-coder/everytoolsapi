@@ -342,6 +342,17 @@ def __get_youtube_video_url_from_search(query_version: str) -> Tuple[jsonify, in
     return jsonify(generated_data[0]), generated_data[1]
 
 
+_scrap_soundcloud_track_url = APIEndpoints.v2.scrap_soundcloud_track_url
+@app.route(f'/api/<query_version>/{_scrap_soundcloud_track_url.endpoint_url}', methods=_scrap_soundcloud_track_url.allowed_methods)
+@limiter.limit(_scrap_soundcloud_track_url.ratelimit)
+@cache.cached(timeout=_scrap_soundcloud_track_url.cache_timeout, make_cache_key=CacheTools.gen_cache_key)
+def __scrap_soundcloud_track_url(query_version: str) -> Tuple[jsonify, int]:
+    if not APIVersion.is_latest_api_version(query_version): return APIVersion.send_invalid_api_version_response(query_version)
+    if not _scrap_soundcloud_track_url.ready_to_production: return show_error_page(error_code=503)
+    generated_data = _scrap_soundcloud_track_url.run(db_client, APITools.extract_request_data(request))
+    return jsonify(generated_data[0]), generated_data[1]
+
+
 if __name__ == '__main__':
     # Load the configuration file
     current_path = Path(__file__).parent

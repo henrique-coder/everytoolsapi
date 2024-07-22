@@ -486,6 +486,56 @@ Convert seconds to HH:MM:SS format.
           "response": {}
         }
 
+## ・ SoundCloud Track URL Scraper [/scrap-soundcloud-track-url?query={query}]
+Scrapes SoundCloud track URL to get the media and thumbnail URLs.
+- Rate limiting: 2/second; 60/minute; 500000/day
+- Cache duration: 1 second(s)
+
++ Parameters
+  + query (string) - SoundCloud track URL.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "float",
+            "errorMessage": "None",
+            "status": "True",
+            "version": "str"
+          },
+          "response": {
+            "filename": "string",
+            "mediaUrl": "string",
+            "thumbnailUrl": "string"
+          }
+        }
+
++ Response 400 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
 ## ・ Text Language Detector [/text-language-detector?query={query}]
 Detects the predominant language in a text.
 - Rate limiting: 4/second; 120/minute; 500000/day
