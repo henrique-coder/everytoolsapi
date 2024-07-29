@@ -1,5 +1,5 @@
 beautifulsoup4
-fake-useragent
+faker
 flask
 flask-caching
 flask-compress
@@ -13,6 +13,7 @@ gunicorn
 httpx
 instaloader
 langdetect
+lxml
 orjson
 psycopg2-binary
 python-dotenv
@@ -21,5 +22,4 @@ redis
 soundcloud-lib
 user-agents
 werkzeug
-youtube-search-python
 yt-dlp
