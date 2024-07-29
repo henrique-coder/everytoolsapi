@@ -397,20 +397,19 @@ Get the YouTube video URL from a search query.
             "version": "str"
           },
           "response": {
-            "foundUrlData": {
-              "channelId": "string",
-              "channelName": "string",
-              "channelUrl": "string",
-              "formattedChannelName": "string",
-              "formattedMediaTitle": "string",
-              "mediaEmbedUrl": "string",
-              "mediaId": "string",
-              "mediaShortUrl": "string",
-              "mediaTitle": "string",
-              "mediaUrl": "string",
-              "thumbnailUrls": "list",
-              "viewCount": "integer"
-            }
+            "extractedUrlsData": [
+              {
+                "channelId": "string",
+                "channelName": "string",
+                "channelUrl": "string",
+                "duration": "integer",
+                "thumbnailUrls": "list",
+                "videoId": "string",
+                "videoTitle": "string",
+                "videoUrl": "string",
+                "viewCount": "integer"
+              }
+            ]
           }
         }
 
@@ -489,7 +488,7 @@ Convert seconds to HH:MM:SS format.
 ## ・ SoundCloud Track URL Scraper [/scrap-soundcloud-track-url?query={query}]
 Scrapes SoundCloud track URL to get the media and thumbnail URLs.
 - Rate limiting: 2/second; 60/minute; 500000/day
-- Cache duration: 1 second(s)
+- Cache duration: 3600 second(s)
 
 + Parameters
   + query (string) - SoundCloud track URL.
