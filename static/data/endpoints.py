@@ -1355,12 +1355,12 @@ class APIEndpoints:
                 for data in json_data:
                     video_id = str(data['videoId'])
                     title = str(data['title']['runs'][0]['text'])
-                    duration = data.get('lengthText', {}).get('simpleText', None)
-                    if duration: duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration.split(':')))))
                     channel_id = data['ownerText']['runs'][0]['navigationEndpoint']['browseEndpoint']['browseId']
                     channel_url = f'https://www.youtube.com/channel/{channel_id}'
                     channel_name = str(data['ownerText']['runs'][0]['text'])
-                    view_count = int(data['viewCountText']['simpleText'].split()[0].replace('.', ''))
+                    duration = data.get('lengthText', {}).get('simpleText', None)
+                    if duration: duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration.split(':')))))
+                    view_count = int(data['viewCountText']['simpleText'].replace('.', '').replace(',', '').split()[0])
                     thumbnails_urls = [f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg', f'https://img.youtube.com/vi/{video_id}/sddefault.jpg', f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/mqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/default.jpg']
 
                     scraped_data.append({
