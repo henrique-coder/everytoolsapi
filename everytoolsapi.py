@@ -155,14 +155,14 @@ def service_unavailable(error: Exception) -> Tuple[render_template, int]: return
 # Setup main routes
 @app.route('/', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
-@cache.cached(timeout=3600, make_cache_key=CacheTools.gen_cache_key)
+@cache.cached(timeout=86400, make_cache_key=CacheTools.gen_cache_key)
 def initial_page() -> Tuple[render_template, int]:
     return render_template('index.html', favicon_base64_data=favicon_base64_data), 200
 
 
 @app.route('/docs', methods=['GET'])
 @limiter.limit(LimiterTools.gen_ratelimit_message(per_min=120))
-@cache.cached(timeout=3600, make_cache_key=CacheTools.gen_cache_key)
+@cache.cached(timeout=86400, make_cache_key=CacheTools.gen_cache_key)
 def docs_page() -> redirect:
     return redirect('https://everytoolsapi.docs.apiary.io', code=302)
 
