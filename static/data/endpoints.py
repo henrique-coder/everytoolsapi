@@ -8,18 +8,18 @@ from urllib.parse import urlparse, parse_qs, unquote, urlencode, unquote_plus
 
 # Third-party modules
 from bs4 import BeautifulSoup
-from fake_useragent import FakeUserAgent
+from faker import Faker
 from googlesearch import search as google_search
 from googletrans import Translator
 from httpx import get, post, HTTPError
 from instaloader import Instaloader, Post as instagram_post
 from langdetect import detect as lang_detect, DetectorFactory, LangDetectException
+from lxml import html
 from orjson import loads as orjson_loads
 from psycopg2 import connect as psycopg2_connect
 from sclib import SoundcloudAPI, Track as SoundcloudTrack
 from unicodedata import normalize
 from user_agents import parse as UserAgentParser
-from youtubesearchpython import SearchVideos as SearchYouTubeVideos
 from yt_dlp import YoutubeDL
 
 # Local modules
@@ -27,7 +27,7 @@ from static.data.functions import APITools, LimiterTools
 
 
 # Global variables
-fake_useragent = FakeUserAgent()
+fake = Faker()
 
 # Helper functions
 def format_string(query: AnyStr, max_length: int = 128) -> str:
@@ -980,7 +980,7 @@ class APIEndpoints:
                     return output_data, 400
 
                 try:
-                    temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake_useragent.random}, timeout=10)
+                    temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake.user_agent()}, timeout=10)
                 except HTTPError:
                     output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -1003,7 +1003,7 @@ class APIEndpoints:
                 thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
 
                 try:
-                    response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake_useragent.random, 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
+                    response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake.user_agent(), 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
                 except HTTPError:
                     output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -1281,20 +1281,19 @@ class APIEndpoints:
                 'query': {'description': 'Search query.', 'required': True, 'type': 'string'}
             }
             expected_output = {
-                'foundUrlData': {
-                    'channelId': 'string',
-                    'channelName': 'string',
-                    'channelUrl': 'string',
-                    'formattedChannelName': 'string',
-                    'formattedMediaTitle': 'string',
-                    'mediaEmbedUrl': 'string',
-                    'mediaId': 'string',
-                    'mediaShortUrl': 'string',
-                    'mediaTitle': 'string',
-                    'mediaUrl': 'string',
-                    'thumbnailUrls': 'list',
-                    'viewCount': 'integer',
-                }
+                'extractedUrlsData': [
+                    {
+                        'videoId': 'string',
+                        'videoTitle': 'string',
+                        'videoUrl': 'string',
+                        'channelId': 'string',
+                        'channelName': 'string',
+                        'channelUrl': 'string',
+                        'duration': 'integer',
+                        'viewCount': 'integer',
+                        'thumbnailUrls': 'list'
+                    }
+                ]
             }
 
             @staticmethod
@@ -1318,50 +1317,67 @@ class APIEndpoints:
                     return output_data, 400
 
                 # Main process
+                params = {'search_query': query}
+                headers = {'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public(), 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'}
+
                 try:
-                    scraped_data = SearchYouTubeVideos(query, offset=1, mode='dict', max_results=1).result()['search_result'][0]
-                except BaseException:
-                    output_data['api']['errorMessage'] = 'Some error occurred while searching for the video. Please try again later.'
+                    response = get('https://www.youtube.com/results', params=params, headers=headers, timeout=10)
+                    response.raise_for_status()
+                except HTTPError:
+                    output_data['api']['errorMessage'] = 'Some error occurred while fetching the search results. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 500
 
-                channel_id = str(scraped_data.get('channeId'))
-                channel_url = f'https://www.youtube.com/channel/{channel_id}'
-                channel_name = str(scraped_data.get('channel'))
-                formated_channel_name = format_string(channel_name)
-                media_title = str(scraped_data.get('title'))
-                formatted_media_title = format_string(media_title)
-                media_id = str(scraped_data.get('id'))
-                view_count = int(scraped_data.get('views'))
-                media_url = f'https://www.youtube.com/watch?v={media_id}'
-                media_short_url = f'https://youtu.be/{media_id}'
-                media_embed_url = f'https://www.youtube.com/embed/{media_id}'
-                thumbnail_urls = [
-                    f'https://img.youtube.com/vi/{media_id}/maxresdefault.jpg',
-                    f'https://img.youtube.com/vi/{media_id}/sddefault.jpg',
-                    f'https://img.youtube.com/vi/{media_id}/hqdefault.jpg',
-                    f'https://img.youtube.com/vi/{media_id}/mqdefault.jpg',
-                    f'https://img.youtube.com/vi/{media_id}/default.jpg'
-                ]
+                if response.status_code != 200:
+                    output_data['api']['errorMessage'] = 'Some error occurred while fetching the search results. Please try again later.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 500
 
-                adjusted_yt_data = {
-                    'mediaId': media_id,
-                    'mediaTitle': media_title,
-                    'formattedMediaTitle': formatted_media_title,
-                    'viewCount': view_count,
-                    'mediaUrl': media_url,
-                    'mediaShortUrl': media_short_url,
-                    'mediaEmbedUrl': media_embed_url,
-                    'channelId': channel_id,
-                    'channelUrl': channel_url,
-                    'channelName': channel_name,
-                    'formattedChannelName': formated_channel_name,
-                    'thumbnailUrls': thumbnail_urls
-                }
+                try:
+                    tree = html.fromstring(response.text)
+                    script = tree.xpath('//script[contains(text(), "ytInitialData")]/text()')
+                    script_content = re_search(r'var ytInitialData = ({.*?});', script[0])
+                except (IndexError, AttributeError):
+                    output_data['api']['errorMessage'] = 'Some error occurred while parsing the search results. Please try again later.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 500
+
+                try:
+                    json_data = orjson_loads(script_content.group(1))['contents']['twoColumnSearchResultsRenderer']['primaryContents']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents']
+                    json_data = [i['videoRenderer'] for i in json_data if 'videoRenderer' in i]
+                except (IndexError, KeyError):
+                    output_data['api']['errorMessage'] = 'No video data found in the search results.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 404
+
+                scraped_data = list()
+
+                for data in json_data:
+                    video_id = str(data['videoId'])
+                    title = str(data['title']['runs'][0]['text'])
+                    duration = data.get('lengthText', {}).get('simpleText', None)
+                    if duration: duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration.split(':')))))
+                    channel_id = data['ownerText']['runs'][0]['navigationEndpoint']['browseEndpoint']['browseId']
+                    channel_url = f'https://www.youtube.com/channel/{channel_id}'
+                    channel_name = str(data['ownerText']['runs'][0]['text'])
+                    view_count = int(data['viewCountText']['simpleText'].split()[0].replace('.', ''))
+                    thumbnails_urls = [f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg', f'https://img.youtube.com/vi/{video_id}/sddefault.jpg', f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/mqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/default.jpg']
+
+                    scraped_data.append({
+                        'videoTitle': title,
+                        'videoId': video_id,
+                        'videoUrl': f'https://www.youtube.com/watch?v={video_id}',
+                        'channelName': channel_name,
+                        'channelId': channel_id,
+                        'channelUrl': channel_url,
+                        'duration': duration,
+                        'viewCount': view_count,
+                        'thumbnailUrls': thumbnails_urls
+                    })
 
                 timer.stop()
 
-                output_data['response'] = {'foundUrlData': adjusted_yt_data}
+                output_data['response'] = {'extractedUrlsData': scraped_data}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
