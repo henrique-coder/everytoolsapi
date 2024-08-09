@@ -16,8 +16,8 @@ from flask_cors import CORS
 from flask_limiter import util as flask_limiter_utils, Limiter
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
+from orjson import loads as orjson_loads
 from werkzeug.middleware.proxy_fix import ProxyFix
-from yaml import safe_load as yaml_safe_load
 
 # Local modules
 from static.data.databases import APIRequestLogs
@@ -29,7 +29,7 @@ from static.data.version import APIVersion
 
 # Configuration class
 class Config:
-    def __init__(self, **entries: Dict[str, Any]) -> None:
+    def __init__(self, **entries: Dict[Any, Any]) -> None:
         for key, value in entries.items():
             if isinstance(value, dict):
                 value = Config(**value)
@@ -356,8 +356,8 @@ def __scrap_soundcloud_track_url(query_version: str) -> Tuple[jsonify, int]:
 if __name__ == '__main__':
     # Load the configuration file
     current_path = Path(__file__).parent
-    config_path = Path(current_path, 'config.yaml')
-    config = Config(**yaml_safe_load(config_path.open('r')))
+    config_path = Path(current_path, 'config.json')
+    config = Config(**orjson_loads(config_path.read_text()))
 
     # Setting up Flask default configuration
     app.static_folder = Path(current_path, config.flask.staticFolder)
