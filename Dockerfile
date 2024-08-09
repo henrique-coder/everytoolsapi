@@ -41,7 +41,7 @@ COPY static/ static/
 COPY templates/ templates/
 COPY requirements.txt requirements.txt
 COPY everytoolsapi.py everytoolsapi.py
-COPY config.yaml config.yaml
+COPY config.json config.json
 COPY favicon.ico favicon.ico
 
 # Development only
