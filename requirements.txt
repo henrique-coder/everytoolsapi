@@ -17,7 +17,6 @@ lxml
 orjson
 psycopg2-binary
 python-dotenv
-pyyaml
 redis
 soundcloud-lib
 user-agents

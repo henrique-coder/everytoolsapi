@@ -26,7 +26,7 @@ from yt_dlp import YoutubeDL
 from static.data.functions import APITools, LimiterTools
 
 
-# Global variables
+# Constants
 fake = Faker()
 
 # Helper functions
@@ -1173,7 +1173,8 @@ class APIEndpoints:
                     formatted_channel_name = format_string(channel_name)
 
                     return {
-                        'mediaId': media_id, 'mediaTitle': media_title,
+                        'mediaId': media_id,
+                        'mediaTitle': media_title,
                         'formattedMediaTitle': media_formatted_title,
                         'mediaDescription': media_description,
                         'mediaUploadedAt': media_uploaded_at,
