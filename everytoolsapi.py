@@ -100,7 +100,7 @@ cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 logger.info('CORS successfully initialized')
 
 # Setup proxy fix for the Flask application
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+# app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Setup PostgreSQL configuration
 postgresql_username = getenv('POSTGRESQL_USERNAME')

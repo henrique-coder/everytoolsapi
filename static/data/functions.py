@@ -28,6 +28,9 @@ class APITools:
         :return: The request arguments, headers, body, and authentication.
         """
 
+        print(f'request_object.remote_addr: {request_object.remote_addr}')
+        print(f'request_object.environ.get("HTTP_X_FORWARDED_FOR"): {request_object.environ.get('HTTP_X_FORWARDED_FOR')}')
+
         remote_addr = request_object.remote_addr if request_object.remote_addr else request_object.environ.get('HTTP_X_FORWARDED_FOR', '0.0.0.0')
         if ',' in remote_addr: remote_addr = remote_addr.split(',')[0].strip()
         route = str(request_object.path)
