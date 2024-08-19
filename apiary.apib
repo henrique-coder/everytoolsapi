@@ -1,82 +1,10 @@
 FORMAT: 1A
-HOST: https://everytoolsapi-henrique-coder.koyeb.app/api/v2/
+HOST: https://everytoolsapi-api.onrender.com/api/v2/
 
 # EveryTools API
 Welcome to the EveryTools API. Where you can find all the tools you need in one place.
 
-## ・ Advanced Text Counter [/advanced-text-counter?query={query}]
-Count the number of characters, words, and many other elements in a text.
-- Rate limiting: 5/second; 300/minute; 1000000/day
-- Cache duration: 1 second(s)
-
-+ Parameters
-  + query (string) - Text to be analyzed.
-
-## Responses (GET) [GET]
-
-+ Response 200 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "float",
-            "errorMessage": "None",
-            "status": "True",
-            "version": "str"
-          },
-          "response": {
-            "letters": {
-              "characters": "dict",
-              "total": "integer"
-            },
-            "lowercase": {
-              "characters": "dict",
-              "total": "integer"
-            },
-            "numbers": {
-              "characters": "dict",
-              "total": "integer"
-            },
-            "otherSymbols": {
-              "characters": "dict",
-              "total": "integer"
-            },
-            "spaces": "integer",
-            "uppercase": {
-              "characters": "dict",
-              "total": "integer"
-            },
-            "words": {
-              "characters": "dict",
-              "total": "integer"
-            }
-          }
-        }
-
-+ Response 400 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "None",
-            "errorMessage": "str",
-            "status": "False",
-            "version": "str"
-          },
-          "response": {}
-        }
-
-+ Response 500 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "None",
-            "errorMessage": "str",
-            "status": "False",
-            "version": "str"
-          },
-          "response": {}
-        }
-
-## ・ E-Mail Address Parser [/email-parser?query={query}]
+## ・ E-Mail Address Parser [/email?query={query}]
 Parse e-mail address to get user and domain information.
 - Rate limiting: 10/second; 300/minute; 1000000/day
 - Cache duration: 1 second(s)
@@ -97,6 +25,7 @@ Parse e-mail address to get user and domain information.
           },
           "response": {
             "domain": "string",
+            "separator": "string",
             "user": "string"
           }
         }
@@ -125,7 +54,7 @@ Parse e-mail address to get user and domain information.
           "response": {}
         }
 
-## ・ FFprobe a Video URL [/ffprobe-a-video-url?query={query}]
+## ・ FFprobe a Video URL [/ffprobe-a-video?query={query}]
 Analyze a video URL using FFprobe to get its metadata.
 - Rate limiting: 2/second; 120/minute; 500000/day
 - Cache duration: 3600 second(s)
@@ -174,16 +103,19 @@ Analyze a video URL using FFprobe to get its metadata.
           "response": {}
         }
 
-## ・ Google Search Results Scraper [/scrap-google-search-results?query={query}&max_results={max_results}]
+## ・ Google Search Results Scraper [/scrap-google-search-results?query={query}&results={results}&language={language}]
 Scrapes Google search results for a given query.
 - Rate limiting: 1/second; 30/minute; 500000/day
-- Cache duration: 300 second(s)
+- Cache duration: 3600 second(s)
 
 + Parameters
   + query (string) - Search query.
 
 
-  + max_results (integer, optional) - Maximum number of results to be returned (default: 10, min: 1, max: 50).
+  + results (integer, optional) - Number of search results to be returned (max: 50). Default: 20.
+
+
+  + language (string, optional) - Language code for the search results. Default: "en-US".
 
 ## Responses (GET) [GET]
 
@@ -225,10 +157,10 @@ Scrapes Google search results for a given query.
           "response": {}
         }
 
-## ⚠️ ➝ MAINTENANCE ・ Instagram Reel URL Scraper [/scrap-instagram-reel-url?query={query}]
+## ・ Instagram Reels URL Scraper [/scrap-instagram-reels?query={query}]
 Scrapes Instagram Reel URL to get the media and thumbnail URLs.
 - Rate limiting: 2/second; 60/minute; 500000/day
-- Cache duration: 3600 second(s)
+- Cache duration: 43200 second(s)
 
 + Parameters
   + query (string) - Instagram Reels URL.
@@ -275,8 +207,56 @@ Scrapes Instagram Reel URL to get the media and thumbnail URLs.
           "response": {}
         }
 
-## ・ My IP Address [/my-ip]
-Get your IP address.
+## ・ Language Detector [/language-detector?query={query}]
+Detects the predominant language in a text.
+- Rate limiting: 4/second; 120/minute; 500000/day
+- Cache duration: 600 second(s)
+
++ Parameters
+  + query (string) - Text to be analyzed.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "float",
+            "errorMessage": "None",
+            "status": "True",
+            "version": "str"
+          },
+          "response": {
+            "detectedLanguageCode": "string"
+          }
+        }
+
++ Response 400 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
+## ・ My IP Address [/ip]
+Get the IP address of the client making the request.
 - Rate limiting: 4/second; 120/minute; 500000/day
 - Cache duration: 1 second(s)
 
@@ -320,10 +300,10 @@ Get your IP address.
           "response": {}
         }
 
-## ・ Retrieve Latest FFmpeg Download URL [/get-latest-ffmpeg-download-url?os={os}&arch={arch}&license={license}&shared={shared}]
-Get the download url of the latest FFmpeg build according to your specifications.
+## ・ Retrieve Latest FFmpeg Build URL [/latest-ffmpeg-build?os={os}&arch={arch}&license={license}&shared={shared}]
+Retrieve the latest FFmpeg build URL from the official repository based on the specified parameters.
 - Rate limiting: 2/second; 60/minute; 500000/day
-- Cache duration: 3600 second(s)
+- Cache duration: 43200 second(s)
 
 + Parameters
   + os (string, optional) - Operating system (options: "windows", "linux").
@@ -350,66 +330,6 @@ Get the download url of the latest FFmpeg build according to your specifications
           },
           "response": {
             "matchedBuildUrls": "list"
-          }
-        }
-
-+ Response 400 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "None",
-            "errorMessage": "str",
-            "status": "False",
-            "version": "str"
-          },
-          "response": {}
-        }
-
-+ Response 500 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "None",
-            "errorMessage": "str",
-            "status": "False",
-            "version": "str"
-          },
-          "response": {}
-        }
-
-## ・ Retrieve YouTube Video URL from Search [/get-youtube-video-url-from-search?query={query}]
-Get the YouTube video URL from a search query.
-- Rate limiting: 4/second; 120/minute; 500000/day
-- Cache duration: 300 second(s)
-
-+ Parameters
-  + query (string) - Search query.
-
-## Responses (GET) [GET]
-
-+ Response 200 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "float",
-            "errorMessage": "None",
-            "status": "True",
-            "version": "str"
-          },
-          "response": {
-            "extractedUrlsData": [
-              {
-                "channelId": "string",
-                "channelName": "string",
-                "channelUrl": "string",
-                "duration": "integer",
-                "thumbnailUrls": "list",
-                "videoId": "string",
-                "videoTitle": "string",
-                "videoUrl": "string",
-                "viewCount": "integer"
-              }
-            ]
           }
         }
 
@@ -485,7 +405,7 @@ Convert seconds to HH:MM:SS format.
           "response": {}
         }
 
-## ・ SoundCloud Track URL Scraper [/scrap-soundcloud-track-url?query={query}]
+## ・ SoundCloud Track URL Scraper [/scrap-soundcloud-track?query={query}]
 Scrapes SoundCloud track URL to get the media and thumbnail URLs.
 - Rate limiting: 2/second; 60/minute; 500000/day
 - Cache duration: 3600 second(s)
@@ -535,10 +455,10 @@ Scrapes SoundCloud track URL to get the media and thumbnail URLs.
           "response": {}
         }
 
-## ・ Text Language Detector [/text-language-detector?query={query}]
-Detects the predominant language in a text.
-- Rate limiting: 4/second; 120/minute; 500000/day
-- Cache duration: 300 second(s)
+## ・ String Counter [/string-counter?query={query}]
+Count the number of characters, words, and many other elements in a text.
+- Rate limiting: 5/second; 300/minute; 1000000/day
+- Cache duration: 1 second(s)
 
 + Parameters
   + query (string) - Text to be analyzed.
@@ -555,7 +475,31 @@ Detects the predominant language in a text.
             "version": "str"
           },
           "response": {
-            "detectedLanguageCode": "string"
+            "letters": {
+              "characters": "dict",
+              "total": "integer"
+            },
+            "lowercase": {
+              "characters": "dict",
+              "total": "integer"
+            },
+            "numbers": {
+              "characters": "dict",
+              "total": "integer"
+            },
+            "otherSymbols": {
+              "characters": "dict",
+              "total": "integer"
+            },
+            "spaces": "integer",
+            "uppercase": {
+              "characters": "dict",
+              "total": "integer"
+            },
+            "words": {
+              "characters": "dict",
+              "total": "integer"
+            }
           }
         }
 
@@ -583,64 +527,10 @@ Detects the predominant language in a text.
           "response": {}
         }
 
-## ・ Text Translator [/text-translator?query={query}&src_lang={src_lang}&dest_lang={dest_lang}]
-Translate text from one language to another.
-- Rate limiting: 2/second; 120/minute; 500000/day
-- Cache duration: 300 second(s)
-
-+ Parameters
-  + query (string) - Text to be translated.
-
-
-  + src_lang (string, optional) - Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.
-
-
-  + dest_lang (string) - Destination language code (e.g., "en" for English).
-
-## Responses (GET) [GET]
-
-+ Response 200 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "float",
-            "errorMessage": "None",
-            "status": "True",
-            "version": "str"
-          },
-          "response": {
-            "translatedText": "string"
-          }
-        }
-
-+ Response 400 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "None",
-            "errorMessage": "str",
-            "status": "False",
-            "version": "str"
-          },
-          "response": {}
-        }
-
-+ Response 500 (application/json)
-
-        {
-          "api": {
-            "elapsedTime": "None",
-            "errorMessage": "str",
-            "status": "False",
-            "version": "str"
-          },
-          "response": {}
-        }
-
-## ・ TikTok Video URL Scraper [/scrap-tiktok-video-url?query={query}]
+## ・ TikTok Video URL Scraper [/scrap-tiktok-video?query={query}]
 Scrapes TikTok video URL to get the media and thumbnail URLs.
 - Rate limiting: 2/second; 60/minute; 500000/day
-- Cache duration: 3600 second(s)
+- Cache duration: 43200 second(s)
 
 + Parameters
   + query (string) - TikTok video URL.
@@ -687,7 +577,61 @@ Scrapes TikTok video URL to get the media and thumbnail URLs.
           "response": {}
         }
 
-## ・ URL Parser [/url-parser?query={query}]
+## ・ Translator [/translator?query={query}&source={source}&destination={destination}]
+Translate any text from one language to another.
+- Rate limiting: 2/second; 120/minute; 500000/day
+- Cache duration: 1 second(s)
+
++ Parameters
+  + query (string) - Text to be translated.
+
+
+  + source (string, optional) - Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.
+
+
+  + destination (string) - Destination language code (e.g., "en" for English).
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "float",
+            "errorMessage": "None",
+            "status": "True",
+            "version": "str"
+          },
+          "response": {
+            "translatedText": "string"
+          }
+        }
+
++ Response 400 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
+## ・ URL Parser [/url?query={query}]
 Parse URL to get protocol, hostname, path, parameters, and fragment information.
 - Rate limiting: 10/second; 300/minute; 1000000/day
 - Cache duration: 1 second(s)
@@ -739,7 +683,7 @@ Parse URL to get protocol, hostname, path, parameters, and fragment information.
           "response": {}
         }
 
-## ・ User-Agent Parser [/useragent-parser?query={query}]
+## ・ User-Agent Parser [/useragent?query={query}]
 Parse User-Agent string to get OS, browser, and device information. If no "query" parameter is provided, the User-Agent header will be used.
 - Rate limiting: 10/second; 300/minute; 1000000/day
 - Cache duration: 1 second(s)
@@ -769,6 +713,12 @@ Parse User-Agent string to get OS, browser, and device information. If no "query
               "family": "string",
               "model": "string"
             },
+            "isBot": "boolean",
+            "isComputer": "boolean",
+            "isEmailClient": "boolean",
+            "isMobile": "boolean",
+            "isTablet": "boolean",
+            "isTouchCapable": "boolean",
             "os": {
               "family": "string",
               "version": "string",
@@ -802,7 +752,67 @@ Parse User-Agent string to get OS, browser, and device information. If no "query
           "response": {}
         }
 
-## ・ YouTube Video URL Scraper [/scrap-youtube-video-url?query={query}]
+## ・ YouTube Search Results Scraper [/scrap-youtube-search-results?query={query}]
+Scrapes YouTube search results and returns a list of extracted videos.
+- Rate limiting: 4/second; 120/minute; 500000/day
+- Cache duration: 3600 second(s)
+
++ Parameters
+  + query (string) - Search query.
+
+## Responses (GET) [GET]
+
++ Response 200 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "float",
+            "errorMessage": "None",
+            "status": "True",
+            "version": "str"
+          },
+          "response": {
+            "extractedUrlsData": [
+              {
+                "channelId": "string",
+                "channelName": "string",
+                "channelUrl": "string",
+                "duration": "integer",
+                "thumbnailUrls": "list",
+                "videoId": "string",
+                "videoTitle": "string",
+                "videoUrl": "string",
+                "viewCount": "integer"
+              }
+            ]
+          }
+        }
+
++ Response 400 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
++ Response 500 (application/json)
+
+        {
+          "api": {
+            "elapsedTime": "None",
+            "errorMessage": "str",
+            "status": "False",
+            "version": "str"
+          },
+          "response": {}
+        }
+
+## ・ YouTube Video URL Scraper [/scrap-youtube-video?query={query}]
 Scrapes YouTube video URL to get all the available information about the video.
 - Rate limiting: 2/second; 60/minute; 500000/day
 - Cache duration: 3600 second(s)
@@ -823,50 +833,77 @@ Scrapes YouTube video URL to get all the available information about the video.
           },
           "response": {
             "info": {
+              "availability": "string",
+              "categories": "list",
               "channelId": "string",
               "channelName": "string",
               "channelUrl": "string",
+              "chapters": "list",
+              "cleanChannelName": "string",
+              "cleanTitle": "string",
               "commentCount": "integer",
-              "formattedChannelName": "string",
-              "formattedMediaDurationTime": "string",
-              "formattedMediaTitle": "string",
+              "description": "string",
+              "duration": "integer",
+              "embedUrl": "string",
+              "followCount": "integer",
+              "fullUrl": "string",
+              "id": "string",
+              "isAgeRestricted": "boolean",
+              "isStreaming": "boolean",
+              "isVerifiedChannel": "boolean",
+              "language": "string",
               "likeCount": "integer",
-              "mediaCategories": "list",
-              "mediaDescription": "string",
-              "mediaDurationTime": "integer",
-              "mediaEmbedUrl": "string",
-              "mediaId": "string",
-              "mediaIsAgeRestringicted": "boolean",
-              "mediaIsstringeaming": "boolean",
-              "mediaShortUrl": "string",
-              "mediaTags": "list",
-              "mediaTitle": "string",
-              "mediaUploadedAt": "integer",
-              "mediaUrl": "string",
+              "shortUrl": "string",
+              "tags": "list",
+              "thumbnails": "list",
+              "title": "string",
+              "uploadTimestamp": "integer",
               "viewCount": "integer"
             },
             "media": {
-              "audio": {
-                "bitrate": "integer",
-                "codec": "string",
-                "samplerate": "integer",
-                "size": "integer",
-                "url": "string"
-              },
-              "subtitle": [
+              "audio": [
                 {
-                  "ext": "string",
-                  "lang": "string",
-                  "url": "string"
+                  "bitrate": "float",
+                  "channels": "integer",
+                  "codec": "string",
+                  "codecVariant": "string",
+                  "extension": "string",
+                  "language": "string",
+                  "qualityNote": "string",
+                  "rawCodec": "string",
+                  "samplerate": "integer",
+                  "size": "integer",
+                  "url": "string",
+                  "youtubeFormatId": "integer"
                 }
               ],
-              "video": {
-                "bitrate": "integer",
-                "codec": "string",
-                "framerate": "integer",
-                "quality": "integer",
-                "url": "string"
-              }
+              "subtitle": {
+                "string": [
+                  {
+                    "extension": "string",
+                    "language": "string",
+                    "url": "string"
+                  }
+                ]
+              },
+              "video": [
+                {
+                  "bitrate": "float",
+                  "codec": "string",
+                  "codecVariant": "string",
+                  "extension": "string",
+                  "framerate": "integer",
+                  "height": "integer",
+                  "language": "string",
+                  "quality": "integer",
+                  "qualityNote": "string",
+                  "rawCodec": "string",
+                  "size": "integer",
+                  "url": "string",
+                  "width": "integer",
+                  "youtubeFormatId": "integer"
+                }
+              ]
             }
           }
         }
