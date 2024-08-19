@@ -20,7 +20,7 @@ from selectolax.parser import HTMLParser
 from unicodedata import normalize
 from user_agents import parse as UserAgentParser
 from validators import url as is_valid_url
-from yt_dlp import YoutubeDL
+from yt_dlp import YoutubeDL, DownloadError as YTDLPDownloadError
 
 # Local modules
 from static.data.functions import APITools, LimiterTools
@@ -1246,8 +1246,17 @@ class APIEndpoints:
                         :param ignore_errors: Whether to ignore errors from yt-dlp.
                         """
 
+                        self._ydl_opts: Dict[str, bool] = {
+                            'extract_flat': True,
+                            'geo_bypass': True,
+                            'noplaylist': True,
+                            'age_limit': None,
+                            'quiet': quiet,
+                            'no_warnings': no_warnings,
+                            'ignoreerrors': ignore_errors
+                        }
+
                         self._url: str = url
-                        self._ydl_opts: Dict[str, bool] = {'extract_flat': True, 'geo_bypass': True, 'noplaylist': True, 'age_limit': None, 'quiet': quiet, 'no_warnings': no_warnings, 'ignoreerrors': ignore_errors}
                         self._raw_youtube_data: Dict[Any, Any] = {}
                         self._raw_youtube_streams: List[Dict[Any, Any]] = []
                         self._raw_youtube_subtitles: Dict[str, List[Dict[str, str]]] = {}
@@ -1264,7 +1273,7 @@ class APIEndpoints:
 
                         self.subtitle_streams: Dict[str, List[Dict[str, str]]] = {}
 
-                    def extract(self, source_data: Dict[Any, Any] = None) -> None:
+                    def extract(self, source_data: Dict[Any, Any] = None) -> Optional[False]:
                         """
                         Extracts all the source data from the media using yt-dlp.
                         :param source_data: The source data you extracted using yt-dlp.
@@ -1275,8 +1284,11 @@ class APIEndpoints:
                             self._raw_youtube_streams = source_data.get('formats', [])
                             self._raw_youtube_subtitles = source_data.get('subtitles', {})
                         else:
-                            with YoutubeDL(self._ydl_opts) as ydl:
-                                self._raw_youtube_data = ydl.extract_info(self._url, download=False, process=True)
+                            try:
+                                with YoutubeDL(self._ydl_opts) as ydl:
+                                    self._raw_youtube_data = dict(ydl.extract_info(self._url, download=False, process=True))
+                            except (Exception, YTDLPDownloadError):
+                                return False
 
                             self._raw_youtube_streams = self._raw_youtube_data.get('formats', [])
                             self._raw_youtube_subtitles = self._raw_youtube_data.get('subtitles', {})
@@ -1501,8 +1513,13 @@ class APIEndpoints:
                     #
                     #     Path(path).write_bytes(orjson_dumps(data, option=OPT_INDENT_2 if indent_code else None))
 
-                dlp_humanizer = DLPHumanizer(query, quiet=False)
-                dlp_humanizer.extract()
+                dlp_humanizer = DLPHumanizer(query, quiet=True)
+                download_status = dlp_humanizer.extract()
+
+                if download_status is False:
+                    output_data['api']['errorMessage'] = 'Some error occurred while extracting the video data. Please try again later.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 500
 
                 dlp_humanizer.retrieve_media_info()
                 dlp_humanizer.analyze_video_streams()
@@ -1614,13 +1631,17 @@ class APIEndpoints:
                 scraped_data = []
 
                 for data in json_data:
-                    video_id = str(data['videoId'])
-                    title = str(data['title']['runs'][0]['text'])
-                    duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(data['lengthText']['simpleText'].split(':')))))
-                    channel_id = data['ownerText']['runs'][0]['navigationEndpoint']['browseEndpoint']['browseId']
+                    video_id = str(data.get('videoId'))
+
+                    if not video_id:
+                        continue
+
+                    title = str(data.get('title', {}).get('runs', [{}])[0].get('text', None))
+                    duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(data.get('lengthText', {}).get('simpleText').split(':')))))
+                    channel_id = str(data.get('ownerText', {}).get('runs', [{}])[0].get('navigationEndpoint', {}).get('browseEndpoint', {}).get('browseId', None))
                     channel_url = f'https://www.youtube.com/channel/{channel_id}'
-                    channel_name = str(data['ownerText']['runs'][0]['text'])
-                    view_count = int(data['viewCountText']['simpleText'].split()[0].replace('.', ''))
+                    channel_name = str(data.get('ownerText', {}).get('runs', [{}])[0].get('text', None))
+                    view_count = int(data.get('viewCountText', {}).get('simpleText', '0').split()[0].replace('.', ''))
 
                     scraped_data.append({
                         'channelId': channel_id,
