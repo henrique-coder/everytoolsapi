@@ -17,10 +17,10 @@ orjson
 psycopg2-binary
 python-dotenv
 redis
+selectolax
 soundcloud-lib
 user-agents
-werkzeug
-yt-dlp
-selectolax
 validators
+werkzeug
 xxhash
+yt-dlp
