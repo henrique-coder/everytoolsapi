@@ -17,10 +17,10 @@
   <p align="center">
     Welcome to the EveryTools API. Where you can find all the tools you need in one place.
     <br />
-    <a href="https://everytoolsapi-henrique-coder.koyeb.app/docs"><strong>Explore the documentation</strong></a>
+    <a href="https://everytoolsapi-api.onrender.com/docs"><strong>Explore the documentation</strong></a>
     <br />
     <br />
-    <a href="https://everytoolsapi-henrique-coder.koyeb.app">View Website</a>
+    <a href="https://everytoolsapi-api.onrender.com">View Website</a>
     ·
     <a href="https://github.com/Henrique-Coder/everytoolsapi/issues">Report Bug</a>
     ·
@@ -79,7 +79,7 @@ To get a local copy up and running, follow these simple steps.
 
 You will need the following software installed on your machine to run the website locally:
 
-- [Python 3.12.3](https://www.python.org/downloads/release/python-3123)
+- [Python 3.12.4](https://www.python.org/downloads/release/python-3124)
 
 <!-- INSTALLATION -->
 ### Installation
@@ -88,13 +88,13 @@ To successfully install the EveryTools API, follow these last steps:
 
 1. Clone the repository to your local machine ・ `git clone https://github.com/Henrique-Coder/everytoolsapi.git`;
 2. Navigate to the project directory ・ `cd everytoolsapi`;
-3. Install project dependencies ・ `pip install -r requirements.txt`;
+3. Install project dependencies ・ `pip install -U -r requirements.txt`;
 4. Run the main file ・ `python everytoolsapi.py`;
 
 <!-- USAGE -->
 ## Usage
 
-For more information on how to use the API, please refer to the full [documentation](https://everytoolsapi-henrique-coder.koyeb.app/docs).
+For more information on how to use the API, please refer to the full [documentation](https://everytoolsapi-api.onrender.com/docs).
 
 <!-- CONTRIBUTING -->
 ## Contributing

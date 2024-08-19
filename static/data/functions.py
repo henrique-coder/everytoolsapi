@@ -5,6 +5,7 @@ from typing import Any, Dict, Union
 
 # Third-party modules
 from flask import request, Request
+from xxhash import xxh3_128_hexdigest
 
 # Local modules
 from static.data.version import APIVersion
@@ -147,4 +148,4 @@ class CacheTools:
         :return: A cache key for the current request.
         """
 
-        return str(request.url)
+        return xxh3_128_hexdigest(f'{request.method.upper()} {request.url} (args: {args}, kwargs: {kwargs})')

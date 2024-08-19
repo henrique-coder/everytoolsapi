@@ -1,25 +1,25 @@
 # Built-in modules
 from collections import Counter
-from datetime import datetime
-from re import compile as re_compile, sub as re_sub, findall as re_findall, search as re_search, match as re_match
+from re import compile as re_compile, sub as re_sub, findall as re_findall, search as re_search
 from subprocess import run as run_subprocess, CalledProcessError as SubprocessCalledProcessError
-from typing import Any, AnyStr, Optional, Union, List, Dict, Tuple
+from typing import Any, AnyStr, Optional, Union, List, Dict, Tuple, Type
 from urllib.parse import urlparse, parse_qs, unquote, urlencode, unquote_plus
 
 # Third-party modules
 from bs4 import BeautifulSoup
 from faker import Faker
-from googlesearch import search as google_search
 from googletrans import Translator
 from httpx import get, post, HTTPError
 from instaloader import Instaloader, Post as instagram_post
 from langdetect import detect as lang_detect, DetectorFactory, LangDetectException
 from lxml import html
-from orjson import loads as orjson_loads
+from orjson import loads as orjson_loads, JSONDecodeError
 from psycopg2 import connect as psycopg2_connect
 from sclib import SoundcloudAPI, Track as SoundcloudTrack
+from selectolax.parser import HTMLParser
 from unicodedata import normalize
 from user_agents import parse as UserAgentParser
+from validators import url as is_valid_url
 from yt_dlp import YoutubeDL
 
 # Local modules
@@ -28,24 +28,57 @@ from static.data.functions import APITools, LimiterTools
 
 # Constants
 fake = Faker()
+DetectorFactory.seed = 0
 
 # Helper functions
-def format_string(query: AnyStr, max_length: int = 128) -> str:
+def get_value(data: Dict[Any, Any], key: Any, fallback_key: Any = None, convert_to: Type = None, default_to: Any = None) -> Any:
     """
-    Format string to remove special characters and normalize it.
-    :param query: String to be sanitized.
-    :param max_length: Maximum length of the string (if exceeds, it will be truncated).
-    :return: Sanitized string.
+    Get a value from a dictionary, with optional fallback key, conversion and default value.
+    :param data: The dictionary to search for the key.
+    :param key: The key to search for in the dictionary.
+    :param fallback_key: The fallback key to search for in the dictionary if the main key is not found.
+    :param convert_to: The type to convert the value to. If the conversion fails, return the default value. If None, return the value as is.
+    :param default_to: The default value to return if the key is not found.
+    :return: The value from the dictionary, or the default value if the key is not found.
     """
 
-    # Normalize string, remove special characters and extra spaces
-    normalized_string = str(normalize('NFKD', query).encode('ASCII', 'ignore').decode('utf-8')).strip()
-    sanitized_string = str(re_sub(r'\s+', ' ', re_sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+,. ]', str(), normalized_string)).strip())
+    try:
+        value = data[key]
+    except KeyError:
+        if fallback_key is not None:
+            try:
+                value = data[fallback_key]
+            except KeyError:
+                return default_to
+        else:
+            return default_to
 
-    # Truncate string if it exceeds the maximum length
-    if len(sanitized_string) > max_length: sanitized_string = str(sanitized_string[:max_length].rsplit(' ', 1)[0])
+    if convert_to is not None:
+        try:
+            value = convert_to(value)
+        except (ValueError, TypeError):
+            return default_to
 
-    # Return the sanitized string
+    return value
+
+def format_string(query: AnyStr, max_length: int = 128) -> Optional[str]:
+    """
+    Format a string to be used as a filename or directory name. Remove special characters, limit length etc.
+    :param query: The string to be formatted.
+    :param max_length: The maximum length of the formatted string. If the string is longer, it will be truncated.
+    :return: The formatted string. If the input string is empty or None, return None.
+    """
+
+    if not query or not query.strip():
+        return None
+
+    normalized_string = normalize('NFKD', str(query)).encode('ASCII', 'ignore').decode('utf-8')
+    sanitized_string = re_sub(r'\s+', ' ', re_sub(r'[^a-zA-Z0-9\-_()[\]{}!$#+;,. ]', '', normalized_string)).strip()
+
+    if len(sanitized_string) > max_length:
+        cutoff = sanitized_string[:max_length].rfind(' ')
+        sanitized_string = sanitized_string[:cutoff] if cutoff != -1 else sanitized_string[:max_length]
+
     return sanitized_string
 
 
@@ -69,10 +102,10 @@ class APIEndpoints:
 
             return output_data, 200
 
-        class useragent_parser:
+        class useragent:
             ready_to_production = True
 
-            endpoint_url = 'useragent-parser'
+            endpoint_url = 'useragent'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
             cache_timeout = 1
@@ -93,6 +126,12 @@ class APIEndpoints:
                     'family': 'string',
                     'model': 'string'
                 },
+                'isBot': 'boolean',
+                'isComputer': 'boolean',
+                'isEmailClient': 'boolean',
+                'isMobile': 'boolean',
+                'isTablet': 'boolean',
+                'isTouchCapable': 'boolean',
                 'os': {
                     'family': 'string',
                     'version': 'string',
@@ -122,22 +161,29 @@ class APIEndpoints:
                 # Main process
                 user_agent = UserAgentParser(ua_string)
                 parsed_ua_data = {
-                    'uaString': user_agent.ua_string,
-                    'os': {
-                        'family': user_agent.os.family,
-                        'version': user_agent.os.version,
-                        'versionString': user_agent.os.version_string
-                    },
                     'browser': {
                         'family': user_agent.browser.family,
                         'version': user_agent.browser.version,
                         'versionString': user_agent.browser.version_string
                     },
                     'device': {
-                        'family': user_agent.device.family,
                         'brand': user_agent.device.brand,
+                        'family': user_agent.device.family,
                         'model': user_agent.device.model
-                    }
+                    },
+                    'isBot': user_agent.is_bot,
+                    'isComputer': user_agent.is_pc,
+                    'isEmailClient': user_agent.is_email_client,
+                    'isMobile': user_agent.is_mobile,
+                    'isTablet': user_agent.is_tablet,
+                    'isTouchCapable': user_agent.is_touch_capable,
+                    'os': {
+                        'family': user_agent.os.family,
+                        'version': user_agent.os.version,
+                        'versionString': user_agent.os.version_string
+                    },
+                    'uaString': user_agent.ua_string,
+
                 }
 
                 timer.stop()
@@ -150,10 +196,10 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class url_parser:
+        class url:
             ready_to_production = True
 
-            endpoint_url = 'url-parser'
+            endpoint_url = 'url'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
             cache_timeout = 1
@@ -262,10 +308,10 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class email_parser:
+        class email:
             ready_to_production = True
 
-            endpoint_url = 'email-parser'
+            endpoint_url = 'email'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=10, per_min=300, per_day=1000000)
             cache_timeout = 1
@@ -277,6 +323,7 @@ class APIEndpoints:
             }
             expected_output = {
                 'domain': 'string',
+                'separator': 'string',
                 'user': 'string'
             }
 
@@ -305,6 +352,7 @@ class APIEndpoints:
 
                 # Main process
                 parsed_email_data = match.groupdict()
+                parsed_email_data.update({'separator': '@'})
 
                 timer.stop()
 
@@ -316,15 +364,15 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class advanced_text_counter:
+        class string_counter:
             ready_to_production = True
 
-            endpoint_url = 'advanced-text-counter'
+            endpoint_url = 'string-counter'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=5, per_min=300, per_day=1000000)
             cache_timeout = 1
 
-            title = 'Advanced Text Counter'
+            title = 'String Counter'
             description = 'Count the number of characters, words, and many other elements in a text.'
             parameters = {
                 'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
@@ -417,15 +465,15 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class text_language_detector:
+        class language_detector:
             ready_to_production = True
 
-            endpoint_url = 'text-language-detector'
+            endpoint_url = 'language-detector'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_min=120, per_day=500000)
-            cache_timeout = 300
+            cache_timeout = 600
 
-            title = 'Text Language Detector'
+            title = 'Language Detector'
             description = 'Detects the predominant language in a text.'
             parameters = {
                 'query': {'description': 'Text to be analyzed.', 'required': True, 'type': 'string'}
@@ -450,8 +498,6 @@ class APIEndpoints:
                     return output_data, 400
 
                 # Main process
-                DetectorFactory.seed = 0
-
                 try:
                     detected_lang = lang_detect(text)
                 except LangDetectException:
@@ -469,20 +515,20 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class text_translator:
+        class translator:
             ready_to_production = True
 
-            endpoint_url = 'text-translator'
+            endpoint_url = 'translator'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=120, per_day=500000)
-            cache_timeout = 300
+            cache_timeout = 1  # 600
 
-            title = 'Text Translator'
-            description = 'Translate text from one language to another.'
+            title = 'Translator'
+            description = 'Translate any text from one language to another.'
             parameters = {
                 'query': {'description': 'Text to be translated.', 'required': True, 'type': 'string'},
-                'src_lang': {'description': 'Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.', 'required': False, 'type': 'string'},
-                'dest_lang': {'description': 'Destination language code (e.g., "en" for English).', 'required': True, 'type': 'string'}
+                'source': {'description': 'Source language code (e.g., "pt" for Portuguese). If not provided, the language will be automatically detected.', 'required': False, 'type': 'string'},
+                'destination': {'description': 'Destination language code (e.g., "en" for English).', 'required': True, 'type': 'string'}
             }
             expected_output = {
                 'translatedText': 'string'
@@ -503,19 +549,19 @@ class APIEndpoints:
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 400
 
-                if request_data['args'].get('dest_lang'):
-                    dest_lang = str(request_data['args']['dest_lang']).replace('-', '_')
+                if request_data['args'].get('destination'):
+                    destination_lang = str(request_data['args']['destination']).replace('-', '_')
                 else:
-                    output_data['api']['errorMessage'] = 'No "dest_lang" parameter found in the request.'
+                    output_data['api']['errorMessage'] = 'No "destination" parameter found in the request.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 400
 
-                src_lang = request_data['args'].get('src_lang', None)
+                source_lang = request_data['args'].get('source', None)
 
                 # Main process
                 try:
                     translator = Translator()
-                    translated_text = translator.translate(text, src='auto' if not src_lang else str(src_lang).replace('-', '_'), dest=dest_lang)
+                    translated_text = translator.translate(text, src='auto' if not source_lang else str(source_lang).replace('-', '_'), dest=destination_lang)
                 except ValueError as e:
                     output_data['api']['errorMessage'] = str(e).capitalize()
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -531,16 +577,16 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class my_ip:
+        class ip:
             ready_to_production = True
 
-            endpoint_url = 'my-ip'
+            endpoint_url = 'ip'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_min=120, per_day=500000)
             cache_timeout = 1
 
             title = 'My IP Address'
-            description = 'Get your IP address.'
+            description = 'Get the IP address of the client making the request.'
             parameters = {}
             expected_output = {
                 'originIpAddress': 'string'
@@ -572,16 +618,16 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class get_latest_ffmpeg_download_url:
+        class latest_ffmpeg_build:
             ready_to_production = True
 
-            endpoint_url = 'get-latest-ffmpeg-download-url'
+            endpoint_url = 'latest-ffmpeg-build'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 3600
+            cache_timeout = 43200
 
-            title = 'Retrieve Latest FFmpeg Download URL'
-            description = 'Get the download url of the latest FFmpeg build according to your specifications.'
+            title = 'Retrieve Latest FFmpeg Build URL'
+            description = 'Retrieve the latest FFmpeg build URL from the official repository based on the specified parameters.'
             parameters = {
                 'os': {'description': 'Operating system (options: "windows", "linux").', 'required': False, 'type': 'string'},
                 'arch': {'description': 'Architecture (options: "amd32", "amd64", "arm32", "arm64").', 'required': False, 'type': 'string'},
@@ -607,7 +653,7 @@ class APIEndpoints:
 
                 # Main process
                 try:
-                    response = get('https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest', timeout=10)
+                    response = get('https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest', headers={'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public()}, timeout=10)
                 except HTTPError:
                     output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -698,10 +744,10 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class ffprobe_a_video_url:
+        class ffprobe_a_video:
             ready_to_production = True
 
-            endpoint_url = 'ffprobe-a-video-url'
+            endpoint_url = 'ffprobe-a-video'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=120, per_day=500000)
             cache_timeout = 3600
@@ -737,10 +783,10 @@ class APIEndpoints:
                 try:
                     process_output = run_subprocess(ffprobe_command, capture_output=True, text=True, check=True)
                     media_data = orjson_loads(process_output.stdout.encode())
-                except SubprocessCalledProcessError as e:
-                    output_data['api']['errorMessage'] = 'Some error occurred while running the FFprobe command. Please use a valid video URL.'
+                except SubprocessCalledProcessError:
+                    output_data['api']['errorMessage'] = 'Invalid video URL provided. Please check the URL and try again.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                    return output_data, 500
+                    return output_data, 400
                 except (IndexError, KeyError):
                     output_data['api']['errorMessage'] = 'No video data found in the URL provided.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -762,13 +808,14 @@ class APIEndpoints:
             endpoint_url = 'scrap-google-search-results'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=1, per_min=30, per_day=500000)
-            cache_timeout = 300
+            cache_timeout = 3600
 
             title = 'Google Search Results Scraper'
             description = 'Scrapes Google search results for a given query.'
             parameters = {
                 'query': {'description': 'Search query.', 'required': True, 'type': 'string'},
-                'max_results': {'description': 'Maximum number of results to be returned (default: 10, min: 1, max: 50).', 'required': False, 'type': 'integer'}
+                'results': {'description': 'Number of search results to be returned (max: 50). Default: 20.', 'required': False, 'type': 'integer'},
+                'language': {'description': 'Language code for the search results. Default: "en-US".', 'required': False, 'type': 'string'}
             }
             expected_output = {
                 'searchResults': 'list'
@@ -789,43 +836,57 @@ class APIEndpoints:
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 400
 
-                max_results = request_data['args'].get('max_results', 10)
-                if not max_results: max_results = 10
+                results = request_data['args'].get('results', 20)
+                if not results: results = 20
+
+                language = request_data['args'].get('language', 'en-US')
 
                 try:
-                    max_results = int(max_results)
+                    results = int(results)
 
-                    if max_results < 1:
-                        output_data['api']['errorMessage'] = 'The "max_results" parameter must be greater than 0.'
+                    if results < 1:
+                        output_data['api']['errorMessage'] = 'The "results" parameter must be greater than 0.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
-                    elif max_results > 50:
-                        output_data['api']['errorMessage'] = 'The "max_results" parameter must be less than or equal to 50.'
+                    elif results > 50:
+                        output_data['api']['errorMessage'] = 'The "results" parameter must be less than or equal to 50.'
                         db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                         return output_data, 400
                 except ValueError:
-                    output_data['api']['errorMessage'] = 'The "max_results" parameter must be an integer.'
+                    output_data['api']['errorMessage'] = 'The "results" parameter must be an integer.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 400
 
                 # Main process
-                scraped_results = list()
-                search_results = list()
+                base_url = 'https://www.google.com/search'
+                params = {'q': query, 'num': results, 'hl': language, 'start': 0}
+                headers = {
+                    'Accept': 'text/html',
+                    'User-Agent': fake.user_agent(),
+                    'X-Forwarded-For': fake.ipv4_public()
+                }
 
-                try:
-                    scraped_results = google_search(query, num_results=max_results, lang='en')
-                except Exception:
-                    output_data['api']['errorMessage'] = 'Some error occurred while scraping the search results. Please try again later.'
-                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                raw_response = get(base_url, params=params, headers=headers, timeout=20)
+                tree = HTMLParser(raw_response.content)
 
-                for result in scraped_results:
-                    search_results.append(unquote(result))
+                extracted_results = []
+                result_quantity = 0
 
-                search_results = list(set(search_results))
+                for node in tree.css('a[href^="/url?q="]'):
+                    clean_url = unquote(urlparse(node.attributes['href']).query.split('&')[0].split('q=')[1])
+
+                    if not is_valid_url(clean_url):
+                        continue
+
+                    extracted_results.append({'title': node.text(strip=True), 'url': clean_url})
+                    result_quantity += 1
+
+                    if result_quantity >= results:
+                        break
 
                 timer.stop()
 
-                output_data['response'] = {'searchResults': search_results}
+                output_data['response'] = {'searchResults': extracted_results}
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
@@ -833,15 +894,15 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class scrap_instagram_reel_url:
-            ready_to_production = False
+        class scrap_instagram_reels:
+            ready_to_production = True
 
-            endpoint_url = 'scrap-instagram-reel-url'
+            endpoint_url = 'scrap-instagram-reels'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 3600
+            cache_timeout = 43200
 
-            title = 'Instagram Reel URL Scraper'
+            title = 'Instagram Reels URL Scraper'
             description = 'Scrapes Instagram Reel URL to get the media and thumbnail URLs.'
             parameters = {
                 'query': {'description': 'Instagram Reels URL.', 'required': True, 'type': 'string'}
@@ -874,7 +935,7 @@ class APIEndpoints:
                     :return: True if the URL is a valid Instagram Reels URL, False otherwise.
                     """
 
-                    pattern = re_compile(r'^(https?://)?(www\.)?instagram\.com(/[^/]+)?/(reel|p)/[A-Za-z0-9_-]+/?(\?.*)?$')
+                    pattern = re_compile(r'^(https?://)?(www\.)?instagram\.com(/[^/]+)?/(reels?|p)/[A-Za-z0-9_-]+/?(\?.*)?$')
                     return bool(pattern.match(query))
 
                 def extract_instagram_reel_id(query: str) -> Optional[str]:
@@ -884,7 +945,7 @@ class APIEndpoints:
                     :return: The ID of the Instagram Reel if the URL is valid, None otherwise.
                     """
 
-                    pattern = re_compile(r'^(https?://)?(www\.)?instagram\.com(/[^/]+)?/(reel|p)/([A-Za-z0-9_-]+)/?(\?.*)?$')
+                    pattern = re_compile(r'^(https?://)?(www\.)?instagram\.com(/[^/]+)?/(reels?|p)/([A-Za-z0-9_-]+)/?(\?.*)?$')
                     match = pattern.match(query)
 
                     if match:
@@ -936,13 +997,13 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class scrap_tiktok_video_url:
+        class scrap_tiktok_video:
             ready_to_production = True
 
-            endpoint_url = 'scrap-tiktok-video-url'
+            endpoint_url = 'scrap-tiktok-video'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
-            cache_timeout = 3600
+            cache_timeout = 43200
 
             title = 'TikTok Video URL Scraper'
             description = 'Scrapes TikTok video URL to get the media and thumbnail URLs.'
@@ -980,7 +1041,7 @@ class APIEndpoints:
                     return output_data, 400
 
                 try:
-                    temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake.user_agent()}, timeout=10)
+                    temp_response = get('https://www.tiktok.com/oembed', params={'url': query}, headers={'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public()}, timeout=10)
                 except HTTPError:
                     output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data search. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -1003,7 +1064,7 @@ class APIEndpoints:
                 thumbnail_url = unquote(response_data.get('thumbnail_url', str()))
 
                 try:
-                    response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake.user_agent(), 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
+                    response = post('https://savetik.co/api/ajaxSearch', headers={'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public(), 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}, data={'q': query}, timeout=10)
                 except HTTPError:
                     output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
@@ -1025,10 +1086,10 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class scrap_youtube_video_url:
+        class scrap_youtube_video:
             ready_to_production = True
 
-            endpoint_url = 'scrap-youtube-video-url'
+            endpoint_url = 'scrap-youtube-video'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
             cache_timeout = 3600
@@ -1040,50 +1101,77 @@ class APIEndpoints:
             }
             expected_output = {
                 'info': {
+                    'availability': 'string',
+                    'categories': 'list',
                     'channelId': 'string',
                     'channelName': 'string',
                     'channelUrl': 'string',
+                    'chapters': 'list',
+                    'cleanChannelName': 'string',
+                    'cleanTitle': 'string',
                     'commentCount': 'integer',
-                    'formattedChannelName': 'string',
-                    'formattedMediaDurationTime': 'string',
-                    'formattedMediaTitle': 'string',
+                    'description': 'string',
+                    'duration': 'integer',
+                    'embedUrl': 'string',
+                    'followCount': 'integer',
+                    'fullUrl': 'string',
+                    'id': 'string',
+                    'isAgeRestricted': 'boolean',
+                    'isStreaming': 'boolean',
+                    'isVerifiedChannel': 'boolean',
+                    'language': 'string',
                     'likeCount': 'integer',
-                    'mediaCategories': 'list',
-                    'mediaDescription': 'string',
-                    'mediaDurationTime': 'integer',
-                    'mediaEmbedUrl': 'string',
-                    'mediaId': 'string',
-                    'mediaIsAgeRestringicted': 'boolean',
-                    'mediaIsstringeaming': 'boolean',
-                    'mediaShortUrl': 'string',
-                    'mediaTags': 'list',
-                    'mediaTitle': 'string',
-                    'mediaUploadedAt': 'integer',
-                    'mediaUrl': 'string',
+                    'shortUrl': 'string',
+                    'tags': 'list',
+                    'thumbnails': 'list',
+                    'title': 'string',
+                    'uploadTimestamp': 'integer',
                     'viewCount': 'integer'
                 },
                 'media': {
-                    'audio': {
-                        'bitrate': 'integer',
-                        'codec': 'string',
-                        'samplerate': 'integer',
-                        'size': 'integer',
-                        'url': 'string'
-                    },
-                    'subtitle': [
+                    'audio': [
                         {
-                            'ext': 'string',
-                            'lang': 'string',
-                            'url': 'string'
+                            'bitrate': 'float',
+                            'channels': 'integer',
+                            'codec': 'string',
+                            'codecVariant': 'string',
+                            'extension': 'string',
+                            'language': 'string',
+                            'qualityNote': 'string',
+                            'rawCodec': 'string',
+                            'samplerate': 'integer',
+                            'size': 'integer',
+                            'url': 'string',
+                            'youtubeFormatId': 'integer'
                         }
                     ],
-                    'video': {
-                        'bitrate': 'integer',
-                        'codec': 'string',
-                        'framerate': 'integer',
-                        'quality': 'integer',
-                        'url': 'string'
-                    }
+                    'subtitle': {
+                        'string': [
+                            {
+                                'extension': 'string',
+                                'language': 'string',
+                                'url': 'string'
+                            }
+                        ]
+                    },
+                    'video': [
+                        {
+                            'bitrate': 'float',
+                            'codec': 'string',
+                            'codecVariant': 'string',
+                            'extension': 'string',
+                            'framerate': 'integer',
+                            'height': 'integer',
+                            'language': 'string',
+                            'quality': 'integer',
+                            'qualityNote': 'string',
+                            'rawCodec': 'string',
+                            'size': 'integer',
+                            'url': 'string',
+                            'width': 'integer',
+                            'youtubeFormatId': 'integer'
+                        }
+                    ]
                 }
             }
 
@@ -1144,123 +1232,295 @@ class APIEndpoints:
                     return output_data, 400
 
                 # Main process
-                def extract_media_info(data: dict) -> Dict[str, Any]:
-                    # Media information
-                    media_id = str(data.get('id', str()))
-                    media_title = str(data.get('title', str()))
-                    media_formatted_title = format_string(media_title)
-                    media_description = str(data.get('description', str()))
-                    media_uploaded_at = int(datetime.strptime(str(data.get('upload_date', '0')), '%Y%m%d').timestamp())
-                    media_duration_time = int(data.get('duration', 0))
-                    media_formatted_duration_time = str('{:02d}:{:02d}:{:02d}'.format(media_duration_time // 3600, (media_duration_time % 3600) // 60, media_duration_time % 60) if media_duration_time < 360000 else '{:d}:{:02d}:{:02d}'.format(media_duration_time // 3600, (media_duration_time % 3600) // 60, media_duration_time % 60))
-                    media_categories = list(data.get('categories', list()))
-                    media_tags = list(data.get('tags', list()))
-                    view_count = int(data.get('view_count', 0))
-                    like_count = int(data.get('like_count', 0))
-                    comment_count = int(data.get('comment_count', 0))
-                    media_is_streaming = bool(data.get('is_live', False))
-                    media_is_age_restricted = bool(data.get('age_limit', False))
+                class DLPHumanizer:
+                    """
+                    A class to extract and format data from YouTube videos using yt-dlp.
+                    """
 
-                    # URLs
-                    media_url = f'https://www.youtube.com/watch?v={media_id}'
-                    media_short_url = f'https://youtu.be/{media_id}'
-                    media_embed_url = f'https://www.youtube.com/embed/{media_id}'
+                    def __init__(self, url: str, quiet: bool = False, no_warnings: bool = True, ignore_errors: bool = True) -> None:
+                        """
+                        Initialize the DLPHumanizer class.
+                        :param url: The YouTube video url to extract data from.
+                        :param quiet: Whether to suppress console output from yt-dlp.
+                        :param no_warnings: Whether to suppress warnings from yt-dlp.
+                        :param ignore_errors: Whether to ignore errors from yt-dlp.
+                        """
 
-                    # Channel information
-                    channel_id = data.get('channel_id', str())
-                    channel_url = f'https://www.youtube.com/channel/{channel_id}' if channel_id else str()
-                    channel_name = str(data.get('uploader', str()))
-                    formatted_channel_name = format_string(channel_name)
+                        self._url: str = url
+                        self._ydl_opts: Dict[str, bool] = {'extract_flat': True, 'geo_bypass': True, 'noplaylist': True, 'age_limit': None, 'quiet': quiet, 'no_warnings': no_warnings, 'ignoreerrors': ignore_errors}
+                        self._raw_youtube_data: Dict[Any, Any] = {}
+                        self._raw_youtube_streams: List[Dict[Any, Any]] = []
+                        self._raw_youtube_subtitles: Dict[str, List[Dict[str, str]]] = {}
 
-                    return {
-                        'mediaId': media_id,
-                        'mediaTitle': media_title,
-                        'formattedMediaTitle': media_formatted_title,
-                        'mediaDescription': media_description,
-                        'mediaUploadedAt': media_uploaded_at,
-                        'mediaDurationTime': media_duration_time,
-                        'formattedMediaDurationTime': media_formatted_duration_time,
-                        'mediaCategories': media_categories,
-                        'mediaTags': media_tags,
-                        'viewCount': view_count,
-                        'likeCount': like_count,
-                        'commentCount': comment_count,
-                        'mediaIsStreaming': media_is_streaming,
-                        'mediaIsAgeRestricted': media_is_age_restricted,
-                        'mediaUrl': media_url,
-                        'mediaShortUrl': media_short_url,
-                        'mediaEmbedUrl': media_embed_url,
-                        'channelId': channel_id,
-                        'channelUrl': channel_url,
-                        'channelName': channel_name,
-                        'formattedChannelName': formatted_channel_name
+                        self.media_info: Dict[str, Any] = {}
+
+                        self.best_video_streams: Optional[List[Dict[str, Any]]] = []
+                        self.best_video_stream: Optional[Dict[str, Any]] = {}
+                        self.best_video_download_url: Optional[str] = None
+
+                        self.best_audio_streams: Optional[List[Dict[str, Any]]] = []
+                        self.best_audio_stream: Optional[Dict[str, Any]] = {}
+                        self.best_audio_download_url: Optional[str] = None
+
+                        self.subtitle_streams: Dict[str, List[Dict[str, str]]] = {}
+
+                    def extract(self, source_data: Dict[Any, Any] = None) -> None:
+                        """
+                        Extracts all the source data from the media using yt-dlp.
+                        :param source_data: The source data you extracted using yt-dlp.
+                        """
+
+                        if source_data:
+                            self._raw_youtube_data = source_data
+                            self._raw_youtube_streams = source_data.get('formats', [])
+                            self._raw_youtube_subtitles = source_data.get('subtitles', {})
+                        else:
+                            with YoutubeDL(self._ydl_opts) as ydl:
+                                self._raw_youtube_data = ydl.extract_info(self._url, download=False, process=True)
+
+                            self._raw_youtube_streams = self._raw_youtube_data.get('formats', [])
+                            self._raw_youtube_subtitles = self._raw_youtube_data.get('subtitles', {})
+
+                    def retrieve_media_info(self) -> None:
+                        """
+                        Extract and format relevant information from the raw yt-dlp response.
+                        :return: The formatted media information if return_data is True, else None.
+                        """
+
+                        data = self._raw_youtube_data
+
+                        id_ = data.get('id')
+                        title = get_value(data, 'fulltitle', 'title')
+                        clean_title = format_string(title)
+                        channel_name = get_value(data, 'channel', 'uploader')
+                        clean_channel_name = format_string(channel_name)
+                        chapters = data.get('chapters', [])
+
+                        if chapters:
+                            chapters = [
+                                {
+                                    'title': chapter.get('title'),
+                                    'startTime': get_value(chapter, 'start_time', convert_to=float),
+                                    'endTime': get_value(chapter, 'end_time', convert_to=float)
+                                }
+                                for chapter in chapters
+                            ]
+
+                        media_info = {
+                            'fullUrl': f'https://www.youtube.com/watch?v={id_}',
+                            'shortUrl': f'https://youtu.be/{id_}',
+                            'embedUrl': f'https://www.youtube.com/embed/{id_}',
+                            'id': id_,
+                            'title': title,
+                            'cleanTitle': clean_title,
+                            'description': data.get('description'),
+                            'channelId': data.get('channel_id'),
+                            'channelUrl': get_value(data, 'uploader_url', 'channel_url'),
+                            'channelName': channel_name,
+                            'cleanChannelName': clean_channel_name,
+                            'isVerifiedChannel': get_value(data, 'channel_is_verified', default_to=False),
+                            'duration': get_value(data, 'duration'),
+                            'viewCount': get_value(data, 'view_count'),
+                            'isAgeRestricted': get_value(data, 'age_limit', convert_to=bool),
+                            'categories': get_value(data, 'categories', default_to=[]),
+                            'tags': get_value(data, 'tags', default_to=[]),
+                            'isStreaming': get_value(data, 'is_live'),
+                            'uploadTimestamp': get_value(data, 'timestamp', 'release_timestamp'),
+                            'availability': get_value(data, 'availability'),
+                            'chapters': chapters,
+                            'commentCount': get_value(data, 'comment_count'),
+                            'likeCount': get_value(data, 'like_count'),
+                            'followCount': get_value(data, 'channel_follower_count'),
+                            'language': get_value(data, 'language'),
+                            'thumbnails': [
+                                f'https://img.youtube.com/vi/{id_}/maxresdefault.jpg',
+                                f'https://img.youtube.com/vi/{id_}/sddefault.jpg',
+                                f'https://img.youtube.com/vi/{id_}/hqdefault.jpg',
+                                f'https://img.youtube.com/vi/{id_}/mqdefault.jpg',
+                                f'https://img.youtube.com/vi/{id_}/default.jpg'
+                            ]
+                        }
+
+                        self.media_info = dict(sorted(media_info.items()))
+
+                    def analyze_video_streams(self) -> None:
+                        """
+                        Extract and format the best video streams from the raw yt-dlp response.
+                        :return: The formatted video streams if return_data is True, else None.
+                        """
+
+                        data = self._raw_youtube_streams
+
+                        format_id_extension_map = {
+                            702: 'mp4', 571: 'mp4', 402: 'mp4', 272: 'webm',  # 7680x4320
+                            701: 'mp4', 401: 'mp4', 337: 'webm', 315: 'webm', 313: 'webm', 305: 'mp4', 266: 'mp4',  # 3840x2160
+                            700: 'mp4', 400: 'mp4', 336: 'webm', 308: 'webm', 271: 'webm', 304: 'mp4', 264: 'mp4',  # 2560x1440
+                            699: 'mp4', 399: 'mp4', 335: 'webm', 303: 'webm', 248: 'webm', 299: 'mp4', 137: 'mp4', 216: 'mp4', 170: 'webm',  # 1920x1080 (616: 'webm' - Premium [m3u8])
+                            698: 'mp4', 398: 'mp4', 334: 'webm', 302: 'webm', 612: 'webm', 247: 'webm', 298: 'mp4', 136: 'mp4', 169: 'webm',  # 1280x720
+                            697: 'mp4', 397: 'mp4', 333: 'webm', 244: 'webm', 135: 'mp4', 168: 'webm',  # 854x480
+                            696: 'mp4', 396: 'mp4', 332: 'webm', 243: 'webm', 134: 'mp4', 167: 'webm',  # 640x360
+                            695: 'mp4', 395: 'mp4', 331: 'webm', 242: 'webm', 133: 'mp4',  # 426x240
+                            694: 'mp4', 394: 'mp4', 330: 'webm', 278: 'webm', 598: 'webm', 160: 'mp4', 597: 'mp4',  # 256x144
+                        }
+
+                        video_streams = [
+                            stream for stream in data
+                            if stream.get('vcodec') != 'none' and int(get_value(stream, 'format_id').split('-')[0]) in format_id_extension_map
+                        ]
+
+                        def calculate_score(stream: Dict[Any, Any]) -> float:
+                            width = stream.get('width', 0)
+                            height = stream.get('height', 0)
+                            framerate = stream.get('fps', 0)
+                            bitrate = stream.get('tbr', 0)
+
+                            return width * height * framerate * bitrate
+
+                        sorted_video_streams = sorted(video_streams, key=calculate_score, reverse=True)
+
+                        def extract_stream_info(stream: Dict[Any, Any]) -> Dict[str, Any]:
+                            codec = stream.get('vcodec', '')
+                            codec_parts = codec.split('.', 1)
+                            youtube_format_id = int(get_value(stream, 'format_id').split('-')[0])
+
+                            return {
+                                'url': stream.get('url'),
+                                'codec': codec_parts[0] if codec_parts else None,
+                                'codecVariant': codec_parts[1] if len(codec_parts) > 1 else None,
+                                'rawCodec': codec,
+                                'extension': format_id_extension_map.get(youtube_format_id, 'mp3'),
+                                'width': stream.get('width'),
+                                'height': stream.get('height'),
+                                'framerate': stream.get('fps'),
+                                'bitrate': stream.get('tbr'),
+                                'quality': stream.get('height'),
+                                'qualityNote': stream.get('format_note'),
+                                'size': stream.get('filesize'),
+                                'language': stream.get('language'),
+                                'youtubeFormatId': youtube_format_id
+                            }
+
+                        self.best_video_streams = [extract_stream_info(stream) for stream in sorted_video_streams] if sorted_video_streams else None
+                        self.best_video_stream = self.best_video_streams[0] if self.best_video_streams else None
+                        self.best_video_download_url = self.best_video_stream['url'] if self.best_video_stream else None
+
+                    def analyze_audio_streams(self) -> None:
+                        """
+                        Extract and format the best audio streams from the raw yt-dlp response.
+                        :return: The formatted audio streams if return_data is True, else None.
+                        """
+
+                        data = self._raw_youtube_streams
+
+                        format_id_extension_map = {
+                            338: 'webm',  # Opus - (VBR) ~480 Kbps (?) - Quadraphonic (4)
+                            380: 'mp4',  # AC3 - 384 Kbps - Surround (5.1) - Rarely
+                            328: 'mp4',  # EAC3 - 384 Kbps - Surround (5.1) - Rarely
+                            258: 'mp4',  # AAC (LC) - 384 Kbps - Surround (5.1) - Rarely
+                            325: 'mp4',  # DTSE (DTS Express) - 384 Kbps - Surround (5.1) - Rarely*
+                            327: 'mp4',  # AAC (LC) - 256 Kbps - Surround (5.1) - ?*
+                            141: 'mp4',  # AAC (LC) - 256 Kbps - Stereo (2) - No, YT Music*
+                            774: 'webm',  # Opus - (VBR) ~256 Kbps - Stereo (2) - Some, YT Music*
+                            256: 'mp4',  # AAC (HE v1) - 192 Kbps - Surround (5.1) - Rarely
+                            251: 'webm',  # Opus - (VBR) <=160 Kbps - Stereo (2) - Yes
+                            140: 'mp4',  # AAC (LC) - 128 Kbps - Stereo (2) - Yes, YT Music
+                            250: 'webm',  # Opus - (VBR) ~70 Kbps - Stereo (2) - Yes
+                            249: 'webm',  # Opus - (VBR) ~50 Kbps - Stereo (2) - Yes
+                            139: 'mp4',  # AAC (HE v1) - 48 Kbps - Stereo (2) - Yes, YT Music
+                            600: 'webm',  # Opus - (VBR) ~35 Kbps - Stereo (2) - Yes
+                            599: 'mp4',  # AAC (HE v1) - 30 Kbps - Stereo (2) - Yes
+                        }
+
+                        audio_streams = [
+                            stream for stream in data
+                            if stream.get('acodec') != 'none' and int(get_value(stream, 'format_id').split('-')[0]) in format_id_extension_map
+                        ]
+
+                        def calculate_score(stream: Dict[Any, Any]) -> float:
+                            bitrate = stream.get('abr', 0)
+                            sample_rate = stream.get('asr', 0)
+
+                            return bitrate * 1.5 + sample_rate / 1000
+
+                        sorted_audio_streams = sorted(audio_streams, key=calculate_score, reverse=True)
+
+                        def extract_stream_info(stream: Dict[Any, Any]) -> Dict[str, Any]:
+                            codec = stream.get('acodec', '')
+                            codec_parts = codec.split('.', 1)
+                            youtube_format_id = int(get_value(stream, 'format_id').split('-')[0])
+
+                            return {
+                                'url': stream.get('url'),
+                                'codec': codec_parts[0] if codec_parts else None,
+                                'codecVariant': codec_parts[1] if len(codec_parts) > 1 else None,
+                                'rawCodec': codec,
+                                'extension': format_id_extension_map.get(youtube_format_id, 'mp3'),
+                                'bitrate': stream.get('abr'),
+                                'qualityNote': stream.get('format_note'),
+                                'size': stream.get('filesize'),
+                                'samplerate': stream.get('asr'),
+                                'channels': stream.get('audio_channels'),
+                                'language': stream.get('language'),
+                                'youtubeFormatId': youtube_format_id
+                            }
+
+                        self.best_audio_streams = [extract_stream_info(stream) for stream in sorted_audio_streams] if sorted_audio_streams else None
+                        self.best_audio_stream = self.best_audio_streams[0] if self.best_audio_streams else None
+                        self.best_audio_download_url = self.best_audio_stream['url'] if self.best_audio_stream else None
+
+                    def analyze_subtitle_streams(self) -> None:
+                        """
+                        Extract and format the best subtitle streams from the raw yt-dlp response.
+                        :return: The formatted subtitle streams if return_data is True, else None.
+                        """
+
+                        data = self._raw_youtube_subtitles
+
+                        subtitle_streams = {}
+
+                        for stream in data:
+                            subtitle_streams[stream] = [
+                                {
+                                    'extension': subtitle.get('ext'),
+                                    'url': subtitle.get('url'),
+                                    'language': subtitle.get('name')
+                                }
+                                for subtitle in data[stream]
+                            ]
+
+                        self.subtitle_streams = dict(sorted(subtitle_streams.items()))
+
+                    # @staticmethod
+                    # def save_json(path: Union[AnyStr, Path, PathLike], data: Union[Dict[Any, Any], List[Any]], indent_code: bool = True) -> None:
+                    #     """
+                    #     Save a dictionary/list to a JSON file.
+                    #     :param path: The path to save the JSON file to.
+                    #     :param data: The dictionary/list to save to the JSON file.
+                    #     :param indent_code: Whether to indent the JSON code. (2 spaces)
+                    #     """
+                    #
+                    #     Path(path).write_bytes(orjson_dumps(data, option=OPT_INDENT_2 if indent_code else None))
+
+                dlp_humanizer = DLPHumanizer(query, quiet=False)
+                dlp_humanizer.extract()
+
+                dlp_humanizer.retrieve_media_info()
+                dlp_humanizer.analyze_video_streams()
+                dlp_humanizer.analyze_audio_streams()
+                dlp_humanizer.analyze_subtitle_streams()
+
+                formatted_data = {
+                    'info': dlp_humanizer.media_info,
+                    'media': {
+                        'video': dlp_humanizer.best_video_streams,
+                        'audio': dlp_humanizer.best_audio_streams,
+                        'subtitle': dlp_humanizer.subtitle_streams
                     }
-
-                def extract_media_subtitles(data: dict) -> List[Dict[str, str]]:
-                    subtitles_data = data.get('subtitles', dict())
-                    output_subtitle_info = list()
-
-                    for lang, subs in subtitles_data.items():
-                        for sub_info in subs:
-                            subtitle_data = {'url': str(unquote(sub_info.get('url', str()))), 'lang': str(lang), 'ext': str(sub_info.get('ext', str()))}
-                            output_subtitle_info.append(subtitle_data)
-
-                    return output_subtitle_info
-
-                def is_blacklisted_media_url(query: str) -> bool:
-                    return not bool(re_match(r'https?://(?!manifest\.googlevideo\.com)\S+', query))
-
-                def is_valid_video_data(data: Any) -> bool:
-                    return data['vcodec'] != 'none' and not data.get('abr')
-
-                def is_valid_audio_data(data: Any) -> bool:
-                    return data.get('acodec', str()) != 'none'
-
-                query_url = f'https://www.youtube.com/watch?v={parsed_url_data["videoId"]}'
-
-                ydl_opts = {'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', 'quiet': True, 'no_warnings': True, 'ignoreerrors': True, 'geo_bypass': True}
-                yt = YoutubeDL(ydl_opts)
-
-                try:
-                    raw_yt_extracted_data = yt.sanitize_info(yt.extract_info(query_url, download=False), remove_private_keys=True)
-                    adjusted_yt_data = {'info': extract_media_info(raw_yt_extracted_data), 'media': {'video': list(), 'audio': list(), 'subtitle': list()}}
-                except BaseException:
-                    output_data['api']['errorMessage'] = 'The URL you have chosen does not exist or is temporarily unavailable.'
-                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                    return output_data, 400
-
-                yt_media_data = adjusted_yt_data['media']
-
-                for format_data in raw_yt_extracted_data['formats']:
-                    # Video data adjustment
-                    if is_valid_video_data(format_data):
-                        video_url = unquote(format_data.get('url', str()))
-
-                        if not is_blacklisted_media_url(video_url):
-                            size = format_data.get('filesize', None)
-
-                            if size:
-                                video_data = {'url': video_url, 'quality': int(format_data.get('height', 0)), 'codec': str(format_data.get('vcodec', str())).split('.')[0], 'framerate': int(format_data.get('fps', 0)), 'bitrate': int(format_data.get('tbr', 0))}
-                                yt_media_data['video'].append(video_data)
-
-                    # Audio data adjustment
-                    if is_valid_audio_data(format_data):
-                        audio_url = unquote(format_data.get('url', str()))
-
-                        if not is_blacklisted_media_url(audio_url):
-                            size = format_data.get('filesize', None)
-                            bitrate = format_data.get('abr', None)
-
-                            if size and bitrate:
-                                audio_data = {'url': audio_url, 'codec': str(format_data.get('acodec', str())).split('.')[0], 'bitrate': int(bitrate), 'samplerate': int(format_data.get('asr', 0)), 'size': int(size)}
-                                yt_media_data['audio'].append(audio_data)
-
-                # Subtitle data adjustment
-                yt_media_data['subtitle'] = extract_media_subtitles(raw_yt_extracted_data)
+                }
 
                 timer.stop()
 
-                output_data['response'] = adjusted_yt_data
+                output_data['response'] = formatted_data
                 output_data['api']['status'] = True
                 output_data['api']['elapsedTime'] = timer.elapsed_time()
 
@@ -1268,31 +1528,31 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class get_youtube_video_url_from_search:
+        class scrap_youtube_search_results:
             ready_to_production = True
 
-            endpoint_url = 'get-youtube-video-url-from-search'
+            endpoint_url = 'scrap-youtube-search-results'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=4, per_min=120, per_day=500000)
-            cache_timeout = 300
+            cache_timeout = 3600
 
-            title = 'Retrieve YouTube Video URL from Search'
-            description = 'Get the YouTube video URL from a search query.'
+            title = 'YouTube Search Results Scraper'
+            description = 'Scrapes YouTube search results and returns a list of extracted videos.'
             parameters = {
                 'query': {'description': 'Search query.', 'required': True, 'type': 'string'}
             }
             expected_output = {
                 'extractedUrlsData': [
                     {
-                        'videoId': 'string',
-                        'videoTitle': 'string',
-                        'videoUrl': 'string',
                         'channelId': 'string',
                         'channelName': 'string',
                         'channelUrl': 'string',
                         'duration': 'integer',
-                        'viewCount': 'integer',
-                        'thumbnailUrls': 'list'
+                        'thumbnailUrls': 'list',
+                        'videoId': 'string',
+                        'videoTitle': 'string',
+                        'videoUrl': 'string',
+                        'viewCount': 'integer'
                     }
                 ]
             }
@@ -1319,7 +1579,7 @@ class APIEndpoints:
 
                 # Main process
                 params = {'search_query': query}
-                headers = {'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public(), 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'}
+                headers = {'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public(), 'Accept': 'text/html'}
 
                 try:
                     response = get('https://www.youtube.com/results', params=params, headers=headers, timeout=10)
@@ -1330,7 +1590,7 @@ class APIEndpoints:
                     return output_data, 500
 
                 if response.status_code != 200:
-                    output_data['api']['errorMessage'] = 'Some error occurred while fetching the search results. Please try again later.'
+                    output_data['api']['errorMessage'] = 'Some error occurred in our systems during the data scraping. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 500
 
@@ -1338,43 +1598,46 @@ class APIEndpoints:
                     tree = html.fromstring(response.text)
                     script = tree.xpath('//script[contains(text(), "ytInitialData")]/text()')
                     script_content = re_search(r'var ytInitialData = ({.*?});', script[0])
-                except (IndexError, AttributeError):
-                    output_data['api']['errorMessage'] = 'Some error occurred while parsing the search results. Please try again later.'
+                except (AttributeError, IndexError, KeyError):
+                    output_data['api']['errorMessage'] = 'No video data found in the URL provided.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                    return output_data, 500
+                    return output_data, 400
 
                 try:
                     json_data = orjson_loads(script_content.group(1))['contents']['twoColumnSearchResultsRenderer']['primaryContents']['sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents']
                     json_data = [i['videoRenderer'] for i in json_data if 'videoRenderer' in i]
-                except (IndexError, KeyError):
-                    output_data['api']['errorMessage'] = 'No video data found in the search results.'
+                except (AttributeError, IndexError, KeyError):
+                    output_data['api']['errorMessage'] = 'No video data found in the URL provided.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
-                    return output_data, 404
+                    return output_data, 500
 
-                scraped_data = list()
+                scraped_data = []
 
                 for data in json_data:
                     video_id = str(data['videoId'])
                     title = str(data['title']['runs'][0]['text'])
+                    duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(data['lengthText']['simpleText'].split(':')))))
                     channel_id = data['ownerText']['runs'][0]['navigationEndpoint']['browseEndpoint']['browseId']
                     channel_url = f'https://www.youtube.com/channel/{channel_id}'
                     channel_name = str(data['ownerText']['runs'][0]['text'])
-                    duration = data.get('lengthText', {}).get('simpleText', None)
-                    if duration: duration = int(sum(int(x) * 60 ** i for i, x in enumerate(reversed(duration.split(':')))))
-                    view_count = int(data['viewCountText']['simpleText'].replace('.', '').replace(',', '').split()[0])
-                    thumbnails_urls = [f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg', f'https://img.youtube.com/vi/{video_id}/sddefault.jpg', f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/mqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/default.jpg']
+                    view_count = int(data['viewCountText']['simpleText'].split()[0].replace('.', ''))
 
                     scraped_data.append({
-                        'videoTitle': title,
-                        'videoId': video_id,
-                        'videoUrl': f'https://www.youtube.com/watch?v={video_id}',
-                        'channelName': channel_name,
                         'channelId': channel_id,
+                        'channelName': channel_name,
                         'channelUrl': channel_url,
                         'duration': duration,
+                        'thumbnailUrls': [f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg', f'https://img.youtube.com/vi/{video_id}/sddefault.jpg', f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/mqdefault.jpg', f'https://img.youtube.com/vi/{video_id}/default.jpg'],
+                        'videoId': video_id,
+                        'videoTitle': title,
+                        'videoUrl': f'https://www.youtube.com/watch?v={video_id}',
                         'viewCount': view_count,
-                        'thumbnailUrls': thumbnails_urls
                     })
+
+                if not scraped_data:
+                    output_data['api']['errorMessage'] = 'No video data found in the URL provided.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 400
 
                 timer.stop()
 
@@ -1386,10 +1649,10 @@ class APIEndpoints:
 
                 return output_data, 200
 
-        class scrap_soundcloud_track_url:
+        class scrap_soundcloud_track:
             ready_to_production = True
 
-            endpoint_url = 'scrap-soundcloud-track-url'
+            endpoint_url = 'scrap-soundcloud-track'
             allowed_methods = ['GET']
             ratelimit = LimiterTools.gen_ratelimit_message(per_sec=2, per_min=60, per_day=500000)
             cache_timeout = 3600
@@ -1421,7 +1684,7 @@ class APIEndpoints:
                     return output_data, 400
 
                 def is_valid_soundcloud_url(query: str) -> bool:
-                    pattern = re_compile(r'^https?://soundcloud\.com/[\w-]+/[\w-]+$')
+                    pattern = re_compile(r'^https?://soundcloud\.com/[\w-]+/[\w-]+(\?.*)?$')
                     return bool(pattern.match(query))
 
                 if not is_valid_soundcloud_url(query):
@@ -1434,14 +1697,20 @@ class APIEndpoints:
                     soundcloud_api = SoundcloudAPI()
                     track_data = soundcloud_api.resolve(query)
                     if not isinstance(track_data, SoundcloudTrack): raise Exception
-                except Exception:
+                except (Exception, TypeError):
                     output_data['api']['errorMessage'] = 'Some error occurred while scraping the SoundCloud track URL. Please try again later.'
                     db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
                     return output_data, 500
 
+                try:
+                    media_url = unquote(orjson_loads(get(track_data.get_prog_url(), headers={'User-Agent': fake.user_agent(), 'X-Forwarded-For': fake.ipv4_public()}, timeout=10).content)['url'])
+                except (JSONDecodeError, HTTPError, KeyError):
+                    output_data['api']['errorMessage'] = 'Some error occurred while fetching the media URL. Please try again later.'
+                    db_client.log_exception(api_request_id, output_data['api']['errorMessage'], timer.get_time())
+                    return output_data, 500
+
                 filename = format_string(f'{track_data.title} - {track_data.artist}') + '.mp3'
-                media_url = unquote(track_data.get_stream_url())
-                thumbnail_url = unquote(track_data.artwork_url.replace('-large', '-original'))
+                thumbnail_url = unquote(track_data.artwork_url.replace('-large.', '-original.'))
 
                 timer.stop()
 
