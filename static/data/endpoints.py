@@ -1641,7 +1641,7 @@ class APIEndpoints:
                     channel_id = str(data.get('ownerText', {}).get('runs', [{}])[0].get('navigationEndpoint', {}).get('browseEndpoint', {}).get('browseId', None))
                     channel_url = f'https://www.youtube.com/channel/{channel_id}'
                     channel_name = str(data.get('ownerText', {}).get('runs', [{}])[0].get('text', None))
-                    view_count = int(data.get('viewCountText', {}).get('simpleText', '0').split()[0].replace(',', ''))
+                    view_count = int(''.join([char for char in data.get('viewCountText', {}).get('simpleText', '0') if char.isdigit()]))
 
                     scraped_data.append({
                         'channelId': channel_id,
