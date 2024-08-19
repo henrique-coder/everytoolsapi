@@ -7,7 +7,6 @@ flask-cors
 flask-limiter
 flask-talisman
 flask-wtf
-googlesearch-python
 googletrans==4.0.0-rc1
 gunicorn
 httpx
@@ -22,3 +21,6 @@ soundcloud-lib
 user-agents
 werkzeug
 yt-dlp
+selectolax
+validators
+xxhash
