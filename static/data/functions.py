@@ -30,6 +30,7 @@ class APITools:
 
         print(f'request_object.remote_addr: {request_object.remote_addr}')
         print(f'request_object.environ.get("HTTP_X_FORWARDED_FOR"): {request_object.environ.get('HTTP_X_FORWARDED_FOR')}')
+        print(f'request_object.environ.get("HTTP_X_REAL_IP"): {request_object.environ.get('HTTP_X_REAL_IP')}')
 
         remote_addr = request_object.environ.get('HTTP_X_FORWARDED_FOR', '0.0.0.0')
         if ',' in remote_addr: remote_addr = remote_addr.split(',')[0].strip()
