@@ -972,11 +972,13 @@ class APIEndpoints:
 
                     parsed_url = urlparse(url)
                     unquoted_url_base = unquote_plus(parsed_url.scheme + '://' + parsed_url.netloc + parsed_url.path)
+
                     return str(unquoted_url_base + '?' + urlencode(parse_qs(parsed_url.query), doseq=True))
 
                 # Main process
+                instaloader = Instaloader()
+
                 try:
-                    instaloader = Instaloader()
                     post_data = instagram_post.from_shortcode(instaloader.context, reel_id)
                 except Exception:
                     output_data['api']['errorMessage'] = 'Some error occurred while scraping the Instagram Reels URL. Please try again later.'
@@ -1253,7 +1255,8 @@ class APIEndpoints:
                             'age_limit': None,
                             'quiet': quiet,
                             'no_warnings': no_warnings,
-                            'ignoreerrors': ignore_errors
+                            'ignoreerrors': ignore_errors,
+                            # 'cookiefile': 'cookies.txt'
                         }
 
                         self._url: str = url
