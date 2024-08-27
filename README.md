@@ -79,7 +79,7 @@ To get a local copy up and running, follow these simple steps.
 
 You will need the following software installed on your machine to run the website locally:
 
-- [Python 3.12.4](https://www.python.org/downloads/release/python-3124)
+- [Python 3.12.5](https://www.python.org/downloads/release/python-3125)
 
 <!-- INSTALLATION -->
 ### Installation
