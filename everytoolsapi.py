@@ -44,7 +44,7 @@ debugging_mode = False
 
 # Load the environment variables
 production_env_path = Path(Path(__file__).parent, '.env')
-development_env_path = Path(Path(__file__).parent, '.dev.env')
+development_env_path = Path(Path(__file__).parent, '.env.dev')
 
 # Load the environment variables based on the debugging mode
 if not debugging_mode:
